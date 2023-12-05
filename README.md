@@ -18,3 +18,6 @@ Todo o fluxo que o plugin realizará, está registrado na seguinte [documentaç�
 
 ### ℹ️ Observação
 Plugin em desenvolvimento e por isso pode acontecer de eventualmente sofrer alterações, mas todo Pull Request de ajuda é bem vinda.
+
+### 🖼️ Estrutura
+![Recourse](https://github.com/secultce/plugin-Recourse/assets/7341117/6221de08-1b5e-4f56-9163-865afcd0643b)

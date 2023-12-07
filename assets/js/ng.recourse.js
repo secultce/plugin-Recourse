@@ -1,5 +1,5 @@
 (function (angular) {
-    var module = angular.module('ng.recourse', ['ngSanitize']);
+    var module = angular.module('ng.recourse', []);
     
     // modifica as requisições POST para que sejam lidas corretamente pelo Slim
     module.config(['$httpProvider', function ($httpProvider) {

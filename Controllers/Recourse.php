@@ -13,17 +13,32 @@ class Recourse extends \MapasCulturais\Controller{
     {
 
         $app = App::i();
-        //    $app->view->enqueueScript(
-        //     'app', // grupo de scripts
-        //     'ng-recourse',  // nome do script
-        //     'js/recourse/ng.recourse.js', // arquivo do script
-        //     [] // dependências do script
-        // );
+            $app->view->enqueueScript(
+            'app', // grupo de scripts
+            'ng-recourse',  // nome do script
+            'js/ng.recourse.js', // arquivo do script
+            [] // dependências do script
+        );
+        $this->render('index');
+       
         // $app->view->jsObject['angularAppDependencies'][] = 'recourse/ng.recourse';
         // dump($app->view->jsObject);
         // die;
-        $app->view->bodyProperties['ng-app'] = "recourse";
-        $app->view->bodyProperties['ng-controller'] = "ItemController";
-        $app->view->part('recourse/index', ['app' => $app]);
+      
+        
+    }
+
+    public function GET_oportunidade()
+    {
+        $app = App::i();
+        $app->view->enqueueScript(
+            'app', // grupo de scripts
+            'ng-recourse',  // nome do script
+            'js/ng.recourse.js', // arquivo do script
+            [] // dependências do script
+        );
+        $entity = $app->repo('Opportunity')->find($this->data['id']);
+        $this->render('index', ['entity' => $entity]);
+        
     }
 }

@@ -1,5 +1,5 @@
 (function (angular) {
-    var module = angular.module('ng.recourse', []);
+    var module = angular.module('ng.recourse', ['ngSanitize']);
     
     // modifica as requisições POST para que sejam lidas corretamente pelo Slim
     module.config(['$httpProvider', function ($httpProvider) {
@@ -13,19 +13,40 @@
         };
     }]);
 
+
+
     // Seriço que executa no servidor as requisições HTTP
-    module.factory('ItemService', ['$http', function ($http) {
-        return {};
+    module.factory('RecourseService', ['$http',  function ($http) {
+        var urlBase = MapasCulturais.baseURL
+        return {
+            getRecourseAll: function(opportunityId){
+               return $http.get(urlBase + 'recursos/todos/' + opportunityId).
+                success(function (data, status) {
+                   console.log({data})
+                   return data
+                }).
+                error(function (data, status) {
+                    console.log(data)
+                });
+            }
+        };
     }]);
 
     // Controlador da interface
-    module.controller('ItemController', ['$scope', 'ItemService', function ($scope, ItemService) {
-        console.log({module})
+    module.controller('RecourseController', ['$scope', 'RecourseService', function ($scope, RecourseService) {
         $scope.data = {
-            items: [
-              {id: 1, title: 'Título 1'},
-              {id: 2, title: 'Título 2'}
-            ]
-          };
+            recourses: []
+         };
+        
+        var recoursesAll = RecourseService.getRecourseAll(MapasCulturais.entity.id)
+        .then(res => JSON.parse(JSON.stringify(res)).data)
+        .then(res => {
+            console.log(res);
+            $scope.data.recourses = res
+            // you returned no value here!
+            // return res;
+        })
+        console.log(recoursesAll)
+        
     }]);
 })(angular);

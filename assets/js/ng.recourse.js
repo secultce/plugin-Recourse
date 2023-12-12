@@ -46,7 +46,25 @@
             // you returned no value here!
             // return res;
         })
-        console.log(recoursesAll)
         
+        $scope.replyRecourse = function (id, text) {
+            $scope.dialogSecult('dialog','Responser Recurso', text);
+        }
+        
+        $scope.dialogSecult = function (type, title, text, icon = '', footer = '') {
+            Swal.fire({
+                title: title,
+                text: text,
+                icon: icon,
+                footer: footer,
+                input: "textarea",
+                showDenyButton: true,
+                showCancelButton: false,
+                denyButtonText: `Sair`,
+                confirmButtonText: "Responder",
+            });
+        }
+
+
     }]);
 })(angular);

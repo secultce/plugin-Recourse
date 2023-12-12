@@ -16,13 +16,12 @@ class Recourse extends \MapasCulturais\Controller{
     public function GET_oportunidade()
     {
         $app = App::i();
-        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultalert/secultce/dist/secultce.min.css');
+        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
         $app->view->enqueueStyle('app', 'recourse', 'css/recourse/recourse.css', ['main']);
         $app->view->enqueueScript(
-            'app', // grupo de scripts
-            'sweetalert2',  // nome do script
-            'https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js', // arquivo do script
-            [] // dependências do script
+            'app',
+            'sweetalert2', 
+            'https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js'
         );
         $app->view->enqueueScript(
             'app', // grupo de scripts

@@ -139,3 +139,10 @@ a.badge:focus {
 .text-center {
     text-align: center;
 }
+
+#main-footer {
+    position: relative;
+    z-index: 0 !important;
+    padding: 1.3rem;
+    color: #fff;
+}

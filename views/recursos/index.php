@@ -10,7 +10,7 @@ $app->view->jsObject['entity'] = $entity;
 // dump($this->jsObject);
 ?>
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
-    <div class="panel-header clearfix">
+    <div class="panel-header clearfix" ng-controller="RecourseController">
         <p class="text-center">
             <h5 style="color:#636161;">
             Recursos da Oportunidade
@@ -22,7 +22,7 @@ $app->view->jsObject['entity'] = $entity;
         </h5>
        </p>
        <p>
-        Total de recursos: <small class="badge">32</small>
+        Total de recursos: <small class="badge">{{data.recourses.length}}</small>
         Total rec. respondido: <small class="badge">30</small>
        </p>
        <p>
@@ -51,7 +51,12 @@ $app->view->jsObject['entity'] = $entity;
                     <td>{{recourses.recourseText}}</td>
                     <td>{{recourses.recourseSend.date}}</td>
                     <td>{{recourses.recourseStatus}}</td>
-                    <td>{{recourses.recourseReply}}</td>
+                    <td>
+                        <button class="btn btn-primary">
+                            {{recourses.recourseReply}}
+                            <small ng-click="replyRecourse(recourses.id, recourses.recourseText)">Responder</small>
+                        </button>
+                    </td>
                     <td>{{recourses.recourseDateReply}}</td>                    
                 </tr>
             </tbody>

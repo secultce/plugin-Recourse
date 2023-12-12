@@ -1,6 +1,9 @@
 <?php 
 $this->layout = 'panel';
 ?>
+<script>
+     const Swal = require('sweetalert2')
+</script>
 <div id="resource" class="aba-content">
 <table class="table table-bordered table-hover">
         <thead>

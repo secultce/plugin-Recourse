@@ -3,6 +3,7 @@ namespace Recourse\Controllers;
 
 use DateTime;
 use \MapasCulturais\App;
+use Recourse\Entities\Recourse as EntityRecourse;
 
 
 class Recourse extends \MapasCulturais\Controller{
@@ -37,8 +38,20 @@ class Recourse extends \MapasCulturais\Controller{
     public function GET_todos()
     {
         $app = App::i();
-        $entity = $app->repo('Recourse\Entities\Recourse')->findBy(['opportunity' => $this->data['id']]);
+        $entity = $app->repo(EntityRecourse::class)->findBy(['opportunity' => $this->data['id']]);
         $this->json($entity, 200);
+    }
+
+    public function POST_responder()
+    {
+        $app = App::i();
+        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
+        $recourse->recourseReply = $this->data['reply'];
+        $recourse->recourseDateReply = new DateTime;
+        $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
+        // dump($app->getAuth()->getAuthenticatedUser()->profile->id);
+       
+        dump($recourse);
     }
 
 

@@ -30,8 +30,7 @@ $app->view->jsObject['entity'] = $entity;
        </p>
     </div>
     <div ng-controller="RecourseController">
-       
-        <table class="table table-bordered table-hover">
+        <table class="table table-bordered table-hover" ng-show="tableRecourse">
             <thead>
                 <tr class="tr-active">
                     <!-- <th>Publicar</th> -->
@@ -54,13 +53,42 @@ $app->view->jsObject['entity'] = $entity;
                     <td>
                         <button class="btn btn-primary">
                             {{recourses.recourseReply}}
-                            <small ng-click="replyRecourse(recourses.id, recourses.recourseText)">Responder</small>
+                            <small ng-click="replyRecourse(
+                                recourses.id,
+                                recourses.registration.id,
+                                recourses.agent.id,
+                                recourses.recourseText,
+                                recourses.recourseSend.date,
+                                recourses.recourseStatus)">Responder</small>
                         </button>
                     </td>
                     <td>{{recourses.recourseDateReply}}</td>                    
                 </tr>
             </tbody>
 
+        </table>
+        <table class="table table-bordered" width='100%'>
+            <tr>
+                <td width="50%">
+                    <table width="100%">
+                        <tr>
+                            <td>Inscrição: 887766</td>
+                            <td>Recurso: Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! 
+                                Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis!
+                                Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis!
+                                 Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis!
+                                 Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! 
+                                 Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis!
+                                 Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis! Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis! Mussum Ipsum, cacilds vidis litro abertis. Mauris nec dolor in eros commodo tempor. Aenean aliquam molestie leo, vitae iaculis nisl. Quem num gosta di mim que vai caçá sua turmis!
+                                  Quem manda na minha terra sou euzis! Eu nunca mais boto a boca num copo de cachaça, agora eu só uso canudis!
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td width="50%">
+                    formulario
+                </td>
+            </tr>
         </table>
         
     </div>

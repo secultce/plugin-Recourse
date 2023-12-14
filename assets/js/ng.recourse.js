@@ -42,6 +42,16 @@
                     error(function (data, status) {
                         console.log(data)
                     });
+            },
+            getRegistration: function (registration) {
+                return $http.get(urlBase + 'recursos/registration/'+ registration).
+                success(function (data, status) {
+                    console.log({ data })
+                    return data
+                }).
+                error(function (data, status) {
+                    console.log(data)
+                });
             }
         };
     }]);
@@ -51,7 +61,10 @@
         $scope.data = {
             recourses: []
         };
-        $scope.tableRecourse = false;
+        $scope.veriftRecourses = true;
+        $scope.textVerifyRecourses = 'Verificando recursos . . . ';
+        $scope.tableRecourse = true;
+        $scope.divReplyRecourse = false
         $scope.recourseAdmin = {
             idRecourse: '',
             registration: '',
@@ -69,6 +82,12 @@
                 if(res.length > 0 )
                 {
                     $scope.tableRecourse = true
+                    $scope.veriftRecourses = false
+                    $scope.textVerifyRecourses = '';
+                }
+                if(res.length == 0)
+                {
+                    $scope.textVerifyRecourses = 'Não existe recursos para essa oportunidade'
                 }
                 // you returned no value here!
                 // return res;
@@ -76,6 +95,7 @@
 
         $scope.replyRecourse = function (id, registration, agent, text, status) {
             $scope.tableRecourse = false
+            $scope.divReplyRecourse = true
             $scope.recourseAdmin = {
                 idRecourse: id,
                 registration: registration,
@@ -84,8 +104,22 @@
                 recourseSend: '',
                 status: ''
             }
-            console.log($scope.recourseAdmin);
+            console.log('recourseAdmin: ',$scope.recourseAdmin);
             // $scope.dialogSecult(id, 'Responder Recurso', text);
+        }
+
+        $scope.changeSituation = function () {
+            console.log($scope.recourseAdmin.status)
+            var registration = '';
+            if($scope.recourseAdmin.status == 'Deferido'){
+                registration =  RecourseService.getRegistration($scope.recourseAdmin.registration)
+                console.log({registration})
+            }
+        }
+
+        $scope.backRecourse = function () {
+            $scope.tableRecourse = true
+            $scope.divReplyRecourse = false
         }
 
         $scope.dialogSecult = function (id, title, text, icon = '', footer = '') {

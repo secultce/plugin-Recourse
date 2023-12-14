@@ -6,7 +6,7 @@ use MapasCulturais\i;
 class Plugin extends \MapasCulturais\Plugin {
     function _init () {
         $app = App::i();
-
+        $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
     
         $app->hook('template(opportunity.single.tabs):end', function () use ($app) {
             $opportunity = $this->controller->requestedEntity;        

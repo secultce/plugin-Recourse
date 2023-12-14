@@ -44,6 +44,7 @@ class Recourse extends \MapasCulturais\Controller{
 
     public function POST_responder()
     {
+        
         $app = App::i();
         $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         $recourse->recourseReply = $this->data['reply'];
@@ -52,6 +53,19 @@ class Recourse extends \MapasCulturais\Controller{
         // dump($app->getAuth()->getAuthenticatedUser()->profile->id);
        
         dump($recourse);
+
+
+        // $hook_prefix = $this->getHookPrefix();
+        // $app->applyHookBoundTo($this, "{$hook_prefix}.recourses", [&$return_recourses]);
+    }
+
+    public function GET_registration()
+    {
+        $app = App::i();
+        dump($this->data);
+        $reg = $app->repo('Registration')->find($this->data['id']);
+        return $this->json(['resultConsolidate' => $reg->consolidatedResult]);
+
     }
 
 

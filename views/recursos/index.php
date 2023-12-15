@@ -6,9 +6,10 @@ $app->view->jsObject['entity'] = $entity;
 // $app->view->jsObject['angularAppDependencies'][] = 'entity.module.opportunity';
 // $app->view->part('recourse/index', ['app' => $app]);
 
-
 // dump($this->jsObject);
 ?>
+<div id="app-recourse">{{ message }}</div>
+
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
     <div class="panel-header clearfix" ng-controller="RecourseController">
         <p class="text-center">
@@ -136,3 +137,16 @@ $app->view->jsObject['entity'] = $entity;
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script !src="">
+    var app = new Vue({
+        el: '#app-recourse',
+        data: {
+            message: 'Hello Vue!'
+        }
+    });
+</script>
+<?php
+
+$app->view->enqueueScript('app', 'recoursejs', 'js/recourse.js');
+?>

@@ -30,9 +30,13 @@ class Recourse extends \MapasCulturais\Controller{
             'js/ng.recourse.js', // arquivo do script
             [] // dependências do script
         );
-       
+
         $entity = $app->repo('Opportunity')->find($this->data['id']);
-        $this->render('index', ['entity' => $entity]);        
+
+        $this->render('index', ['entity' => $entity, 'app' => $app]);
+//        $app->view->enqueueScript('app', 'vendor', 'js/vendor.js');
+
+
     }
 
     public function GET_todos()

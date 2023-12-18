@@ -50,13 +50,20 @@ class Recourse extends \MapasCulturais\Controller{
     {
         
         $app = App::i();
+        dump($this->data);
         $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         $recourse->recourseReply = $this->data['reply'];
         $recourse->recourseDateReply = new DateTime;
         $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
-        // dump($app->getAuth()->getAuthenticatedUser()->profile->id);
-       
-        dump($recourse);
+        try {
+            $app->em->persist($recourse);
+            $app->em->flush();
+        }catch (Exception $e) {
+
+        }
+//         dump($app->getAuth()->getAuthenticatedUser()->profile->id);
+//
+//        dump($recourse);
 
 
         // $hook_prefix = $this->getHookPrefix();
@@ -71,6 +78,8 @@ class Recourse extends \MapasCulturais\Controller{
         return $this->json(['resultConsolidate' => $reg->consolidatedResult]);
 
     }
+
+
 
 
 }

@@ -8,9 +8,12 @@ $app->view->jsObject['entity'] = $entity;
 
 // dump($this->jsObject);
 ?>
-<div id="app-recourse">{{ message }}</div>
+
 
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
+    <div class="alert info">
+        Lembramos que ao clicar em responder
+    </div>
     <div class="panel-header clearfix" ng-controller="RecourseController">
         <p class="text-center">
         <h5 style="color:#636161;">
@@ -24,7 +27,7 @@ $app->view->jsObject['entity'] = $entity;
         </p>
         <p>
             Total de recursos: <small class="badge">{{data.recourses.length}}</small>
-            Total rec. respondido: <small class="badge">30</small>
+            Total rec. respondido: <small class="badge">{{countNotReply}}</small>
         </p>
         <p>
             <hr>
@@ -32,7 +35,6 @@ $app->view->jsObject['entity'] = $entity;
     </div>
     <div ng-controller="RecourseController">
         <div style="width: 100%;" ng-if="veriftRecourses">
-          
             <label for="">{{textVerifyRecourses}}</label>
         </div>
         <table class="table table-bordered table-hover" ng-show="tableRecourse">
@@ -50,20 +52,33 @@ $app->view->jsObject['entity'] = $entity;
             </thead>
             <tbody>
                 <tr ng-repeat="recourses in data.recourses">
-                    <td>{{recourses.registration.id}}</td>
+                    <td>
+                        <a href="{{redirectRegistrarion(recourses.registration.id)}}" target="_blank">
+                            {{recourses.registration.id}}
+                        </a>
+                    </td>
                     <td>{{recourses.agent.name}}</td>
-                    <td>{{recourses.recourseText}}</td>
-                    <td>{{recourses.recourseSend.date}}</td>
+                    <td>
+                        {{recourses.recourseText.substring(0, 100)}}...
+                        <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)">Ler mais</a>
+                    </td>
+
+                    <td>{{recourses.recourseSend}}</td>
                     <td>{{recourses.recourseStatus}}</td>
                     <td>
+                        <p ng-if="recourses.recourseReply.substring(0, 100) < 100">
+                            <small> {{recourses.recourseReply.substring(0, 100)}}...</small>
+                        </p>
+                        <p ng-else>
+                            <small> {{recourses.recourseReply}}</small>
+                        </p>
                         <button class="btn btn-primary">
-                            {{recourses.recourseReply}}
                             <small ng-click="replyRecourse(
                                 recourses.id,
                                 recourses.registration.id,
                                 recourses.agent,
                                 recourses.recourseText,
-                                recourses.recourseSend.date,
+                                recourses.recourseSend,
                                 recourses.recourseStatus)">Responder</small>
                         </button>
                     </td>
@@ -85,13 +100,16 @@ $app->view->jsObject['entity'] = $entity;
                 <td width="50%">
                     <table width="100%">
                         <tr>
-                            <td> <strong>Inscrição:</strong> {{recourseAdmin.registration}}</td>
+                            <td> <strong>Inscrição:</strong>
+                                <a href="{{redirectRegistrarion(recourseAdmin.registration)}}" target="_blank">
+                                    {{recourseAdmin.registration}}
+                                </a>
+                            </td>
                         </tr>
                         <tr>
                             <td>
                                 <strong>Recurso: </strong>
                                 {{recourseAdmin.recourseText}}
-                        
                             </td>
                         </tr>
                         <tr>
@@ -101,7 +119,7 @@ $app->view->jsObject['entity'] = $entity;
                         </tr>
                         <tr>
                             <td>
-                                <strong>Enviado em: </strong> {{recourseAdmin.agent.name}}
+                                <strong>Enviado em: </strong> {{recourseAdmin.recourseSend}}
                             </td>
                         </tr>
                         <tr>
@@ -114,21 +132,35 @@ $app->view->jsObject['entity'] = $entity;
                 <td width="50%">
                     <div class="reply-shadow" >
                         <div class="form-group">
-                            <label for="label-reply-form">Responder ao recurso</label>
-                            <textarea name="" id="" class="form-control" rows="10"></textarea>
-                            <label for="label-reply-form">Alterar a situação</label>
+                            <label for="label-reply-form">Responder ao recurso {{recourseAdmin.idRecourse}}</label>
+                            <textarea name="reply" class="form-control" rows="10" ng-model="reply" ></textarea>
+                            <label for="label-reply-form">Alterar a situação {{recourseAdmin.status}}</label>
                             <select name="situation" ng-change="changeSituation()" ng-model="recourseAdmin.status" id="" class="form-control">
                                 <option value="">--Selecione--</option>
-                                <option value="Deferido">Deferido</option>
-                                <option value="Indeferido">Indeferido</option>
+                                <option value="1">Deferido</option>
+                                <option value="-9">Indeferido</option>
                             </select>
-                            <button class="btn btn-primary btn-reply-recourse">
+                            <div class="form-group" ng-if="noteActual > 0">
+                                <label for="">Nota Atual: {{noteActual}}</label>
+                                <p class="textcenter">
+                                    <small>--</small>
+                                </p>
+                                <p>
+                                    <label for="label-reply-form">
+                                        <strong>Nova nota</strong>
+                                    </label>
+                                    <input type="text" class="form-control" ng-model="newNoteReply">
+                                </p>
+                            </div>
+                            <button
+                                    class="btn btn-primary btn-reply-recourse"
+                                    type="submit"
+                                    ng-click="sendReplyRecourse(recourseAdmin.idRecourse, recourseAdmin.status, reply)"
+                            >
                                 Enviar resposta
                                 <i class="fas fa-paper-plane"></i>
                             </button>
-
                         </div>
-
                     </div>
                 </td>
             </tr>
@@ -136,17 +168,3 @@ $app->view->jsObject['entity'] = $entity;
 
     </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
-<script !src="">
-    var app = new Vue({
-        el: '#app-recourse',
-        data: {
-            message: 'Hello Vue!'
-        }
-    });
-</script>
-<?php
-
-$app->view->enqueueScript('app', 'recoursejs', 'js/recourse.js');
-?>

@@ -66,10 +66,10 @@ $app->view->jsObject['entity'] = $entity;
                     <td>{{recourses.recourseSend}}</td>
                     <td>{{recourses.recourseStatus}}</td>
                     <td>
-                        <p ng-if="recourses.recourseReply.substring(0, 100) < 100">
-                            <small> {{recourses.recourseReply.substring(0, 100)}}...</small>
+                        <p ng-if="recourses.recourseReply.length > 100">
+                            <small> {{recourses.recourseReply.substr(0, 100)}}...</small>
                         </p>
-                        <p ng-else>
+                        <p ng-if="recourses.recourseReply.length < 100">
                             <small> {{recourses.recourseReply}}</small>
                         </p>
                         <button class="btn btn-primary">
@@ -79,7 +79,10 @@ $app->view->jsObject['entity'] = $entity;
                                 recourses.agent,
                                 recourses.recourseText,
                                 recourses.recourseSend,
-                                recourses.recourseStatus)">Responder</small>
+                                recourses.recourseStatus,
+                                recourses.replyAgentId,
+                                recourses.recourseReply
+                                )">Responder</small>
                         </button>
                     </td>
                     <td>{{recourses.recourseDateReply}}</td>
@@ -132,13 +135,13 @@ $app->view->jsObject['entity'] = $entity;
                 <td width="50%">
                     <div class="reply-shadow" >
                         <div class="form-group">
-                            <label for="label-reply-form">Responder ao recurso {{recourseAdmin.idRecourse}}</label>
-                            <textarea name="reply" class="form-control" rows="10" ng-model="reply" ></textarea>
+                            <label for="label-reply-form">Responder ao recurso</label>
+                            <textarea name="reply" class="form-control" rows="10" ng-model="recourseAdmin.reply">{{recourseAdmin.reply}}</textarea>
                             <label for="label-reply-form">Alterar a situação {{recourseAdmin.status}}</label>
                             <select name="situation" ng-change="changeSituation()" ng-model="recourseAdmin.status" id="" class="form-control">
                                 <option value="">--Selecione--</option>
                                 <option value="1">Deferido</option>
-                                <option value="-9">Indeferido</option>
+                                <option value="-9" >Indeferido</option>
                             </select>
                             <div class="form-group" ng-if="noteActual > 0">
                                 <label for="">Nota Atual: {{noteActual}}</label>
@@ -155,7 +158,7 @@ $app->view->jsObject['entity'] = $entity;
                             <button
                                     class="btn btn-primary btn-reply-recourse"
                                     type="submit"
-                                    ng-click="sendReplyRecourse(recourseAdmin.idRecourse, recourseAdmin.status, reply)"
+                                    ng-click="sendReplyRecourse(recourseAdmin.idRecourse, recourseAdmin.status, recourseAdmin.reply)"
                             >
                                 Enviar resposta
                                 <i class="fas fa-paper-plane"></i>

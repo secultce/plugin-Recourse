@@ -50,24 +50,35 @@ class Recourse extends \MapasCulturais\Controller{
     {
         
         $app = App::i();
-        dump($this->data);
+        //Validações
+        if($this->data['reply'] == ''){
+            return $this->json(['message' => 'Você não poderá enviar sem antes responder ao candidato'], 403);
+        }
+        if($this->data['status'] == '' || $this->data['status'] == 'Aberto'){
+            return $this->json(['message' => 'Informe a situação da resposta do seu recurso'], 403);
+        }
+        //Formatando o status para gravar no banco
+        $statusRecourse =  $this->data['status'];
+        if($this->data['status'] == 'Deferido' || $this->data['status'] == 'Indeferido'){
+            $statusRecourse = self::getSituationToStatus( $this->data['status'] );
+        }
+
         $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         $recourse->recourseReply = $this->data['reply'];
         $recourse->recourseDateReply = new DateTime;
+        $recourse->recourseStatus = $statusRecourse;
         $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
         try {
+            dump($recourse);
             $app->em->persist($recourse);
             $app->em->flush();
+            return $this->json(['message' => 'Recurso respondido com sucesso!'], 200);
         }catch (Exception $e) {
-
+            return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
         }
-//         dump($app->getAuth()->getAuthenticatedUser()->profile->id);
-//
-//        dump($recourse);
 
-
-        // $hook_prefix = $this->getHookPrefix();
-        // $app->applyHookBoundTo($this, "{$hook_prefix}.recourses", [&$return_recourses]);
+         $hook_prefix = $this->getHookPrefix();
+         $app->applyHookBoundTo($this, "{$hook_prefix}.recourses", [&$return_recourses]);
     }
 
     public function GET_registration()
@@ -77,6 +88,25 @@ class Recourse extends \MapasCulturais\Controller{
         $reg = $app->repo('Registration')->find($this->data['id']);
         return $this->json(['resultConsolidate' => $reg->consolidatedResult]);
 
+    }
+
+    /**
+     * Funcção que recebe uma string em texto e altera para o status da classe da Entidade
+     * @param string
+     * @return string
+     */
+    public function getSituationToStatus($situation): string
+    {
+        $situ = '';
+        switch ($situation) {
+            case 'Deferido':
+                $situ = EntityRecourse::STATUS_ENABLED;
+                break;
+            case 'Indeferido':
+                $situ = EntityRecourse::STATUS_DISABLED;
+                break;
+        }
+        return $situ;
     }
 
 

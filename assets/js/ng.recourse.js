@@ -38,10 +38,22 @@
                 return $http.post(urlBase + 'recursos/responder', data).
                     success(function (data, status) {
                         console.log({ data })
-                        return data
+                            Swal.fire({
+                                title: "Sucesso!",
+                                text: data.message
+                            });
+                    setTimeout(() => {
+                        window.location.reload()
+                    }, "2000");
+                        // return data
                     }).
                     error(function (data, status) {
                         console.log(data)
+                        Swal.fire({
+                            title: "Ops!",
+                            icon: 'error',
+                            text: data.message
+                        });
                     });
             },
             getRegistration: function (registration) {
@@ -89,29 +101,18 @@
                     if(res[i]['recourseDateReply']){
                         res[i]['recourseDateReply'] = moment(res[i]['recourseDateReply'].date).format('DD/MM/YYYY hh:mm')
                     }
-                    if(res[i]['recourseStatus']){
-                        console.log(res[i]['recourseStatus'])
-                        switch (res[i]['recourseStatus']) {
-                            case '0':
-                                res[i]['recourseStatus'] = 'Aberto';
-                                break;
-                            case '1':
-                                res[i]['recourseStatus'] = 'Deferido';
-                                break;
-                            case '-9':
-                                res[i]['recourseStatus'] = 'Indeferido';
-                                break;
-
-                        }
+                    //Formatando o status de nome
+                    if(res[i]['recourseStatus']) {
+                        res[i]['recourseStatus'] =  $scope.getSituation(res[i]['recourseStatus']);
                     }
+
                     if(res[i]['recourseReply'] == null)
                     {
                         $scope.countNotReply++;
-                        console.log('Dentro do If: ',$scope.countNotReply)
+                        console.log('Dentro do If: ',$scope.countNotReply);
                     }
                 }
-                console.log($scope.countNotReply)
-                $scope.data.recourses = res
+                $scope.data.recourses = res;
                 if(res.length > 0 )
                 {
                     $scope.tableRecourse = true;
@@ -124,9 +125,35 @@
                 }
                 // you returned no value here!
 
-            })
+            });
 
-        $scope.replyRecourse = function (id, registration, agent, text, send, status) {
+        $scope.getSituation = function (situation) {
+            var statusStituation = '';
+
+                switch (situation) {
+                    case '0':
+                        statusStituation = 'Aberto';
+                        break;
+                    case '1':
+                        statusStituation = 'Deferido';
+                        break;
+                    case '-9':
+                        statusStituation = 'Indeferido';
+                        break;
+                }
+
+            return statusStituation;
+        };
+
+        $scope.replyRecourse = function (id, registration, agent, text, send, status, agentReply, reply) {
+            //Caso o agente que clicou não foi o mesmo que respondeu ao recurso, então é bloqueado para responder
+            if( (agentReply !== null) && agentReply !== MapasCulturais.userProfile.id){
+                Swal.fire({
+                    title: "Ops!",
+                    text: 'Você não poderá responder a esse recurso ou visualizar a resposta'
+                });
+                return false;
+            }
             $scope.tableRecourse = false
             $scope.divReplyRecourse = true
             $scope.recourseAdmin = {
@@ -135,12 +162,13 @@
                 agent: agent,
                 recourseText: text,
                 recourseSend: send,
-                status: status
+                status: status,
+                agentReply: agentReply,
+                reply: reply
             }
         }
 
         $scope.changeSituation = function () {
-            console.log($scope.recourseAdmin.status)
             var registration = '';
             if($scope.recourseAdmin.status == '1'){
                 registration =  RecourseService.getRegistration($scope.recourseAdmin.registration)
@@ -154,7 +182,8 @@
         }
 
         $scope.sendReplyRecourse = function (id, status, reply) {
-            RecourseService.sendReply(id, status, reply);
+            var reply = RecourseService.sendReply(id, status, reply);
+            console.log({reply})
         }
 
         $scope.backRecourse = function () {

@@ -3,6 +3,9 @@ namespace Recourse\Controllers;
 
 use DateTime;
 use \MapasCulturais\App;
+use \MapasCulturais\Entities\EntityRevision;
+use \MapasCulturais\Entities\EntityRevisionData;
+
 use Recourse\Entities\Recourse as EntityRecourse;
 
 
@@ -68,17 +71,31 @@ class Recourse extends \MapasCulturais\Controller{
         $recourse->recourseDateReply = new DateTime;
         $recourse->recourseStatus = $statusRecourse;
         $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
+
+        $recourseData = [
+            'Resposta' => $this->data['reply'],
+            'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
+            'Alterado em: ' => $recourse->recourseDateReply
+        ];
         try {
-            dump($recourse);
             $app->em->persist($recourse);
             $app->em->flush();
-            return $this->json(['message' => 'Recurso respondido com sucesso!'], 200);
+//            dump($recourse);
+            $entityRevision = new EntityRevision($recourseData, $recourse, 'created' , 'Alterado resposta do recurso');
+            $entityRevision->save();
+//            $app->em->persist($entityRevision);
+//            $app->em->flush();
+
+            dump( $entityRevision);
+
+//            return $this->json(['message' => 'Recurso respondido com sucesso!'], 200);
         }catch (Exception $e) {
-            return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
+            die($e->getMessage());
+//            return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
         }
 
-         $hook_prefix = $this->getHookPrefix();
-         $app->applyHookBoundTo($this, "{$hook_prefix}.recourses", [&$return_recourses]);
+//         $hook_prefix = $this->getHookPrefix();
+//         $app->applyHookBoundTo($this, "{$hook_prefix}.recourses", [&$recourse]);
     }
 
     public function GET_registration()
@@ -87,7 +104,6 @@ class Recourse extends \MapasCulturais\Controller{
         dump($this->data);
         $reg = $app->repo('Registration')->find($this->data['id']);
         return $this->json(['resultConsolidate' => $reg->consolidatedResult]);
-
     }
 
     /**

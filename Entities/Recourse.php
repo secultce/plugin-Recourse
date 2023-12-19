@@ -97,5 +97,10 @@ class Recourse extends \MapasCulturais\Entity {
      */
     protected $replyAgentId = null;
 
-
+    /**
+     * @var bool
+     *
+     * @ORM\Column(name="reply_publish", type="boolean", nullable=true)
+     */
+    protected $replyPublish = false;
 }

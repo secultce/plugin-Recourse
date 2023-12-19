@@ -38,22 +38,22 @@
                 return $http.post(urlBase + 'recursos/responder', data).
                     success(function (data, status) {
                         console.log({ data })
-                            Swal.fire({
-                                title: "Sucesso!",
-                                text: data.message
-                            });
-                    setTimeout(() => {
-                        window.location.reload()
-                    }, "2000");
+                            // Swal.fire({
+                            //     title: "Sucesso!",
+                            //     text: data.message
+                            // });
+                    // setTimeout(() => {
+                    //     window.location.reload()
+                    // }, "2000");
                         // return data
                     }).
                     error(function (data, status) {
                         console.log(data)
-                        Swal.fire({
-                            title: "Ops!",
-                            icon: 'error',
-                            text: data.message
-                        });
+                        // Swal.fire({
+                        //     title: "Ops!",
+                        //     icon: 'error',
+                        //     text: data.message
+                        // });
                     });
             },
             getRegistration: function (registration) {

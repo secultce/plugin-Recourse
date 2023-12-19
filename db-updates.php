@@ -20,6 +20,7 @@ return [
             opportunity_id integer NOT NULL,
             agent_id integer NOT NULL,
             reply_agent_id integer NOT NULL,
+            reply_publish boolean NULL default false,
             PRIMARY KEY(id));");
         __exec("ALTER TABLE recourse ADD
         CONSTRAINT resource_registration_fk

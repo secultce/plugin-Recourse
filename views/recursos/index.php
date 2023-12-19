@@ -12,7 +12,8 @@ $app->view->jsObject['entity'] = $entity;
 
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
     <div class="alert info">
-        Lembramos que ao clicar em responder
+        Lembramos que ao clicar em <strong>Responder</strong>, a resposta somente poderá ser enviada por você, então,
+        nenhum outro da comissão poderá responder o recurso do candidato.
     </div>
     <div class="panel-header clearfix" ng-controller="RecourseController">
         <p class="text-center">
@@ -27,7 +28,8 @@ $app->view->jsObject['entity'] = $entity;
         </p>
         <p>
             Total de recursos: <small class="badge">{{data.recourses.length}}</small>
-            Total rec. respondido: <small class="badge">{{countNotReply}}</small>
+            Total rec. sem resposta: <small class="badge">{{countNotReply}}</small>
+            <a href="#" class="btn btn-default" style="float: right" title="Imprimir todos recursos">Imprimir Recursos</a>
         </p>
         <p>
             <hr>
@@ -72,7 +74,7 @@ $app->view->jsObject['entity'] = $entity;
                         <p ng-if="recourses.recourseReply.length < 100">
                             <small> {{recourses.recourseReply}}</small>
                         </p>
-                        <button class="btn btn-primary">
+                        <button class="btn btn-primary" title="Responder ao recurso do candidato">
                             <small ng-click="replyRecourse(
                                 recourses.id,
                                 recourses.registration.id,
@@ -127,7 +129,7 @@ $app->view->jsObject['entity'] = $entity;
                         </tr>
                         <tr>
                             <td>
-                                <strong>Situação: </strong> {{recourseAdmin.status}}
+                                <strong>Situação: </strong> {{getSituation(recourseAdmin.status)}}
                             </td>
                         </tr>
                     </table>
@@ -168,6 +170,12 @@ $app->view->jsObject['entity'] = $entity;
                 </td>
             </tr>
         </table>
+        <div>
+            <button class="btn btn-primary" title="Publica esses recursos para os proponentes visualizem a resposta">
+                <?php \MapasCulturais\i::_e('Publicar Recursos'); ?>
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
 
     </div>
 </div>

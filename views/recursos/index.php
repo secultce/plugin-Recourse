@@ -74,8 +74,9 @@ $app->view->jsObject['entity'] = $entity;
                         <p ng-if="recourses.recourseReply.length < 100">
                             <small> {{recourses.recourseReply}}</small>
                         </p>
-                        <button class="btn btn-primary" title="Responder ao recurso do candidato">
-                            <small ng-click="replyRecourse(
+                        <a class="btn"
+                           title="Responder ou editar o recurso do candidato"
+                           ng-click="replyRecourse(
                                 recourses.id,
                                 recourses.registration.id,
                                 recourses.agent,
@@ -84,8 +85,13 @@ $app->view->jsObject['entity'] = $entity;
                                 recourses.recourseStatus,
                                 recourses.replyAgentId,
                                 recourses.recourseReply
-                                )">Responder</small>
-                        </button>
+                            )"
+                        >
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a class="btn" title="Visualizar Resposta">
+                            <i class="fas fa-eye"></i>
+                        </a>
                     </td>
                     <td>{{recourses.recourseDateReply}}</td>
                 </tr>

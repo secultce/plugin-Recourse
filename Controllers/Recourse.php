@@ -51,7 +51,6 @@ class Recourse extends \MapasCulturais\Controller{
 
     public function POST_responder()
     {
-        
         $app = App::i();
         //Validações
         if($this->data['reply'] == ''){
@@ -125,7 +124,15 @@ class Recourse extends \MapasCulturais\Controller{
         return $situ;
     }
 
-
+    public function POST_verifyPermission()
+    {
+        $app = App::i();
+        //Entidade
+        $oportunity = $app->repo('Opportunity')->find($this->data['id']);
+        //Verifica permissao do usuário locado
+        $permission = $oportunity->evaluationMethodConfiguration->canUser('@control');
+        $this->json($permission, 200);
+    }
 
 
 }

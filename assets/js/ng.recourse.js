@@ -65,6 +65,9 @@
                 error(function (data, status) {
                     console.log(data)
                 });
+            },
+            verifyView: function (entity) {
+                return $http.post(urlBase + 'recursos/verifyPermission', entity)
             }
         };
     }]);
@@ -106,7 +109,7 @@
                         res[i]['recourseStatus'] =  $scope.getSituation(res[i]['recourseStatus']);
                     }
 
-                    if(res[i]['recourseReply'] == null)
+                    if(res[i]['recourseReply'] == null || res[i]['recourseReply'] == '')
                     {
                         $scope.countNotReply++;
                         console.log('Dentro do If: ',$scope.countNotReply);
@@ -150,7 +153,8 @@
             if( (agentReply !== null) && agentReply !== MapasCulturais.userProfile.id){
                 Swal.fire({
                     title: "Ops!",
-                    text: 'Você não poderá responder a esse recurso ou visualizar a resposta'
+                    text: 'Você não poderá responder esse recurso por que ele foi respondido ' +
+                        'por outra comissão.'
                 });
                 return false;
             }
@@ -195,7 +199,28 @@
            return MapasCulturais.createUrl('inscricao', registration);
         }
 
-
+        $scope.verifyView= function(recourseReply)
+        {
+           var reply = '';
+           if(recourseReply == ''){
+               reply = 'Recurso ainda não foi respondido!'
+           }else{
+               reply = recourseReply;
+           }
+            RecourseService.verifyView(MapasCulturais.entity)
+                .then(res => JSON.parse(JSON.stringify(res)).data)
+                .then(res => {
+                    console.log({res})
+                    if(res) {
+                        $scope.dialogSecult(0, 'Resposta', reply);
+                    }else{
+                        $scope.dialogSecult(0, 'Ops!', 'Você não tem permissão para visualizar a resposta');
+                    }
+                })
+                .catch(function(err) {
+                    console.log({err})
+                });
+        };
         $scope.dialogSecult = function (id, title, text, icon = '', footer = '') {
             Swal.fire({
                 title: title,
@@ -203,33 +228,14 @@
                 icon: icon,
                 width: 850,
                 footer: footer,
-                // input: "textarea",
-                // html: `<label>Recurso Enviado:</label><br/>${text} <br/><hr/>
-                // <label>Situação do Recurso:</label>
-                // <select name="status" class="swal2-input" id="cars">
-                //     <option value="">--Selecione--</option>
-                //     <option value="deferido">Deferido</option>
-                //     <option value="indeferido">Indeferido</option>
-                // </select>
-                // `,
-                showDenyButton: true,
+                // showDenyButton: true,
                 showCancelButton: false,
                 // denyButtonText: `Sair`,
                 // confirmButtonText: "Responder",
                 allowOutsideClick: false,
                 allowEscapeKey: false,
-                // preConfirm: (result) => {
-                //     statusRecourse = document.getElementById("cars").value,
-                //         RecourseService.sendReply(id, result, statusRecourse)
-                //     return false; // Prevent confirmed
-                // },
-                // preDeny: () => {
-                //     if (someLogic()) {
-                //         return false; // Prevent denied
-                //     }
-                // },
             });
-        }
+        };
 
 
     }]);

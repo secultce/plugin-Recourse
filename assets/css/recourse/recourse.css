@@ -203,4 +203,8 @@ textarea.form-control {
     float: right;
     margin: 5px;
 }
+.btn-recourse {
+    border: 1px solid #c3c3c3;
+    border-radius: 5px;
+}
 

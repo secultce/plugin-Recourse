@@ -185,3 +185,9 @@ $app->view->jsObject['entity'] = $entity;
 
     </div>
 </div>
+
+<script>
+
+
+
+</script>

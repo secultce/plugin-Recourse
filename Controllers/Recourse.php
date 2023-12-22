@@ -5,7 +5,7 @@ use DateTime;
 use \MapasCulturais\App;
 use \MapasCulturais\Entities\EntityRevision;
 use \MapasCulturais\Entities\EntityRevisionData;
-
+use MapasCulturais\Entities\OpportunityMeta;
 use Recourse\Entities\Recourse as EntityRecourse;
 
 
@@ -20,19 +20,7 @@ class Recourse extends \MapasCulturais\Controller{
     public function GET_oportunidade()
     {
         $app = App::i();
-        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-        $app->view->enqueueStyle('app', 'recourse', 'css/recourse/recourse.css', ['main']);
-        $app->view->enqueueScript(
-            'app',
-            'sweetalert2', 
-            'https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js'
-        );
-        $app->view->enqueueScript(
-            'app', // grupo de scripts
-            'ng-recourse',  // nome do script
-            'js/ng.recourse.js', // arquivo do script
-            [] // dependências do script
-        );
+
 
         $entity = $app->repo('Opportunity')->find($this->data['id']);
 
@@ -134,5 +122,60 @@ class Recourse extends \MapasCulturais\Controller{
         $this->json($permission, 200);
     }
 
+
+    function POST_disabledResource(){
+        $app = App::i();
+        //Alterando o claimDisabled no metadata
+        $opp = $app->repo('Opportunity')->find($this->postData['id']);
+        //Valor recebido pela request é repassado para alteração
+        if ($opp) {
+            self::saveClaimDisabled($opp, $this->postData['claimDisabled']);
+        }
+    }
+
+    function POST_opportunityEnabled(){
+        $app = App::i();
+        //id oportunidade
+//        $id = $this->postData['opportunity'];
+        //instancia da oportunidade
+        $opportunity = $app->repo('Opportunity')->find($this->postData['opportunity']);
+//        self::saveClaimDisabled($opportunity, 0);
+        dump($this->postData);
+
+        $idOp = $this->postData['opportunity'];
+
+//        $upOpMeta = $app->repo('OpportunityMeta')->findby(['owner' => $idOp]);
+        foreach ($this->postData as $key => $value) {
+
+            if($key !== 'opportunity' && $key !== 'claimDisabled'){
+                dump($key);
+                dump($value);
+                $newOpMeta = new OpportunityMeta;
+                $newOpMeta->owner = $opportunity;
+                $newOpMeta->key = $key;
+                $newOpMeta->value = $value;
+                $app->em->persist($newOpMeta);
+                $newOpMeta->save(true);
+
+
+//                $upOpMeta->owner = $idOp;
+//                $upOpMeta->key = $key;
+//                $upOpMeta->value = $value;
+//                $upOpMeta->save(true);
+            }
+
+        }
+    }
+    //Salva a alteração da habilitação de recurso
+    function saveClaimDisabled($entity, $claimDisabled)
+    {
+        $entity->claimDisabled = $claimDisabled;
+        $entity->save(true);
+
+        if($claimDisabled == '1'){
+            dump($entity->getMetadata('date-initial'));
+        }
+
+    }
 
 }

@@ -14,7 +14,6 @@
     }]);
 
 
-
     // Seriço que executa no servidor as requisições HTTP
     module.factory('RecourseService', ['$http', function ($http) {
         var urlBase = MapasCulturais.baseURL
@@ -93,6 +92,10 @@
         $scope.newNoteReply = '';
         $scope.reply = '';
         $scope.countNotReply = 0;
+        //Configuração de recurso (Admin)
+        $scope.modelSelectConfigurationRecourse = false;
+        $scope.divSelectConfiguration = false;
+
 
         var recoursesAll = RecourseService.getRecourseAll(MapasCulturais.entity.id)
             .then(res => JSON.parse(JSON.stringify(res)).data)
@@ -181,14 +184,14 @@
                     $scope.noteActual = res.data.resultConsolidate
                 }).catch(err => {
                     console.log(err)
-                })
+                });
             }
-        }
+        };
 
         $scope.sendReplyRecourse = function (id, status, reply) {
             var reply = RecourseService.sendReply(id, status, reply);
             console.log({reply})
-        }
+        };
 
         $scope.backRecourse = function () {
             $scope.tableRecourse = true
@@ -197,7 +200,7 @@
 
         $scope.redirectRegistrarion = function (registration) {
            return MapasCulturais.createUrl('inscricao', registration);
-        }
+        };
 
         $scope.verifyView= function(recourseReply)
         {
@@ -220,6 +223,10 @@
                 .catch(function(err) {
                     console.log({err})
                 });
+        };
+
+        $scope.selectConfigurationRecourse = function() {
+            console.log($scope.modelSelectConfigurationRecourse);
         };
         $scope.dialogSecult = function (id, title, text, icon = '', footer = '') {
             Swal.fire({

@@ -9,13 +9,14 @@ $entity =  $this->controller->requestedEntity;
 //dump($entity );
 //Verdadeiro ou Falso se o usuário tem permissão para modificar os campos dessa entidade
 $can_edit = $entity->canUser('modifyRegistrationFields');
-dump($can_edit );
-dump($enableRecourse);
+//dump($can_edit );
+//dump($enableRecourse);
 if($enableRecourse == 0){
     $enabledDiv = 'visible';
     $selectedEnabled  = '';
     $selectedDisabled = 'selected';
 }
+
 ?>
 
 <p>
@@ -43,14 +44,34 @@ if($enableRecourse == 0){
                     <tr  class="table-full">
                         <td>
                             <div class="form-group">
-                                <label for="hora-inicial">Data de início </label>
-                                <input type="date" class="date form-control dateResource" name="date-initial" value="">
+<!--                                <label for="hora-inicial">Data de início </label>-->
+<!--                                <input type="date" class="date form-control dateResource" name="date-initial" value="">-->
+                                <span class="label"><?php \MapasCulturais\i::_e("Data Inicial");?>:</span>
+                                <span class="js-editable"
+                                      data-type="date"
+                                      data-value="<?php echo $dtInitial; ?>"
+                                      data-edit="recourse_date_initial"
+                                      data-viewformat="dd/mm/yyyy"
+                                      data-showbuttons="false"
+                                      data-original-title="<?php \MapasCulturais\i::_e("Data Inicial");?>"
+                                      data-emptytext="<?php \MapasCulturais\i::_e("Início do Recurso");?>">
+   <?php echo $dtInitial; ?>
+</span>
                             </div>
                         </td>
                         <td>
                             <div class="form-group">
-                                <label for="hora-inicial">Hora de início </label>
-                                <input type="time" class="date form-control dateResource" name="time-initial" value="12:00">
+                                <span class="label"><?php \MapasCulturais\i::_e("Hora Inicial");?>:</span>
+                                <span class="js-editable"
+                                      data-type="time"
+                                      data-value="12:00"
+                                      data-edit="recourse_time_initial"
+                                      data-viewformat="HH:mm"
+                                      data-showbuttons="false"
+                                      data-original-title="<?php \MapasCulturais\i::_e("Hora Inicial");?>"
+                                      data-emptytext="<?php \MapasCulturais\i::_e("Horário do início do Recurso");?>">
+   12:00
+</span>
                             </div>
                         </td>
                         <td>

@@ -2,6 +2,7 @@
 namespace Recourse;
 use MapasCulturais\App;
 use MapasCulturais\i;
+use Recourse\Controllers\Recourse as RecourseController;
 
 class Plugin extends \MapasCulturais\Plugin {
     function _init () {
@@ -35,6 +36,10 @@ class Plugin extends \MapasCulturais\Plugin {
 //            dump($__data['opportunity']->getMetadata('claimDisabled'));
             //0 Está habilitado - 1 Não está habilitado
             $enableRecourse = $__data['opportunity']->getMetadata('claimDisabled');
+            if($enableRecourse == 1){
+                RecourseController::verifyClaim($__data['opportunity']);
+
+            }
             dump($__template);
             $app->view->enqueueScript(
                 'app', // grupo de scripts
@@ -42,7 +47,8 @@ class Plugin extends \MapasCulturais\Plugin {
                 'js/recourse/recourse.js', // arquivo do script
                 [] // dependências do script
             );
-            $this->part('recourse/opportunity-recourse-form', [ 'enableRecourse' => $enableRecourse]);
+            $dtInitial = $__data['opportunity']->getMetadata('recourse_date_initial');
+            $this->part('recourse/opportunity-recourse-form', [ 'enableRecourse' => $enableRecourse, 'dtInitial' => $dtInitial]);
         });
         $app->hook('template(opportunity.edit.registration-config):after', function(){
             dump('registration-config - after');
@@ -56,5 +62,21 @@ class Plugin extends \MapasCulturais\Plugin {
    function register () {
     $app = App::i();
     $app->registerController('recursos', 'Recourse\Controllers\Recourse');
+       $this->registerOpportunityMetadata('recourse_date_initial', [
+           'label' => i::__('Data Inicial'),
+           'type' => 'date',
+       ]);
+       $this->registerOpportunityMetadata('recourse_time_initial', [
+           'label' => i::__('Hora Inicial'),
+           'type' => 'time',
+       ]);
+       $this->registerOpportunityMetadata('date-end', [
+           'label' => i::__('Hora Inicial'),
+           'type' => 'date',
+       ]);
+       $this->registerOpportunityMetadata('time-end', [
+           'label' => i::__('Hora Final'),
+           'type' => 'time',
+       ]);
    }
 }

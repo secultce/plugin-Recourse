@@ -178,4 +178,24 @@ class Recourse extends \MapasCulturais\Controller{
 
     }
 
+    public static function verifyClaim($entity)
+    {
+        $app = App::i();
+//        dump($entity->id);
+        $metas = $app->repo('OpportunityMeta')->findBy([
+            'owner' => $entity->id
+        ]);
+//        dump($metas);
+        foreach ($metas as $meta){
+            if($meta->key == 'date-initial' || $meta->key == 'time-initial' || $meta->key == 'date-end' || $meta->key == 'time-end' )
+            {
+                $del = $meta->delete();
+//                $app->em->save();
+                 $app->em->flush();
+//                dump($del);
+            }
+        }
+//        die;
+    }
+
 }

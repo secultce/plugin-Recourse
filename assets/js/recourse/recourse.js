@@ -17,22 +17,7 @@ $(function () {
             $('#insertData').hide();
         }
     });
-    //Salva a configuração dos recursos
-    $("#buttonSendData").click(function (e) {
-        e.preventDefault();
-        var form = $("#resourceFormData").serialize();
-        form += '&opportunity='+MapasCulturais.entity.id;
-        console.log(form);
-        $.ajax({
-            type: "POST",
-            url: MapasCulturais.baseURL+'recursos/opportunityEnabled',
-            data: form,
-            dataType: "json",
-            success: function (response) {
-                console.log(response);
-            }
-        });
-    });
+
 
 });
 

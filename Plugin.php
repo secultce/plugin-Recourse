@@ -9,7 +9,7 @@ class Plugin extends \MapasCulturais\Plugin {
         $app = App::i();
         $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-        $app->view->enqueueStyle('app', 'recourse', 'css/recourse/recourse.css', ['main']);
+
         $app->view->enqueueScript(
             'app',
             'sweetalert2',
@@ -26,6 +26,8 @@ class Plugin extends \MapasCulturais\Plugin {
             $opportunity = $this->controller->requestedEntity;        
             // dump($opportunity->canUser('@control'));
             // $this->part('singles/opportunity-resources', ['entity' => $opportunity]);
+
+            $app->view->enqueueStyle('app', 'recourse', 'css/recourse/recourse.css', ['main']);
             if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && !$opportunity->claimDisabled) {
                 $this->part('singles/opportunity-resources', ['entity' => $opportunity, 'app' => $app]);
                 // $this->part('tab', ['id' => 'resource', 'label' => i::__('Recursos')]);
@@ -33,22 +35,44 @@ class Plugin extends \MapasCulturais\Plugin {
         });
 
         $app->hook('view.partial(claim-configuration).params', function($__data, &$__template) use ($app){
-//            dump($__data['opportunity']->getMetadata('claimDisabled'));
+
             //0 Está habilitado - 1 Não está habilitado
             $enableRecourse = $__data['opportunity']->getMetadata('claimDisabled');
             if($enableRecourse == 1){
                 RecourseController::verifyClaim($__data['opportunity']);
 
             }
-            dump($__template);
+
             $app->view->enqueueScript(
                 'app', // grupo de scripts
                 'recourse',  // nome do script
                 'js/recourse/recourse.js', // arquivo do script
                 [] // dependências do script
             );
-            $dtInitial = $__data['opportunity']->getMetadata('recourse_date_initial');
-            $this->part('recourse/opportunity-recourse-form', [ 'enableRecourse' => $enableRecourse, 'dtInitial' => $dtInitial]);
+            //Todo o metadata da oportunidade
+            $metadt = $__data['opportunity']->getMetadata();
+            //Array gerado para enderezar o valores na view
+            $confRecourse = [];
+            //Preenchendo array
+            foreach ($metadt as $key => $met)
+            {
+                switch ($key){
+                    case 'recourse_date_initial':
+                        $confRecourse['dt_initial'] = $met;
+                        break;
+                    case 'recourse_time_initial':
+                        $confRecourse['tm_initial'] = $met;
+                        break;
+                    case 'recourse_date_end':
+                        $confRecourse['dt_end'] = $met;
+                        break;
+                    case 'recourse_time_end':
+                        $confRecourse['tm_end'] = $met;
+                        break;
+                }
+            }
+
+            $this->part('recourse/opportunity-recourse-form', [ 'enableRecourse' => $enableRecourse, 'confRecourse' => $confRecourse]);
         });
         $app->hook('template(opportunity.edit.registration-config):after', function(){
             dump('registration-config - after');
@@ -70,11 +94,11 @@ class Plugin extends \MapasCulturais\Plugin {
            'label' => i::__('Hora Inicial'),
            'type' => 'time',
        ]);
-       $this->registerOpportunityMetadata('date-end', [
+       $this->registerOpportunityMetadata('recourse_date_end', [
            'label' => i::__('Hora Inicial'),
            'type' => 'date',
        ]);
-       $this->registerOpportunityMetadata('time-end', [
+       $this->registerOpportunityMetadata('recourse_time_end', [
            'label' => i::__('Hora Final'),
            'type' => 'time',
        ]);

@@ -133,69 +133,34 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
-    function POST_opportunityEnabled(){
-        $app = App::i();
-        //id oportunidade
-//        $id = $this->postData['opportunity'];
-        //instancia da oportunidade
-        $opportunity = $app->repo('Opportunity')->find($this->postData['opportunity']);
-//        self::saveClaimDisabled($opportunity, 0);
-        dump($this->postData);
 
-        $idOp = $this->postData['opportunity'];
-
-//        $upOpMeta = $app->repo('OpportunityMeta')->findby(['owner' => $idOp]);
-        foreach ($this->postData as $key => $value) {
-
-            if($key !== 'opportunity' && $key !== 'claimDisabled'){
-                dump($key);
-                dump($value);
-                $newOpMeta = new OpportunityMeta;
-                $newOpMeta->owner = $opportunity;
-                $newOpMeta->key = $key;
-                $newOpMeta->value = $value;
-                $app->em->persist($newOpMeta);
-                $newOpMeta->save(true);
-
-
-//                $upOpMeta->owner = $idOp;
-//                $upOpMeta->key = $key;
-//                $upOpMeta->value = $value;
-//                $upOpMeta->save(true);
-            }
-
-        }
-    }
     //Salva a alteração da habilitação de recurso
     function saveClaimDisabled($entity, $claimDisabled)
     {
         $entity->claimDisabled = $claimDisabled;
         $entity->save(true);
-
         if($claimDisabled == '1'){
-            dump($entity->getMetadata('date-initial'));
+            self::verifyClaim($entity);
         }
-
     }
 
+    /**
+    Faz Verificação para qndo for desabilitado o recurso, excluir do metabase sA
+     */
     public static function verifyClaim($entity)
     {
         $app = App::i();
-//        dump($entity->id);
         $metas = $app->repo('OpportunityMeta')->findBy([
             'owner' => $entity->id
         ]);
-//        dump($metas);
+        //Excluindo meta data
         foreach ($metas as $meta){
-            if($meta->key == 'date-initial' || $meta->key == 'time-initial' || $meta->key == 'date-end' || $meta->key == 'time-end' )
+            if($meta->key == 'recourse_date_initial' || $meta->key == 'recourse_time_initial' || $meta->key == 'recourse_date_end' || $meta->key == 'recourse_time_end' )
             {
-                $del = $meta->delete();
-//                $app->em->save();
-                 $app->em->flush();
-//                dump($del);
+                $meta->delete();
+                $app->em->flush();
             }
         }
-//        die;
     }
 
 }

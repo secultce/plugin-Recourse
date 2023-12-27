@@ -10,9 +10,9 @@ $entity = $this->controller->requestedEntity;
 //dump($entity );
 //Verdadeiro ou Falso se o usuário tem permissão para modificar os campos dessa entidade
 $can_edit = $entity->canUser('modifyRegistrationFields');
-//dump($can_edit );
-//dump($enableRecourse);
-if ($enableRecourse == 0) {
+
+//Se o formulário tiver configurado para o recurso está habilitado
+if ($enableRecourse == '0') {
     $enabledDiv = 'visible';
     $selectedEnabled = '';
     $selectedDisabled = 'selected';
@@ -22,13 +22,19 @@ if ($enableRecourse == 0) {
 
 <p>
 <hr>
-<h4><?php i::_e("Recurso"); ?></h4>
+
 </p>
-<p class="registration-help">
-    Espaço para configurar se a oportunidade receberá a modalidade de recurso.
-</p>
-<div class="panel panel-default">
-    <div class="panel-heading"><label><?php i::_e("Formulário para recursos"); ?></label></div>
+
+<div class="registration-fieldset">
+    <div class="panel panel-default ">
+
+
+    <div class="panel-heading"> <h4 class="title-h4"><?php i::_e("Recurso"); ?></h4></div>
+    <p class="registration-help mgt-16 mgb-16">
+        Espaço para configurar se a oportunidade receberá a modalidade de recurso. Se habilitar os recursos tem a
+        possibilidade de adicionar um período onde o usuário enviará seus recursos.
+    </p>
+    <div class=""><label class="mgt-16"><?php i::_e("Formulário para recursos"); ?></label></div>
     <div class="panel-body">
         <form id="resourceFormData">
             <select id="resourceOptions" name="claimDisabled" class="form-control" name="resourceOptions">
@@ -110,4 +116,14 @@ if ($enableRecourse == 0) {
             </div>
         </form>
     </div>
+    </div>
 </div>
+
+<script>
+    // Shorthand for $( document ).ready()
+    $(function() {
+        //Ocutando a div existente no modulo de oportunidades
+        $("#registration-claim-configuration").hide();
+    });
+</script>
+

@@ -7,8 +7,7 @@ use Recourse\Controllers\Recourse as RecourseController;
 class Plugin extends \MapasCulturais\Plugin {
     function _init () {
         $app = App::i();
-        $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
-        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
+
 
         $app->view->enqueueScript(
             'app',
@@ -23,11 +22,13 @@ class Plugin extends \MapasCulturais\Plugin {
         );
     
         $app->hook('template(opportunity.single.tabs):end', function () use ($app) {
+            $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
+            $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
             $opportunity = $this->controller->requestedEntity;        
             // dump($opportunity->canUser('@control'));
             // $this->part('singles/opportunity-resources', ['entity' => $opportunity]);
 
-            $app->view->enqueueStyle('app', 'recourse', 'css/recourse/recourse.css', ['main']);
+            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && !$opportunity->claimDisabled) {
                 $this->part('singles/opportunity-resources', ['entity' => $opportunity, 'app' => $app]);
                 // $this->part('tab', ['id' => 'resource', 'label' => i::__('Recursos')]);
@@ -35,12 +36,12 @@ class Plugin extends \MapasCulturais\Plugin {
         });
 
         $app->hook('view.partial(claim-configuration).params', function($__data, &$__template) use ($app){
-
+            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             //0 Está habilitado - 1 Não está habilitado
             $enableRecourse = $__data['opportunity']->getMetadata('claimDisabled');
-            if($enableRecourse == 1){
+            //Se alterar a configuração para desabilitar o recurso, faz uma verificação de metadata
+            if($enableRecourse == '1'){
                 RecourseController::verifyClaim($__data['opportunity']);
-
             }
 
             $app->view->enqueueScript(
@@ -73,6 +74,7 @@ class Plugin extends \MapasCulturais\Plugin {
             }
 
             $this->part('recourse/opportunity-recourse-form', [ 'enableRecourse' => $enableRecourse, 'confRecourse' => $confRecourse]);
+
         });
         $app->hook('template(opportunity.edit.registration-config):after', function(){
             dump('registration-config - after');

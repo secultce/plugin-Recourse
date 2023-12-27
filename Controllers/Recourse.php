@@ -128,6 +128,7 @@ class Recourse extends \MapasCulturais\Controller{
         //Alterando o claimDisabled no metadata
         $opp = $app->repo('Opportunity')->find($this->postData['id']);
         //Valor recebido pela request é repassado para alteração
+//
         if ($opp) {
             self::saveClaimDisabled($opp, $this->postData['claimDisabled']);
         }
@@ -145,7 +146,7 @@ class Recourse extends \MapasCulturais\Controller{
     }
 
     /**
-    Faz Verificação para qndo for desabilitado o recurso, excluir do metabase sA
+    Faz Verificação para qndo for desabilitado o recurso, excluir do metadata da conf. de recurso
      */
     public static function verifyClaim($entity)
     {

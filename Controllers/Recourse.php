@@ -128,7 +128,7 @@ class Recourse extends \MapasCulturais\Controller{
         //Alterando o claimDisabled no metadata
         $opp = $app->repo('Opportunity')->find($this->postData['id']);
         //Valor recebido pela request é repassado para alteração
-//
+
         if ($opp) {
             self::saveClaimDisabled($opp, $this->postData['claimDisabled']);
         }
@@ -138,6 +138,7 @@ class Recourse extends \MapasCulturais\Controller{
     //Salva a alteração da habilitação de recurso
     function saveClaimDisabled($entity, $claimDisabled)
     {
+        $app = App::i();
         $entity->claimDisabled = $claimDisabled;
         $entity->save(true);
         if($claimDisabled == '1'){

@@ -1,6 +1,7 @@
 // A $( document ).ready() block.
 
 $(function () {
+    console.log('.opportunity-claim-box ready');
     $( "#resourceOptions" ).change(function() {
         var opt =  $( "#resourceOptions" ).val();
         console.log({opt})
@@ -30,3 +31,8 @@ function claimDisabled(opt)
         }
     });
 }
+
+$(document).ready(function () {
+
+    $('.opportunity-claim-box').remove();
+});

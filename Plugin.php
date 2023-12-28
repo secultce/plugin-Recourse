@@ -76,8 +76,24 @@ class Plugin extends \MapasCulturais\Plugin {
             $this->part('recourse/opportunity-recourse-form', [ 'enableRecourse' => $enableRecourse, 'confRecourse' => $confRecourse]);
 
         });
-        $app->hook('template(opportunity.edit.registration-config):after', function(){
-            dump('registration-config - after');
+        $app->hook('template(opportunity.single.user-registration-table--registration--status):end', function($reg_args) use ($app){
+            $entity = $reg_args;
+
+            $app->view->enqueueScript(
+                'app', // grupo de scripts
+                'recourse',  // nome do script
+                'js/recourse/recourse.js', // arquivo do script
+                [] // dependências do script
+            );
+            //Período configurado para verificação de data e hora corrente
+            $strToEnd = $entity->opportunity->getMetadata('recourse_date_end').' '.$entity->opportunity->getMetadata('recourse_time_end');
+            $now = DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
+
+            $this->part('recourse/recourse-user-registration-status', ['entity' => $entity]);
+        });
+
+        $app->hook('template(panel.registrations.panel-registration-meta):before', function($registration) use ($app){
+        dump($registration->getMetadata('claimDisabled'));
         });
 
 

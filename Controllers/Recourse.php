@@ -165,4 +165,26 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
+    public function POST_sendRecourse()
+    {
+        $app = App::i();
+        $registratrion = $app->repo('Registration')->find($this->data['registration']);
+        $opportinuty = $app->repo('Opportunity')->find($this->data['opportunity']);
+        $agent = $app->repo('Agent')->find($this->data['agent']);
+        if(!is_null($this->data['recourse'])) {
+            $recourse = new EntityRecourse;
+            $recourse->recourseText = $this->data['recourse'];
+            $recourse->recourseSend = new \DateTime();
+            $recourse->recourseStatus = EntityRecourse::STATUS_DRAFT;
+            $recourse->registration = $registratrion;
+            $recourse->opportunity = $opportinuty;
+            $recourse->agent = $agent ;
+            $situ = $recourse->save(true);
+            if(is_null($situ)){
+                return $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
+            }
+            return $this->errorJson('Erro Inesperado', 403);
+
+        }
+    }
 }

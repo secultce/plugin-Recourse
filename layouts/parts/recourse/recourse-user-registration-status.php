@@ -1,18 +1,12 @@
 <?php
-
-use MapasCulturais\i;
-
-$app = \MapasCulturais\App::i();
-$user = $app->user;
-$baseUrl = $app->_config['base.url'];
-
-dump($entity->opportunity->getMetadata('recourse_date_end'));
-dump($entity->opportunity->getMetadata('recourse_time_end'));
-dump($entity->opportunity->getMetadata('claimDisabled'));
+//Data atual do momento
+$now = new DateTime();
+/**
+ * Só habilita o botão de recurso se o periodo final do recurso for igual ou maior que o configurado
+ */
 ?>
-
 <div class="opportunity-claim-button">
-    <?php if( $entity->opportunity->getMetadata('claimDisabled') == '0') : ?>
+    <?php if(  $endOfPeriod >= $now)   : ?>
     <a class="btn btn-primary" href="<?php echo $baseUrl . 'painel/inscricoes/' . $entity->id .'#tab=enviadas'?>">
         Ir para página de recurso.
     </a>

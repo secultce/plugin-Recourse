@@ -8,6 +8,9 @@ class Plugin extends \MapasCulturais\Plugin {
     function _init () {
         $app = App::i();
 
+        $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
+        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
+        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
 
         $app->view->enqueueScript(
             'app',
@@ -36,6 +39,9 @@ class Plugin extends \MapasCulturais\Plugin {
         });
 
         $app->hook('view.partial(claim-configuration).params', function($__data, &$__template) use ($app){
+            $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
+            $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
+
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             //0 Está habilitado - 1 Não está habilitado
             $enableRecourse = $__data['opportunity']->getMetadata('claimDisabled');
@@ -87,13 +93,38 @@ class Plugin extends \MapasCulturais\Plugin {
             );
             //Período configurado para verificação de data e hora corrente
             $strToEnd = $entity->opportunity->getMetadata('recourse_date_end').' '.$entity->opportunity->getMetadata('recourse_time_end');
-            $now = DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
-
-            $this->part('recourse/recourse-user-registration-status', ['entity' => $entity]);
+            $endOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
+            $baseUrl = $app->_config['base.url'];
+            //So mostra o botão se o recurso tiver habilitado
+            if($entity->opportunity->getMetadata('claimDisabled') == '0')
+            {
+                $this->part('recourse/recourse-user-registration-status', [
+                    'entity' => $entity,
+                    'endOfPeriod' => $endOfPeriod,
+                    'baseUrl' => $baseUrl
+                ]);
+            }
         });
 
-        $app->hook('template(panel.registrations.panel-registration-meta):before', function($registration) use ($app){
-        dump($registration->getMetadata('claimDisabled'));
+        $plugin = $this;
+        $app->hook('template(panel.registrations.panel-registration-meta):before', function($registration) use ($app, $plugin){
+//            dump($registration->opportunity->getMetadata('claimDisabled'));
+            $validadte = $plugin->verifyPeriodEnd($registration->opportunity);
+
+            $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
+            $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
+
+            $app->view->enqueueScript(
+                'app', // grupo de scripts
+                'recourse',  // nome do script
+                'js/recourse/recourse.js', // arquivo do script
+                [] // dependências do script
+            );
+//            dump($validadte);
+            if($validadte)
+                $this->part('recourse/user-open-recourse', [
+                    'registration' => $registration
+                ]);
         });
 
 
@@ -120,5 +151,22 @@ class Plugin extends \MapasCulturais\Plugin {
            'label' => i::__('Hora Final'),
            'type' => 'time',
        ]);
+   }
+
+   function verifyPeriodEnd($opportunity) {
+       $strToEnd = $opportunity->getMetadata('recourse_date_end').' '.$opportunity->getMetadata('recourse_time_end');
+       $endOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
+//       dump($strToEnd);
+//       dump($endOfPeriod);
+//       dump($opportunity);
+
+       $now = new \DateTime();
+       if($opportunity->getMetadata('claimDisabled') == '0'){
+           if(  $endOfPeriod >= $now) {
+              return true;
+           }
+       }
+       return false;
+
    }
 }

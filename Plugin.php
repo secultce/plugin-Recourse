@@ -3,46 +3,25 @@ namespace Recourse;
 use MapasCulturais\App;
 use MapasCulturais\i;
 use Recourse\Controllers\Recourse as RecourseController;
+use Recourse\Entities\Recourse as EntityRecourse;
 
 class Plugin extends \MapasCulturais\Plugin {
     function _init () {
         $app = App::i();
 
-        $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
-        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
-
-        $app->view->enqueueScript(
-            'app',
-            'sweetalert2',
-            'https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js'
-        );
-        $app->view->enqueueScript(
-            'app', // grupo de scripts
-            'ng-recourse',  // nome do script
-            'js/ng.recourse.js', // arquivo do script
-            [] // dependências do script
-        );
-    
         $app->hook('template(opportunity.single.tabs):end', function () use ($app) {
-            $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
-            $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-            $opportunity = $this->controller->requestedEntity;        
-            // dump($opportunity->canUser('@control'));
-            // $this->part('singles/opportunity-resources', ['entity' => $opportunity]);
+           $this->_publishAssets();
 
-            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
+            $opportunity = $this->controller->requestedEntity;
+
             if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && !$opportunity->claimDisabled) {
                 $this->part('singles/opportunity-resources', ['entity' => $opportunity, 'app' => $app]);
                 // $this->part('tab', ['id' => 'resource', 'label' => i::__('Recursos')]);
             }
         });
-
-        $app->hook('view.partial(claim-configuration).params', function($__data, &$__template) use ($app){
-            $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
-            $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-
-            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
+        $plugin = $this;
+        $app->hook('view.partial(claim-configuration).params', function($__data, &$__template) use ($app,$plugin){
+            $plugin->_publishAssets();
             //0 Está habilitado - 1 Não está habilitado
             $enableRecourse = $__data['opportunity']->getMetadata('claimDisabled');
             //Se alterar a configuração para desabilitar o recurso, faz uma verificação de metadata
@@ -82,6 +61,7 @@ class Plugin extends \MapasCulturais\Plugin {
             $this->part('recourse/opportunity-recourse-form', [ 'enableRecourse' => $enableRecourse, 'confRecourse' => $confRecourse]);
 
         });
+
         $app->hook('template(opportunity.single.user-registration-table--registration--status):end', function($reg_args) use ($app){
             $entity = $reg_args;
 
@@ -106,24 +86,31 @@ class Plugin extends \MapasCulturais\Plugin {
             }
         });
 
-        $plugin = $this;
+
         $app->hook('template(panel.registrations.panel-registration-meta):before', function($registration) use ($app, $plugin){
 //            dump($registration->opportunity->getMetadata('claimDisabled'));
             $validadte = $plugin->verifyPeriodEnd($registration->opportunity);
 
-            $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
-            $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-
+            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $app->view->enqueueScript(
                 'app', // grupo de scripts
                 'recourse',  // nome do script
                 'js/recourse/recourse.js', // arquivo do script
                 [] // dependências do script
             );
-//            dump($validadte);
+            //Verificando se já houve envio de recurso
+            $rec = $app->repo('Recourse\Entities\Recourse')->findBy([
+                'agent' =>  $registration->owner->id,
+                'opportunity' => $registration->opportunity->id
+            ]);
+            //Inicia com verdadeiro, em condições igual a 0, trona-se falso
+            $isSendrecourse = true;
+            count($rec) > 0 ?: $isSendrecourse = false;
+
             if($validadte)
                 $this->part('recourse/user-open-recourse', [
-                    'registration' => $registration
+                    'registration' => $registration,
+                    'isSendrecourse' => $isSendrecourse
                 ]);
         });
 
@@ -131,6 +118,21 @@ class Plugin extends \MapasCulturais\Plugin {
  
 
    }//fim _init
+
+    /**
+     * Publica todos os assets (css/js)
+     * @see \MapasCulturais\Themes\BaseV1\Theme::_publishAssets()
+     */
+    protected function _publishAssets()
+    {
+        $app = App::i();
+        $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
+        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
+        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
+        $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
+        $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
+
+    }
 
    function register () {
     $app = App::i();

@@ -1,5 +1,4 @@
 <?php
-dump($registration->id);
 
 ?>
 <style>
@@ -9,12 +8,17 @@ dump($registration->id);
         text-align: center !important;
     }
 </style>
-<div>
-    <button class="btn btn-primary"
+<div class="opportunity-claim-button">
+    <?php if(!$isSendrecourse): ?>
+    <a class="btn btn-primary"
             onclick="sendRecourse(<?php echo $registration->id; ?>, <?php echo $registration->opportunity->id; ?>)"
             id="btn-recourse-<?php echo $registration->id; ?>">
         Abrir Recurso
-    </button>
-
+    </a>
+    <?php else: ?>
+    <p>
+        <label class="info-btn-recourse">Recurso enviado</label>
+    </p>
+    <?php endif; ?>
 </div>
 

@@ -21,13 +21,11 @@ class Recourse extends \MapasCulturais\Controller{
     {
         $app = App::i();
 
-
+        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
+        $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
         $entity = $app->repo('Opportunity')->find($this->data['id']);
 
         $this->render('index', ['entity' => $entity, 'app' => $app]);
-//        $app->view->enqueueScript('app', 'vendor', 'js/vendor.js');
-
-
     }
 
     public function GET_todos()

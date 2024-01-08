@@ -258,4 +258,10 @@ textarea.form-control {
 .mgb-16 {
     margin-bottom: 16px;
 }
+.info-btn-recourse {
+    font-family: cursive;
+    font-size: larger;
+    color: #0A66C2;
+    padding: 5px;
+}
 

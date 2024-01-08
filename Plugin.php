@@ -8,10 +8,10 @@ use Recourse\Entities\Recourse as EntityRecourse;
 class Plugin extends \MapasCulturais\Plugin {
     function _init () {
         $app = App::i();
-
-        $app->hook('template(opportunity.single.tabs):end', function () use ($app) {
-           $this->_publishAssets();
-
+        $plugin = $this;
+        $app->hook('template(opportunity.single.tabs):end', function () use ($app,$plugin) {
+            $plugin->_publishAssets();
+            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $opportunity = $this->controller->requestedEntity;
 
             if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && !$opportunity->claimDisabled) {
@@ -19,7 +19,7 @@ class Plugin extends \MapasCulturais\Plugin {
                 // $this->part('tab', ['id' => 'resource', 'label' => i::__('Recursos')]);
             }
         });
-        $plugin = $this;
+
         $app->hook('view.partial(claim-configuration).params', function($__data, &$__template) use ($app,$plugin){
             $plugin->_publishAssets();
             //0 Está habilitado - 1 Não está habilitado
@@ -92,12 +92,10 @@ class Plugin extends \MapasCulturais\Plugin {
             $validadte = $plugin->verifyPeriodEnd($registration->opportunity);
 
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
-            $app->view->enqueueScript(
-                'app', // grupo de scripts
-                'recourse',  // nome do script
-                'js/recourse/recourse.js', // arquivo do script
-                [] // dependências do script
-            );
+            $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[] );
+            $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
+            $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
+
             //Verificando se já houve envio de recurso
             $rec = $app->repo('Recourse\Entities\Recourse')->findBy([
                 'agent' =>  $registration->owner->id,
@@ -114,7 +112,13 @@ class Plugin extends \MapasCulturais\Plugin {
                 ]);
         });
 
-
+        /**
+         * Adiciona novos menus no painel
+         */
+        $app->hook('template(panel.registrations.nav.panel.registrations):after', function () use($app) {
+            $idUser = $app->getUser()->id;
+            $this->part('panel/nav-recursos', ['idUser' => $idUser]);
+        });
  
 
    }//fim _init
@@ -128,7 +132,6 @@ class Plugin extends \MapasCulturais\Plugin {
         $app = App::i();
         $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
         $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
 

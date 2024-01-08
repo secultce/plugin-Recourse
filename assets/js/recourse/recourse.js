@@ -105,6 +105,9 @@ function sendRecourse(registration, opportunity)
                         showConfirmButton: false,
                         // timer: 1500
                     });
+                    //Ocutando botão para não ter mais de um envio
+                    $("#btn-recourse-"+registration).hide();
+
                 },
                 error: function() {
                     Swal.fire({

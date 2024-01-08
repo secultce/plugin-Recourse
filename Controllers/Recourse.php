@@ -17,15 +17,26 @@ class Recourse extends \MapasCulturais\Controller{
         $app = App::i();        
     }
 
+    public function GET_agent()
+    {
+        dump($this->data);
+    }
+
     public function GET_oportunidade()
     {
         $app = App::i();
+        $this->requireAuthentication();
 
         $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
-        $entity = $app->repo('Opportunity')->find($this->data['id']);
+        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
+        $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
 
-        $this->render('index', ['entity' => $entity, 'app' => $app]);
+        $entity = $app->repo('Opportunity')->find($this->data['id']);
+        //Se for administrador
+        if($entity->canUser('@control')){
+            $this->render('index', ['entity' => $entity, 'app' => $app]);
+        }
     }
 
     public function GET_todos()
@@ -37,6 +48,9 @@ class Recourse extends \MapasCulturais\Controller{
 
     public function POST_responder()
     {
+        //Verificando se o recurso foi respondido
+        self::verifyReply($this->data['entityId']);
+
         $app = App::i();
         //Validações
         if($this->data['reply'] == ''){
@@ -65,15 +79,9 @@ class Recourse extends \MapasCulturais\Controller{
         try {
             $app->em->persist($recourse);
             $app->em->flush();
-//            dump($recourse);
             $entityRevision = new EntityRevision($recourseData, $recourse, 'created' , 'Alterado resposta do recurso');
             $entityRevision->save();
-//            $app->em->persist($entityRevision);
-//            $app->em->flush();
-
-            dump( $entityRevision);
-
-//            return $this->json(['message' => 'Recurso respondido com sucesso!'], 200);
+            $this->json(['message' => 'Recurso respondido com sucesso!', 'status' => 200], 200);
         }catch (Exception $e) {
             die($e->getMessage());
 //            return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
@@ -183,6 +191,16 @@ class Recourse extends \MapasCulturais\Controller{
             }
             return $this->errorJson('Erro Inesperado', 403);
 
+        }
+    }
+
+    public function verifyReply($recourse)
+    {
+        $app = App::i();
+        $rec = $app->repo('Recourse\Entities\Recourse')->find($recourse);
+        if(!is_null($rec->recourseReply) && !is_null($rec->recourseDateReply) && $rec->replyAgentId !== $app->getAuth()->getAuthenticatedUser()->profile->id)
+        {
+            return $this->errorJson('Esse recurso foi respondido', 403);
         }
     }
 }

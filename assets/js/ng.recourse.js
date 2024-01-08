@@ -37,13 +37,14 @@
                 return $http.post(urlBase + 'recursos/responder', data).
                     success(function (data, status) {
                         console.log({ data })
-                            Swal.fire({
-                                title: "Sucesso!",
-                                text: data.message
-                            });
-                    setTimeout(() => {
-                        window.location.reload()
-                    }, "2000");
+                    if(data.status == 200){
+                        Swal.fire({
+                            title: "Sucesso!",
+                            text: data.message
+                        });
+                    }
+
+
                         // return data
                     }).
                     error(function (data, status) {
@@ -51,8 +52,11 @@
                         Swal.fire({
                             title: "Ops!",
                             icon: 'error',
-                            text: data.message
+                            text: data.data
                         });
+                        setTimeout(() => {
+                            window.location.reload()
+                        }, "1500");
                     });
             },
             getRegistration: function (registration) {

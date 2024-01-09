@@ -15,8 +15,8 @@
 
 // Theme Variables
 // Color
-$secultce-primary: #22a638 !default;
-$secultce-success: #66cc66 !default;
+$secultce-primary: #085E55 !default;
+$secultce-success: #23A350 !default;
 $secultce-danger: #cc3333 !default;
 $secultce-warning: #cc9933 !default;
 $secultce-info: #40b4b4 !default;
@@ -632,4 +632,9 @@ $swal2-toast-buttons-font-size: $bootstrap-toast-font-size;
   max-width: $bootstrap-toast-max-width;
   border-radius: $bootstrap-toast-border-radius;
   background-color: $bootstrap-toast-background-color;
+}
+
+.swal2-icon.swal2-warning {
+  border-color: $secultce-success;
+  color: $secultce-primary;
 }

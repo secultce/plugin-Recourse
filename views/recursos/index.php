@@ -1,19 +1,13 @@
 <?php
 $this->layout = 'panel';
 $app->view->jsObject['entity'] = $entity;
-// $app->view->bodyProperties['ng-app'] = "recourse";
-// $app->view->bodyProperties['ng-controller'] = "ItemController";
-// $app->view->jsObject['angularAppDependencies'][] = 'entity.module.opportunity';
-// $app->view->part('recourse/index', ['app' => $app]);
-
-// dump($this->jsObject);
 ?>
 
 
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
     <div class="alert info">
-        Lembramos que ao clicar em <strong>Responder</strong>, a resposta somente poderá ser enviada por você, então,
-        nenhum outro da comissão poderá responder o recurso do candidato.
+        Lembramos que ao clicar em <strong>Responder <i class="fa fa-edit"></i>  </strong>, o recurso tem privilégio
+        de edição antes da publicação, somente para você. Não poderá mais ser editado por ninguém.
     </div>
     <div class="panel-header clearfix" ng-controller="RecourseController">
         <p class="text-center">
@@ -177,7 +171,11 @@ $app->view->jsObject['entity'] = $entity;
             </tr>
         </table>
         <div>
-            <button class="btn btn-primary" title="Publica esses recursos para os proponentes visualizem a resposta">
+            <button
+                class="btn btn-primary"
+                title="Publica esses recursos para os proponentes visualizem a resposta"
+                ng-click="clickPublish(<?php echo $entity->id; ?>)"
+            >
                 <?php \MapasCulturais\i::_e('Publicar Recursos'); ?>
                 <i class="fas fa-paper-plane"></i>
             </button>

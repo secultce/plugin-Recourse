@@ -232,6 +232,30 @@
         $scope.selectConfigurationRecourse = function() {
             console.log($scope.modelSelectConfigurationRecourse);
         };
+
+        $scope.clickPublish = function(id) {
+            console.log('clickPublish' , id);
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                customClass: {
+                    confirmButton: "btn-success-rec",
+                    cancelButton: "btn-warning-rec"
+                },
+                confirmButtonText: "Yes, delete it!",
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: "Deleted!",
+                        text: "Your file has been deleted.",
+                        icon: "success"
+                    });
+                }
+            });
+        };
+
         $scope.dialogSecult = function (id, title, text, icon = '', footer = '') {
             Swal.fire({
                 title: title,
@@ -247,6 +271,7 @@
                 allowEscapeKey: false,
             });
         };
+
 
 
     }]);

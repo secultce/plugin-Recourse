@@ -10,13 +10,14 @@ class Plugin extends \MapasCulturais\Plugin {
         $app = App::i();
         $plugin = $this;
         $app->hook('template(opportunity.single.tabs):end', function () use ($app,$plugin) {
+            //Assets mais usados nas rotas
             $plugin->_publishAssets();
+            //Arquivo Css do plugin
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $opportunity = $this->controller->requestedEntity;
 
             if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && !$opportunity->claimDisabled) {
                 $this->part('singles/opportunity-resources', ['entity' => $opportunity, 'app' => $app]);
-                // $this->part('tab', ['id' => 'resource', 'label' => i::__('Recursos')]);
             }
         });
 
@@ -29,12 +30,6 @@ class Plugin extends \MapasCulturais\Plugin {
                 RecourseController::verifyClaim($__data['opportunity']);
             }
 
-            $app->view->enqueueScript(
-                'app', // grupo de scripts
-                'recourse',  // nome do script
-                'js/recourse/recourse.js', // arquivo do script
-                [] // dependências do script
-            );
             //Todo o metadata da oportunidade
             $metadt = $__data['opportunity']->getMetadata();
             //Array gerado para enderezar o valores na view
@@ -64,13 +59,7 @@ class Plugin extends \MapasCulturais\Plugin {
 
         $app->hook('template(opportunity.single.user-registration-table--registration--status):end', function($reg_args) use ($app){
             $entity = $reg_args;
-
-            $app->view->enqueueScript(
-                'app', // grupo de scripts
-                'recourse',  // nome do script
-                'js/recourse/recourse.js', // arquivo do script
-                [] // dependências do script
-            );
+            $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
             //Período configurado para verificação de data e hora corrente
             $strToEnd = $entity->opportunity->getMetadata('recourse_date_end').' '.$entity->opportunity->getMetadata('recourse_time_end');
             $endOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
@@ -86,16 +75,10 @@ class Plugin extends \MapasCulturais\Plugin {
             }
         });
 
-
         $app->hook('template(panel.registrations.panel-registration-meta):before', function($registration) use ($app, $plugin){
-//            dump($registration->opportunity->getMetadata('claimDisabled'));
-            $validadte = $plugin->verifyPeriodEnd($registration->opportunity);
-
+            $validate = $plugin->verifyPeriodEnd($registration->opportunity);
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
-            $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[] );
-            $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-            $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
-
+            $plugin->_publishAssets();
             //Verificando se já houve envio de recurso
             $rec = $app->repo('Recourse\Entities\Recourse')->findBy([
                 'agent' =>  $registration->owner->id,
@@ -105,11 +88,11 @@ class Plugin extends \MapasCulturais\Plugin {
             $isSendrecourse = true;
             count($rec) > 0 ?: $isSendrecourse = false;
 
-            if($validadte)
-                $this->part('recourse/user-open-recourse', [
-                    'registration' => $registration,
-                    'isSendrecourse' => $isSendrecourse
-                ]);
+            $this->part('recourse/user-open-recourse', [
+                'registration' => $registration,
+                'isSendrecourse' => $isSendrecourse,
+                'validate' => $validate
+            ]);
         });
 
         /**
@@ -119,13 +102,11 @@ class Plugin extends \MapasCulturais\Plugin {
             $idUser = $app->getUser()->id;
             $this->part('panel/nav-recursos', ['idUser' => $idUser]);
         });
- 
-
    }//fim _init
 
     /**
      * Publica todos os assets (css/js)
-     * @see \MapasCulturais\Themes\BaseV1\Theme::_publishAssets()
+     *
      */
     protected function _publishAssets()
     {
@@ -134,7 +115,7 @@ class Plugin extends \MapasCulturais\Plugin {
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
         $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
-
+        $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
     }
 
    function register () {
@@ -161,9 +142,6 @@ class Plugin extends \MapasCulturais\Plugin {
    function verifyPeriodEnd($opportunity) {
        $strToEnd = $opportunity->getMetadata('recourse_date_end').' '.$opportunity->getMetadata('recourse_time_end');
        $endOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
-//       dump($strToEnd);
-//       dump($endOfPeriod);
-//       dump($opportunity);
 
        $now = new \DateTime();
        if($opportunity->getMetadata('claimDisabled') == '0'){
@@ -172,6 +150,5 @@ class Plugin extends \MapasCulturais\Plugin {
            }
        }
        return false;
-
    }
 }

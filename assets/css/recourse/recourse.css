@@ -265,3 +265,49 @@ textarea.form-control {
     padding: 5px;
 }
 
+.swal2-icon.swal2-warning {
+    border-color: #23A350 !important;
+    color: #085E55 !important;
+}
+.swal2-icon .swal2-icon-content {
+    display: flex  !important;
+    align-items: center !important;
+    font-size: 3.75em !important;
+}
+
+div:where(.swal2-icon) .swal2-icon-content {
+    display: flex !important;
+    align-items: center; !important
+     font-size: 0  !important;
+}
+.swal2-icon {
+    width: 4em !important;
+    height: 4em !important;
+}
+
+.btn-success-rec {
+    color: #fff !important;;
+    background-color: #085E55 !important;;
+    border: 1px solid #042f2b !important;; }
+.btn-success-rec:hover {
+    color: #fff;
+    background-color: #0a766a;
+    border: 1px solid #042f2b; }
+
+.btn-warning-rec {
+    color: #fff !important;
+    background-color: #cc9933 !important;
+    border: 1px solid #b88a2e !important;  }
+.btn-warning-rec:hover {
+    color: #fff;
+    background-color: #d1a347;
+    border: 1px solid #a37a29; }
+
+.swal2-styled.swal2-confirm {
+    padding: .175rem .75rem !important;
+}
+
+.swal2-styled.swal2-cancel {
+    padding: .175rem .75rem !important;
+}
+

@@ -63,6 +63,10 @@ function sendRecourse(registration, opportunity)
         confirmButtonText: 'Enviar recurso',
         cancelButtonText: 'Sair',
         showLoaderOnConfirm: true,
+        customClass: {
+            confirmButton: "btn-success-rec",
+            cancelButton: "btn-warning-rec"
+        },
         preConfirm: async (login) => {
             console.log(login);
             ctxUser = login;

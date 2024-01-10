@@ -2,7 +2,7 @@
 namespace Recourse\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
-
+use \MapasCulturais\App;
 /**
  * Recourse 
  * 
@@ -103,4 +103,17 @@ class Recourse extends \MapasCulturais\Entity {
      * @ORM\Column(name="reply_publish", type="boolean", nullable=true)
      */
     protected $replyPublish = false;
+
+    /**
+     * @var Object
+     *
+     * @param $opportunityId integer
+     */
+    public static function publishResource($opportunityId) {
+        $app = App::i();
+        $dql = "UPDATE Recourse\Entities\Recourse r SET r.replyPublish = true WHERE r.opportunity = {$opportunityId}";
+        $query = $app->em->createQuery($dql);
+        $resource = $query->getResult();
+        return $resource;
+    }
 }

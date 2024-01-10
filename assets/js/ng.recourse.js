@@ -36,16 +36,15 @@
                 };
                 return $http.post(urlBase + 'recursos/responder', data).
                     success(function (data, status) {
-                        console.log({ data })
-                    if(data.status == 200){
-                        Swal.fire({
-                            title: "Sucesso!",
-                            text: data.message
-                        });
-                    }
-
-
-                        // return data
+                        if(data.status == 200){
+                            Swal.fire({
+                                title: "Sucesso!",
+                                text: data.message
+                            });
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1500);
+                        }
                     }).
                     error(function (data, status) {
                         console.log(data)
@@ -71,6 +70,26 @@
             },
             verifyView: function (entity) {
                 return $http.post(urlBase + 'recursos/verifyPermission', entity)
+            },
+            publish: function (opportunity){
+                var dataPublish = {
+                    opportunity
+                };
+                return $http.post(urlBase + 'recursos/publish', dataPublish).
+                success(function (data, status){
+                    console.log({data});
+                    console.log({status});
+                }).error(function (err, status) {
+                    // console.log({err});
+                    console.log({status});
+                    if(status !== 200){
+                        Swal.fire({
+                            title: "Ops!",
+                            icon: 'error',
+                            text: 'Ocorreu um erro inesperado'
+                        });
+                    }
+                });
             }
         };
     }]);
@@ -96,6 +115,7 @@
         $scope.newNoteReply = '';
         $scope.reply = '';
         $scope.countNotReply = 0;
+        $scope.isPublish = false;
         //Configuração de recurso (Admin)
         $scope.modelSelectConfigurationRecourse = false;
         $scope.divSelectConfiguration = false;
@@ -104,6 +124,13 @@
         var recoursesAll = RecourseService.getRecourseAll(MapasCulturais.entity.id)
             .then(res => JSON.parse(JSON.stringify(res)).data)
             .then(res => {
+                console.log({res})
+                //Se tiver um publicado o botão no front é desabilitado
+                res.forEach(function (valor, indice) {
+                   if(valor.replyPublish == true){
+                       $scope.isPublish = true;
+                   }
+                });
                 for (i = 0; i < res.length; i++){
                     if(res[i]['recourseSend']){
                         res[i]['recourseSend'] = moment(res[i]['recourseSend'].date).format('DD/MM/YYYY hh:mm')
@@ -236,21 +263,38 @@
         $scope.clickPublish = function(id) {
             console.log('clickPublish' , id);
             Swal.fire({
-                title: "Are you sure?",
-                text: "You won't be able to revert this!",
+                title: "Publicar recursos?",
+                text: "Verifique se todos os recursos foram respondido. Pois ao confirmar essa ação não poderá ser " +
+                    "revertida.",
                 icon: "warning",
                 showCancelButton: true,
                 customClass: {
                     confirmButton: "btn-success-rec",
                     cancelButton: "btn-warning-rec"
                 },
-                confirmButtonText: "Yes, delete it!",
+                confirmButtonText: "Sim, Publicar",
+                cancelButtonText: "Não, sair",
             }).then((result) => {
+                Swal.fire({
+                    title: 'Aguarde...',
+                    text: 'Todos os recursos estão sendo publicados, aguarde a conclusão.',
+                    imageUrl: MapasCulturais.spinnerUrl,
+                    imageHeight: 30,
+                    showConfirmButton: false,
+                });
                 if (result.isConfirmed) {
-                    Swal.fire({
-                        title: "Deleted!",
-                        text: "Your file has been deleted.",
-                        icon: "success"
+                    RecourseService.publish(id)
+                    .then(res => JSON.parse(JSON.stringify(res)).data)
+                    .then(res => {
+                        console.log({res})
+                        Swal.close();
+                        if(res.status == 200){
+                            Swal.fire({
+                                title: 'Sucesso',
+                                text: 'Todos os recursos foram publicados',
+                                timer: 1500
+                            });
+                        }
                     });
                 }
             });

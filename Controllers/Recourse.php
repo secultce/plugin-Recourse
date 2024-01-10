@@ -70,12 +70,16 @@ class Recourse extends \MapasCulturais\Controller{
         $recourse->recourseDateReply = new DateTime;
         $recourse->recourseStatus = $statusRecourse;
         $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
-
+        $recourse->createTimestamp = new DateTime();
         $recourseData = [
             'Resposta' => $this->data['reply'],
             'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
             'Alterado em: ' => $recourse->recourseDateReply
         ];
+//        $app->em->persist($recourse);
+//        $app->em->flush();
+//        $entityRevision = new EntityRevision($recourseData, $recourse, 'created' , 'Alterado resposta do recurso');
+//        $entityRevision->save(true);
         try {
             $app->em->persist($recourse);
             $app->em->flush();
@@ -83,7 +87,7 @@ class Recourse extends \MapasCulturais\Controller{
             $entityRevision->save();
             $this->json(['message' => 'Recurso respondido com sucesso!', 'status' => 200], 200);
         }catch (Exception $e) {
-            die($e->getMessage());
+            dump($e->getMessage());
 //            return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
         }
 
@@ -194,6 +198,9 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
+    /*
+     * Função para verificar se já tem resposta de um recurso
+     * */
     public function verifyReply($recourse)
     {
         $app = App::i();
@@ -203,4 +210,20 @@ class Recourse extends \MapasCulturais\Controller{
             return $this->errorJson('Esse recurso foi respondido', 403);
         }
     }
+
+    /*
+     * Função que publica os recursos
+     * @params $opportunity integer
+     * return void
+     */
+    public function POST_publish()
+    {
+        $res = EntityRecourse::publishResource($this->postData['opportunity']);
+        if($res > 0) {
+            $this->json([ 'title' => 'Sucesso', 'message' => 'Publicação realizada com sucesso', 'status' => 200], 200);
+        }
+        $this->json([ 'title' => 'Error', 'message' => 'Ocorreu um erro inesperado.', 'type' => 'error'], 500);
+    }
+
+
 }

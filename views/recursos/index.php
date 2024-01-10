@@ -1,6 +1,11 @@
 <?php
 $this->layout = 'panel';
 $app->view->jsObject['entity'] = $entity;
+
+$op = $app->repo('Opportunity')->find($entity->id);
+if($entity->evaluationMethodConfiguration->type != 'documentary') {
+
+}
 ?>
 
 
@@ -8,6 +13,8 @@ $app->view->jsObject['entity'] = $entity;
     <div class="alert info">
         Lembramos que ao clicar em <strong>Responder <i class="fa fa-edit"></i>  </strong>, o recurso tem privilégio
         de edição antes da publicação, somente para você. Não poderá mais ser editado por ninguém.
+        Lembramos que ao clicar em Responder, o recurso só poderá ser respondido e editado exclusivamente por você,
+        antes da publicação. Não poderá ser editado por outra pessoa.
     </div>
     <div class="panel-header clearfix" ng-controller="RecourseController">
         <p class="text-center">
@@ -158,9 +165,10 @@ $app->view->jsObject['entity'] = $entity;
                                 </p>
                             </div>
                             <button
-                                    class="btn btn-primary btn-reply-recourse"
-                                    type="submit"
-                                    ng-click="sendReplyRecourse(recourseAdmin.idRecourse, recourseAdmin.status, recourseAdmin.reply)"
+                                class="btn btn-primary btn-reply-recourse"
+                                type="submit"
+                                ng-click="sendReplyRecourse(recourseAdmin.idRecourse, recourseAdmin.status,
+                                 recourseAdmin.reply)"
                             >
                                 Enviar resposta
                                 <i class="fas fa-paper-plane"></i>
@@ -171,10 +179,14 @@ $app->view->jsObject['entity'] = $entity;
             </tr>
         </table>
         <div>
+            <small>isPublish: {{isPublish}}</small>
             <button
                 class="btn btn-primary"
                 title="Publica esses recursos para os proponentes visualizem a resposta"
                 ng-click="clickPublish(<?php echo $entity->id; ?>)"
+                ng-if="data.recourses.length > 0"
+                disabled
+                type="button"
             >
                 <?php \MapasCulturais\i::_e('Publicar Recursos'); ?>
                 <i class="fas fa-paper-plane"></i>

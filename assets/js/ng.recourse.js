@@ -120,49 +120,52 @@
         $scope.modelSelectConfigurationRecourse = false;
         $scope.divSelectConfiguration = false;
 
+        var recoursesAll = {};
+        if(MapasCulturais.hasOwnProperty('entity')){
+            var recoursesAll = RecourseService.getRecourseAll(MapasCulturais.entity.id)
+                .then(res => JSON.parse(JSON.stringify(res)).data)
+                .then(res => {
+                    console.log({res})
+                    //Se tiver um publicado o botão no front é desabilitado
+                    res.forEach(function (valor, indice) {
+                        if(valor.replyPublish == true){
+                            $scope.isPublish = true;
+                        }
+                    });
+                    for (i = 0; i < res.length; i++){
+                        if(res[i]['recourseSend']){
+                            res[i]['recourseSend'] = moment(res[i]['recourseSend'].date).format('DD/MM/YYYY hh:mm')
+                        }
+                        if(res[i]['recourseDateReply']){
+                            res[i]['recourseDateReply'] = moment(res[i]['recourseDateReply'].date).format('DD/MM/YYYY hh:mm')
+                        }
+                        //Formatando o status de nome
+                        if(res[i]['recourseStatus']) {
+                            res[i]['recourseStatus'] =  $scope.getSituation(res[i]['recourseStatus']);
+                        }
 
-        var recoursesAll = RecourseService.getRecourseAll(MapasCulturais.entity.id)
-            .then(res => JSON.parse(JSON.stringify(res)).data)
-            .then(res => {
-                console.log({res})
-                //Se tiver um publicado o botão no front é desabilitado
-                res.forEach(function (valor, indice) {
-                   if(valor.replyPublish == true){
-                       $scope.isPublish = true;
-                   }
-                });
-                for (i = 0; i < res.length; i++){
-                    if(res[i]['recourseSend']){
-                        res[i]['recourseSend'] = moment(res[i]['recourseSend'].date).format('DD/MM/YYYY hh:mm')
+                        if(res[i]['recourseReply'] == null || res[i]['recourseReply'] == '')
+                        {
+                            $scope.countNotReply++;
+                            console.log('Dentro do If: ',$scope.countNotReply);
+                        }
                     }
-                    if(res[i]['recourseDateReply']){
-                        res[i]['recourseDateReply'] = moment(res[i]['recourseDateReply'].date).format('DD/MM/YYYY hh:mm')
-                    }
-                    //Formatando o status de nome
-                    if(res[i]['recourseStatus']) {
-                        res[i]['recourseStatus'] =  $scope.getSituation(res[i]['recourseStatus']);
-                    }
-
-                    if(res[i]['recourseReply'] == null || res[i]['recourseReply'] == '')
+                    $scope.data.recourses = res;
+                    if(res.length > 0 )
                     {
-                        $scope.countNotReply++;
-                        console.log('Dentro do If: ',$scope.countNotReply);
+                        $scope.tableRecourse = true;
+                        $scope.veriftRecourses = false;
+                        $scope.textVerifyRecourses = '';
                     }
-                }
-                $scope.data.recourses = res;
-                if(res.length > 0 )
-                {
-                    $scope.tableRecourse = true;
-                    $scope.veriftRecourses = false;
-                    $scope.textVerifyRecourses = '';
-                }
-                if(res.length == 0)
-                {
-                    $scope.textVerifyRecourses = 'Não existe recursos para essa oportunidade'
-                }
-                // you returned no value here!
+                    if(res.length == 0)
+                    {
+                        $scope.textVerifyRecourses = 'Não existe recursos para essa oportunidade'
+                    }
+                    // you returned no value here!
 
-            });
+                });
+        }
+
 
         $scope.getSituation = function (situation) {
             var statusStituation = '';
@@ -261,7 +264,6 @@
         };
 
         $scope.clickPublish = function(id) {
-            console.log('clickPublish' , id);
             Swal.fire({
                 title: "Publicar recursos?",
                 text: "Verifique se todos os recursos foram respondido. Pois ao confirmar essa ação não poderá ser " +
@@ -300,6 +302,11 @@
             });
         };
 
+        $scope.infoUserRecourse = function(text) {
+            Swal.fire({
+                html:text,
+            });
+        };
         $scope.dialogSecult = function (id, title, text, icon = '', footer = '') {
             Swal.fire({
                 title: title,

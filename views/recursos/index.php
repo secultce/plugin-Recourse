@@ -3,12 +3,7 @@ $this->layout = 'panel';
 $app->view->jsObject['entity'] = $entity;
 
 $op = $app->repo('Opportunity')->find($entity->id);
-if($entity->evaluationMethodConfiguration->type != 'documentary') {
-
-}
 ?>
-
-
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
     <div class="alert info">
         Lembramos que ao clicar em <strong>Responder <i class="fa fa-edit"></i>  </strong>, o recurso tem privilégio
@@ -24,7 +19,9 @@ if($entity->evaluationMethodConfiguration->type != 'documentary') {
         </p>
         <p>
         <h5>
-            <?php echo $entity->name; ?>
+            <a href="<?php echo $urlOpp; ?>" target="_blank">
+                <?php echo $entity->name; ?>
+            </a>
         </h5>
         </p>
         <p>
@@ -179,18 +176,24 @@ if($entity->evaluationMethodConfiguration->type != 'documentary') {
             </tr>
         </table>
         <div>
-            <small>isPublish: {{isPublish}}</small>
-            <button
-                class="btn btn-primary"
-                title="Publica esses recursos para os proponentes visualizem a resposta"
-                ng-click="clickPublish(<?php echo $entity->id; ?>)"
-                ng-if="data.recourses.length > 0"
-                disabled
-                type="button"
-            >
-                <?php \MapasCulturais\i::_e('Publicar Recursos'); ?>
-                <i class="fas fa-paper-plane"></i>
-            </button>
+           <div ng-if="!isPublish">
+               <button
+                       class="btn btn-primary"
+                       title="Publica esses recursos para os proponentes visualizem a resposta"
+                       ng-click="clickPublish(<?php echo $entity->id; ?>)"
+                       ng-if="data.recourses.length > 0"
+                       disabled
+                       type="button"
+               >
+                   <?php \MapasCulturais\i::_e('Publicar Recursos'); ?>
+                   <i class="fas fa-paper-plane"></i>
+               </button>
+           </div>
+            <div ng-else class="alert success">
+                <label for="">
+                    <h5>Recursos publicado</h5>
+                </label>
+            </div>
         </div>
 
     </div>

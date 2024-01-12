@@ -19,23 +19,43 @@ class Recourse extends \MapasCulturais\Controller{
 
     public function GET_agent()
     {
-        dump($this->data);
+        $app = App::i();
+        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
+        $this->_publishAssets();
+        //Convertendo o valor para inteiro para uma comparação, caso nao seja ids iguais lança a mensagem de permissão
+        //Todo: Averiguar em situação que o owner tem vários agentes individuais
+        $idAgent = (int) $this->data['id'];
+        $isOwner = true;
+        if(isset($app->getUser()->profile->id)){
+            $idAgent !== $app->getUser()->profile->id ? $isOwner = false : $isOwner = true;
+        }
+
+        //Buscando todos os recursos publicados e do agente logado
+        $agent = $app->repo('Agent')->find($idAgent);
+        $allRecourceUser = $app->repo('Recourse\Entities\Recourse')->findBy([
+            'agent' => $agent
+        ]);
+        $this->render('recources-user',[
+            'isOwner' => $isOwner,
+            'allRecourceUser' => $allRecourceUser
+        ]);
     }
 
     public function GET_oportunidade()
     {
         $app = App::i();
         $this->requireAuthentication();
-
         $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
         $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
 
         $entity = $app->repo('Opportunity')->find($this->data['id']);
+
         //Se for administrador
         if($entity->canUser('@control')){
-            $this->render('index', ['entity' => $entity, 'app' => $app]);
+            $urlOpp = $app->createUrl('opportunity', $entity->id);
+            $this->render('index', ['entity' => $entity, 'app' => $app, 'urlOpp' => $urlOpp]);
         }
     }
 
@@ -223,6 +243,16 @@ class Recourse extends \MapasCulturais\Controller{
             $this->json([ 'title' => 'Sucesso', 'message' => 'Publicação realizada com sucesso', 'status' => 200], 200);
         }
         $this->json([ 'title' => 'Error', 'message' => 'Ocorreu um erro inesperado.', 'type' => 'error'], 500);
+    }
+
+    protected function _publishAssets()
+    {
+        $app = App::i();
+        $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
+        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
+        $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
+        $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
+        $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
     }
 
 

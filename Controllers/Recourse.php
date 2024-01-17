@@ -10,7 +10,6 @@ use Recourse\Entities\Recourse as EntityRecourse;
 
 
 class Recourse extends \MapasCulturais\Controller{
-
     public function GET_index()
     {
 
@@ -96,10 +95,8 @@ class Recourse extends \MapasCulturais\Controller{
             'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
             'Alterado em: ' => $recourse->recourseDateReply
         ];
-//        $app->em->persist($recourse);
-//        $app->em->flush();
 //        $entityRevision = new EntityRevision($recourseData, $recourse, 'created' , 'Alterado resposta do recurso');
-//        $entityRevision->save(true);
+//        dump($recourse->getRevisionIds(EntityRecourse::class, EntityRecourse));
         try {
             $app->em->persist($recourse);
             $app->em->flush();
@@ -158,7 +155,6 @@ class Recourse extends \MapasCulturais\Controller{
         //Alterando o claimDisabled no metadata
         $opp = $app->repo('Opportunity')->find($this->postData['id']);
         //Valor recebido pela request é repassado para alteração
-
         if ($opp) {
             self::saveClaimDisabled($opp, $this->postData['claimDisabled']);
         }
@@ -177,7 +173,7 @@ class Recourse extends \MapasCulturais\Controller{
     }
 
     /**
-    Faz Verificação para qndo for desabilitado o recurso, excluir do metadata da conf. de recurso
+    * Faz Verificação para qndo for desabilitado o recurso, excluir do metadata da conf. de recurso
      */
     public static function verifyClaim($entity)
     {

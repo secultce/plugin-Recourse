@@ -46,6 +46,7 @@ if ($enableRecourse == '0') {
                     <?php i::_e('Desabilitar formulário de Recurso'); ?>
                 </option>
             </select>
+
             <div id="insertData" class="<?php echo $enabledDiv; ?>">
                 <table class="table-full">
                     <tr class="table-full">

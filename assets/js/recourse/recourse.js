@@ -17,13 +17,6 @@ $(function () {
             $('#insertData').hide();
         }
     });
-    $( "#btn-open-recourse-user" ).on( "click", function() {
-        console.log('btn-open-recourse-user0');
-
-
-
-
-    } );
 
 });
 
@@ -43,13 +36,9 @@ function claimDisabled(opt)
 function sendRecourse(registration, opportunity)
 {
     var ctxUser = '';
-    console.log({ctxUser})
     var idCtxUser = 'context-recourse-user-' + registration;
     var agent = MapasCulturais.userProfile.id;
     console.log(registration, agent);
-
-
-
     Swal.fire({
         title: "Escrever o Recurso",
         input: "textarea",

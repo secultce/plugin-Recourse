@@ -11,7 +11,7 @@ use \MapasCulturais\App;
  * @ORM\entity(repositoryClass="MapasCulturais\Repository")
  */
 class Recourse extends \MapasCulturais\Entity {
-
+    use \MapasCulturais\Traits\EntityRevision;
     //const STATUS_ENABLED = 1; - self:STATUS_ENABLED para deferido
     //const STATUS_DISABLED = -9; - self:STATUS_DISABLED para indeferido
     // const STATUS_DRAFT = 0; - self:STATUS_DRAFT para status inicial

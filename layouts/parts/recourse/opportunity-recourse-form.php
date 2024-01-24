@@ -7,28 +7,16 @@ $enabledDiv = 'hidden';
 $selectedEnabled = 'selected';
 $selectedDisabled = '';
 $entity = $this->controller->requestedEntity;
-//dump($entity );
 //Verdadeiro ou Falso se o usuário tem permissão para modificar os campos dessa entidade
 $can_edit = $entity->canUser('modifyRegistrationFields');
-
-//Se o formulário tiver configurado para o recurso está habilitado
-if ($enableRecourse == '0') {
-    $enabledDiv = 'visible';
-    $selectedEnabled = '';
-    $selectedDisabled = 'selected';
-}
-
 ?>
 
 <p>
 <hr>
-
 </p>
 
 <div class="">
     <div class="panel panel-default ">
-
-
     <div class="panel-heading"> <h4 class="title-h4"><?php i::_e("Recurso"); ?></h4></div>
     <p class="registration-help mgt-16 mgb-16">
         Espaço para configurar se a oportunidade receberá a modalidade de recurso.
@@ -36,20 +24,14 @@ if ($enableRecourse == '0') {
         <p class="registration-help mgt-16 mgb-16">
             Se habilitar os recursos tem a possibilidade de adicionar um período onde o usuário enviará seus recursos.
         </p>
-    <div class=""><label class="">
-
-    </div>
     <div class="panel-body">
         <form id="resourceFormData">
-
             <div id="insertData" class="">
                 <table class="table-full">
                     <tr class="table-full">
                         <td>
                             <div class="form-group">
-                                <!--                                <label for="hora-inicial">Data de início </label>-->
-                                <!--                                <input type="date" class="date form-control dateResource" name="date-initial" value="">-->
-                                <span class="label"><?php \MapasCulturais\i::_e("Data Inicial"); ?>:</span>
+                                 <span class="label"><?php \MapasCulturais\i::_e("Data Inicial"); ?>:</span>
                                 <span class="js-editable"
                                       data-type="date"
                                       data-value="<?php echo $confRecourse['dt_initial']; ?>"
@@ -120,6 +102,7 @@ if ($enableRecourse == '0') {
     $(function() {
         //Ocutando a div existente no modulo de oportunidades
         // $("#registration-claim-configuration").hide();
+
     });
 </script>
 

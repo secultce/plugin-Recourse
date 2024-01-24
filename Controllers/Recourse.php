@@ -4,12 +4,14 @@ namespace Recourse\Controllers;
 use DateTime;
 use \MapasCulturais\App;
 use \MapasCulturais\Entities\EntityRevision;
+use MapasCulturais\Entities\EntityRevision as Revision;
 use \MapasCulturais\Entities\EntityRevisionData;
-use MapasCulturais\Entities\OpportunityMeta;
+use MapasCulturais\Traits;
 use Recourse\Entities\Recourse as EntityRecourse;
 
 
 class Recourse extends \MapasCulturais\Controller{
+
     public function GET_index()
     {
 
@@ -45,15 +47,15 @@ class Recourse extends \MapasCulturais\Controller{
         $app = App::i();
         $this->requireAuthentication();
         $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
-        $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
         $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
+        $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
 
         $entity = $app->repo('Opportunity')->find($this->data['id']);
 
         //Se for administrador
         if($entity->canUser('@control')){
-            $urlOpp = $app->createUrl('opportunity', $entity->id);
+            $urlOpp = $app->createUrl('oportunidade', $entity->id);
             $this->render('index', ['entity' => $entity, 'app' => $app, 'urlOpp' => $urlOpp]);
         }
     }
@@ -93,23 +95,22 @@ class Recourse extends \MapasCulturais\Controller{
         $recourseData = [
             'Resposta' => $this->data['reply'],
             'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
-            'Alterado em: ' => $recourse->recourseDateReply
+            'Alterado em: ' => $recourse->recourseDateReply,
+
         ];
-//        $entityRevision = new EntityRevision($recourseData, $recourse, 'created' , 'Alterado resposta do recurso');
-//        dump($recourse->getRevisionIds(EntityRecourse::class, EntityRecourse));
+        //Gravando dados para log de atividades
+        $revision = new Revision($recourseData,$recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
         try {
             $app->em->persist($recourse);
             $app->em->flush();
-            $entityRevision = new EntityRevision($recourseData, $recourse, 'created' , 'Alterado resposta do recurso');
-            $entityRevision->save();
+            $revision->save(true);
             $this->json(['message' => 'Recurso respondido com sucesso!', 'status' => 200], 200);
         }catch (Exception $e) {
-            dump($e->getMessage());
-//            return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
+            return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
         }
 
-//         $hook_prefix = $this->getHookPrefix();
-//         $app->applyHookBoundTo($this, "{$hook_prefix}.recourses", [&$recourse]);
+         $hook_prefix = $this->getHookPrefix();
+         $app->applyHookBoundTo($this, "{$hook_prefix}.recourses", [&$recourse]);
     }
 
     public function GET_registration()
@@ -194,6 +195,7 @@ class Recourse extends \MapasCulturais\Controller{
     public function POST_sendRecourse()
     {
         $app = App::i();
+
         $registratrion = $app->repo('Registration')->find($this->data['registration']);
         $opportinuty = $app->repo('Opportunity')->find($this->data['opportunity']);
         $agent = $app->repo('Agent')->find($this->data['agent']);
@@ -205,7 +207,8 @@ class Recourse extends \MapasCulturais\Controller{
             $recourse->registration = $registratrion;
             $recourse->opportunity = $opportinuty;
             $recourse->agent = $agent ;
-            $situ = $recourse->save(true);
+            $recourse->create_timestamp = new \DateTime();
+            $situ = $recourse->save();
             if(is_null($situ)){
                 return $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
             }
@@ -251,5 +254,53 @@ class Recourse extends \MapasCulturais\Controller{
         $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
     }
 
+    protected function createLogsRevision($dataRevision, $recourse)
+    {
+        $app = App::i();
+        $conn = $app->em->getConnection();
 
+
+        dump($recourse->getClassName());
+        foreach ($dataRevision as $keysRevision => $revisionData)
+        {
+            $lastRevsisionDataId = $conn
+                ->executeQuery('SELECT id FROM entity_revision_data ORDER BY "timestamp" DESC LIMIT 1')
+                ->fetch()['id'];
+            $sqlRevisionData = "INSERT INTO
+            entity_revision_data (\"id\", \"timestamp\", \"key\", \"value\")
+            VALUES (:id, :timestamp, :key, :value)";
+            $conn->executeUpdate($sqlRevisionData, [
+                'id' => $lastRevsisionDataId + 1,
+                'timestamp' => (new \DateTime())->format(DATE_W3C),
+                'key' => $keysRevision,
+                'value' => $revisionData,
+            ]);
+//
+            $lastEntityRevisionId = $conn
+                ->executeQuery('SELECT id FROM entity_revision ORDER BY "create_timestamp" DESC LIMIT 1')
+                ->fetch()['id'];
+            $sqlEntityRevision = "INSERT INTO
+                    entity_revision (id, user_id, object_id, object_type, create_timestamp, action, message)
+                    VALUES (:id, :user_id, :object_id, :object_type, :create_timestamp, :action, :message)";
+            $conn->executeUpdate($sqlEntityRevision, [
+                'id' => $lastEntityRevisionId+1,
+                'user_id' => $app->user->id,
+                'object_id' => $recourse->id,
+                'object_type' => $recourse->getClassName(),
+                'create_timestamp' => (new \DateTime())->format(DATE_W3C),
+                'action' => EntityRevision::ACTION_CREATED,
+                'message' => 'Registro criado.',
+            ]);
+
+            $conn->executeUpdate("INSERT INTO entity_revision_revision_data VALUES (:revision_id, :revision_data_id)", [
+                'revision_id' => $lastEntityRevisionId + 1,
+                'revision_data_id' => $lastRevsisionDataId + 1
+            ]);
+
+        }
+
+
+
+
+    }
 }

@@ -182,7 +182,6 @@ $op = $app->repo('Opportunity')->find($entity->id);
                        title="Publica esses recursos para os proponentes visualizem a resposta"
                        ng-click="clickPublish(<?php echo $entity->id; ?>)"
                        ng-if="data.recourses.length > 0"
-                       disabled
                        type="button"
                >
                    <?php \MapasCulturais\i::_e('Publicar Recursos'); ?>

@@ -42,7 +42,7 @@ $this->layout = 'panel';
                                 <a href="#" ng-click="infoUserRecourse('<?php echo $recourse->recourseText; ?>')">Ler Recurso</a>
                             <?php
                             }else{
-                                echo strlen($recourse->recourseText);
+                                echo $recourse->recourseText;
                             }
                             ?>
 
@@ -51,7 +51,17 @@ $this->layout = 'panel';
                             <?php echo $recourse->recourseSend->format('d/m/Y H:i:s'); ?>
                         </td>
                         <td>
-                            <?php echo $recourse->recourseStatus; ?>
+                            <?php
+                            switch ($recourse->recourseStatus) {
+                                case '0':
+                                    echo 'Aberto';
+                                    break;
+                                case '1':
+                                    echo 'Deferido';
+                                    break;
+                                case '-9':
+                                    echo 'Indeferido';
+                            } ?>
                         </td>
                         <td>
                             <?php

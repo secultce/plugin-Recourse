@@ -277,14 +277,15 @@
                 confirmButtonText: "Sim, Publicar",
                 cancelButtonText: "Não, sair",
             }).then((result) => {
-                Swal.fire({
-                    title: 'Aguarde...',
-                    text: 'Todos os recursos estão sendo publicados, aguarde a conclusão.',
-                    imageUrl: MapasCulturais.spinnerUrl,
-                    imageHeight: 30,
-                    showConfirmButton: false,
-                });
+
                 if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Aguarde...',
+                        text: 'Todos os recursos estão sendo publicados, aguarde a conclusão.',
+                        imageUrl: MapasCulturais.spinnerUrl,
+                        imageHeight: 30,
+                        showConfirmButton: false,
+                    });
                     RecourseService.publish(id)
                     .then(res => JSON.parse(JSON.stringify(res)).data)
                     .then(res => {
@@ -296,8 +297,13 @@
                                 text: 'Todos os recursos foram publicados',
                                 timer: 1500
                             });
+                            setTimeout(function () {
+                                window.location.reload();
+                            }, 1500);
                         }
                     });
+                }else{
+                    Swal.close();
                 }
             });
         };

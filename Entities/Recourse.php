@@ -105,6 +105,13 @@ class Recourse extends \MapasCulturais\Entity {
     protected $replyPublish = false;
 
     /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="create_timestamp", type="datetime", nullable=false)
+     */
+    protected $createTimestamp;
+
+    /**
      * @var Object
      *
      * @param $opportunityId integer

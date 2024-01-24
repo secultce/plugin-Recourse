@@ -25,29 +25,24 @@ if ($enableRecourse == '0') {
 
 </p>
 
-<div class="registration-fieldset">
+<div class="">
     <div class="panel panel-default ">
 
 
     <div class="panel-heading"> <h4 class="title-h4"><?php i::_e("Recurso"); ?></h4></div>
     <p class="registration-help mgt-16 mgb-16">
-        Espaço para configurar se a oportunidade receberá a modalidade de recurso. Se habilitar os recursos tem a
-        possibilidade de adicionar um período onde o usuário enviará seus recursos.
+        Espaço para configurar se a oportunidade receberá a modalidade de recurso.
     </p>
-    <div class=""><label class="mgt-16"><?php i::_e("Formulário para recursos"); ?></label></div>
+        <p class="registration-help mgt-16 mgb-16">
+            Se habilitar os recursos tem a possibilidade de adicionar um período onde o usuário enviará seus recursos.
+        </p>
+    <div class=""><label class="">
+
+    </div>
     <div class="panel-body">
         <form id="resourceFormData">
-            <select id="resourceOptions" name="claimDisabled" class="form-control" name="resourceOptions">
-                <option value="">--Selecione--</option>
-                <option value="0" <?php echo $selectedDisabled; ?>>
-                    <?php i::_e('Habilitar formulário de Recurso'); ?>
-                </option>
-                <option <?php echo $selectedEnabled; ?> value="1">
-                    <?php i::_e('Desabilitar formulário de Recurso'); ?>
-                </option>
-            </select>
 
-            <div id="insertData" class="<?php echo $enabledDiv; ?>">
+            <div id="insertData" class="">
                 <table class="table-full">
                     <tr class="table-full">
                         <td>
@@ -124,7 +119,7 @@ if ($enableRecourse == '0') {
     // Shorthand for $( document ).ready()
     $(function() {
         //Ocutando a div existente no modulo de oportunidades
-        $("#registration-claim-configuration").hide();
+        // $("#registration-claim-configuration").hide();
     });
 </script>
 

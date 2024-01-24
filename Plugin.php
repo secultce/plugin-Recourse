@@ -21,17 +21,22 @@ class Plugin extends \MapasCulturais\Plugin {
             }
         });
 
-        $app->hook('view.partial(claim-configuration).params', function($__data, &$__template) use ($app,$plugin){
+        $app->hook('view.partial(claim-configuration):after', function($__template, &$__html) use ($app,$plugin){
+            //add assests
             $plugin->_publishAssets();
+            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
+            //Entidade
+            $opp = $this->controller->requestedEntity;
+
             //0 Está habilitado - 1 Não está habilitado
-            $enableRecourse = $__data['opportunity']->getMetadata('claimDisabled');
-            //Se alterar a configuração para desabilitar o recurso, faz uma verificação de metadata
+            $enableRecourse = $opp->getMetadata('claimDisabled');
+             //Se alterar a configuração para desabilitar o recurso, faz uma verificação de metadata
             if($enableRecourse == '1'){
-                RecourseController::verifyClaim($__data['opportunity']);
+                RecourseController::verifyClaim($opp);
             }
 
             //Todo o metadata da oportunidade
-            $metadt = $__data['opportunity']->getMetadata();
+            $metadt = $opp->getMetadata();
             //Array gerado para enderezar o valores na view
             $confRecourse = [];
             //Preenchendo array
@@ -53,7 +58,11 @@ class Plugin extends \MapasCulturais\Plugin {
                 }
             }
 
-            $this->part('recourse/opportunity-recourse-form', [ 'enableRecourse' => $enableRecourse, 'confRecourse' => $confRecourse]);
+            $this->part('recourse/opportunity-recourse-form', [
+                'enableRecourse' => $enableRecourse,
+                'confRecourse' => $confRecourse,
+                'template' => $__html
+            ]);
 
         });
 
@@ -119,24 +128,24 @@ class Plugin extends \MapasCulturais\Plugin {
     }
 
    function register () {
-    $app = App::i();
-    $app->registerController('recursos', 'Recourse\Controllers\Recourse');
-       $this->registerOpportunityMetadata('recourse_date_initial', [
+        $app = App::i();
+        $app->registerController('recursos', 'Recourse\Controllers\Recourse');
+        $this->registerOpportunityMetadata('recourse_date_initial', [
            'label' => i::__('Data Inicial'),
            'type' => 'date',
-       ]);
-       $this->registerOpportunityMetadata('recourse_time_initial', [
+        ]);
+        $this->registerOpportunityMetadata('recourse_time_initial', [
            'label' => i::__('Hora Inicial'),
            'type' => 'time',
-       ]);
-       $this->registerOpportunityMetadata('recourse_date_end', [
+        ]);
+        $this->registerOpportunityMetadata('recourse_date_end', [
            'label' => i::__('Hora Inicial'),
            'type' => 'date',
-       ]);
-       $this->registerOpportunityMetadata('recourse_time_end', [
+        ]);
+        $this->registerOpportunityMetadata('recourse_time_end', [
            'label' => i::__('Hora Final'),
            'type' => 'time',
-       ]);
+        ]);
    }
 
    function verifyPeriodEnd($opportunity) {

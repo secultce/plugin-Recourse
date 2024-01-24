@@ -189,7 +189,7 @@ $op = $app->repo('Opportunity')->find($entity->id);
                    <i class="fas fa-paper-plane"></i>
                </button>
            </div>
-            <div ng-else class="alert success">
+            <div ng-else class="alert success"  ng-if="isPublish">
                 <label for="">
                     <h5>Recursos publicado</h5>
                 </label>

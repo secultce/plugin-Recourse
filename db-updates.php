@@ -19,7 +19,7 @@ return [
             registration_id integer NOT NULL,
             opportunity_id integer NOT NULL,
             agent_id integer NOT NULL,
-            reply_agent_id integer NOT NULL,
+            reply_agent_id integer NULL,
             reply_publish boolean NULL default false,
             create_timestamp timestamp,
             PRIMARY KEY(id));");
@@ -37,10 +37,6 @@ return [
         CONSTRAINT resource_agent_fk
         FOREIGN KEY (agent_id) REFERENCES agent (id)
         ON DELETE CASCADE NOT DEFERRABLE INITIALLY IMMEDIATE");
-    },
-    'alter table recourse_entity_revision' => function() {
-        __exec("ALTER TYPE object_type ADD VALUE 'Recourse\Entities\Recourse'");
-
     }
 
 ];

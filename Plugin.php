@@ -111,6 +111,12 @@ class Plugin extends \MapasCulturais\Plugin {
             $idAgent = $app->getUser()->profile->id;
             $this->part('panel/nav-recursos', ['idAgent' => $idAgent]);
         });
+
+        $app->hook('doctrine.emum(object_type).values', function(&$result) use ($app){
+//              array_merge($result, ['Recourse' => 'Recourse\Entities\Recourse']);
+            $result["Recourse"] = 'Recourse\Entities\Recourse';
+
+        });
    }//fim _init
 
     /**

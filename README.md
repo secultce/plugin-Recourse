@@ -11,7 +11,8 @@
 # 🚀 Instalação
 
 Instalação padrão como recomenda a [documentação](https://mapasculturais.gitbook.io/documentacao-para-desenvolvedores/formacao-para-desenvolvedores/plugins) oficial do repositório.
-    ### 🆙 - Acessar o container, acessar /var/www/scripts e rodar `./db-update`
+
+- 🆙 - Acessar o container, acessar /var/www/scripts e rodar  `./db-update`
 
 ## ✅ Critérios de Aceitação
 

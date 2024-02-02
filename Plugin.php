@@ -107,7 +107,8 @@ class Plugin extends \MapasCulturais\Plugin {
         /**
          * Adiciona novos menus no painel
          */
-        $app->hook('template(panel.registrations.nav.panel.registrations):after', function () use($app) {
+
+        $app->hook('template(panel.<<*>>.nav.panel.registrations):after', function () use($app) {
             $idAgent = $app->getUser()->profile->id;
             $this->part('panel/nav-recursos', ['idAgent' => $idAgent]);
         });

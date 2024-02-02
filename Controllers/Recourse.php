@@ -57,6 +57,9 @@ class Recourse extends \MapasCulturais\Controller{
         if($entity->canUser('@control')){
             $urlOpp = $app->createUrl('oportunidade', $entity->id);
             $this->render('index', ['entity' => $entity, 'app' => $app, 'urlOpp' => $urlOpp]);
+        }else{
+            return $app->redirect($app->createUrl('panel', 'index'), 401);
+            dump($entity);
         }
     }
 

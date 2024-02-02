@@ -6,10 +6,14 @@ $this->jsObject['isAdmin'] = $entity->canUser("@control");
 $visibledTab = false;
 ?>
 
-<?php $this->applyTemplateHook('opportunity-resource--tab', 'before'); ?>
-<?php $this->applyTemplateHook('opportunity-resource--tab', 'begin'); ?>
+<?php $this->applyTemplateHook('ource--tab', 'before'); ?>
+<?php $this->applyTemplateHook('opportunity-resource--tab', 'begin');
+    if($entity->canUser('@control')):
+?>
 <li><a href="#recursos" onclick="redirectRecourse()"><?php \MapasCulturais\i::_e("Recursos");?></a></li>
-<?php $this->applyTemplateHook('opportunity-resource--tab', 'end'); ?>
+<?php
+    endif;// fim condição de administrador
+$this->applyTemplateHook('opportunity-resource--tab', 'end'); ?>
 <?php $this->applyTemplateHook('opportunity-resource--tab', 'after'); ?>
 <script>
     $(document).ready(function(){

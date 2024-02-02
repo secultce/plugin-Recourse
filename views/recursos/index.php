@@ -45,7 +45,7 @@ $op = $app->repo('Opportunity')->find($entity->id);
                     <th>Aberto por</th>
                     <th>Recurso</th>
                     <th>Enviado em </th>
-                    <th>Status</th>
+                    <th>Situação</th>
                     <th>Resposta</th>
                     <th>Respondido em </th>
                 </tr>
@@ -72,7 +72,7 @@ $op = $app->repo('Opportunity')->find($entity->id);
                         <p ng-if="recourses.recourseReply.length < 100">
                             <small> {{recourses.recourseReply}}</small>
                         </p>
-                        <a class="btn btn-recourse" style="color: #0a766a"
+                        <a class="btn btn-recourse" style="color: #0a766a" ng-if="!isPublish"
                            title="Responder ou editar o recurso do candidato"
                            ng-click="replyRecourse(
                                 recourses.id,

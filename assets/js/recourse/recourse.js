@@ -83,7 +83,7 @@ function sendRecourse(registration, opportunity)
                 agent,
                 recourse: ctxUser
             };
-
+            var panelRecourse = MapasCulturais.createUrl('recursos/agent/'+agent);
             $.ajax({
                 method: "POST",
                 url: MapasCulturais.baseURL + 'recursos/sendRecourse',
@@ -94,7 +94,7 @@ function sendRecourse(registration, opportunity)
                         // icon: "success",
                         title: res.message,
                         html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-                            "<a href='#' class='btn btn-default'>Ir p/ painel</a> <a href='#' class='btn btn-info'>Sair</a> ",
+                            "<a href='"+panelRecourse+"' class='btn btn-default'>Ir p/ painel</a>",
                         showConfirmButton: false,
                         // timer: 1500
                     });

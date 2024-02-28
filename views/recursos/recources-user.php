@@ -52,16 +52,22 @@ $this->layout = 'panel';
                         </td>
                         <td>
                             <?php
-                            switch ($recourse->recourseStatus) {
-                                case '0':
-                                    echo 'Aberto';
-                                    break;
-                                case '1':
-                                    echo 'Deferido';
-                                    break;
-                                case '-9':
-                                    echo 'Indeferido';
-                            } ?>
+                           
+                            if($recourse->replyPublish){
+                                switch ($recourse->recourseStatus) {
+                                    case '0':
+                                        echo 'Aberto';
+                                        break;
+                                    case '1':
+                                        echo 'Deferido';
+                                        break;
+                                    case '-9':
+                                        echo 'Indeferido';
+                                }
+                            }else{
+                                echo "Aguarde...";
+                            }
+                            ?>
                         </td>
                         <td>
                             <?php

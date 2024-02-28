@@ -25,4 +25,5 @@ Plugin em desenvolvimento e por isso pode acontecer de eventualmente sofrer alte
 ![Recourse](https://github.com/secultce/plugin-Recourse/assets/7341117/6221de08-1b5e-4f56-9163-865afcd0643b)
 
 
-### 🆙
+### 🆙 Video de apresentação do funcionamento do Plugin
+https://drive.google.com/file/d/1YP6rZWNj6bDHZBk2KCVxtQbHCLpt5Ys0/view?usp=sharing

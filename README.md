@@ -12,6 +12,8 @@
 
 Instalação padrão como recomenda a [documentação](https://mapasculturais.gitbook.io/documentacao-para-desenvolvedores/formacao-para-desenvolvedores/plugins) oficial do repositório.
 
+- 🆙 - Acessar o container, acessar /var/www/scripts e rodar  `./db-update`
+
 ## ✅ Critérios de Aceitação
 
 Todo o fluxo que o plugin realizará, está registrado na seguinte [documentação](https://docs.google.com/document/d/e/2PACX-1vQkPpfsQ_1h6fc6WQK1NIh4_1R_vNdXHrlHJpg34en-NglQiIaUKg9RxRcQzAdYfu4P7GDHHgdeiArh/pub) .
@@ -21,3 +23,6 @@ Plugin em desenvolvimento e por isso pode acontecer de eventualmente sofrer alte
 
 ### 🖼️ Estrutura
 ![Recourse](https://github.com/secultce/plugin-Recourse/assets/7341117/6221de08-1b5e-4f56-9163-865afcd0643b)
+
+
+### 🆙

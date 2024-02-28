@@ -71,7 +71,7 @@ $this->layout = 'panel';
                                     <a href="#" ng-click="infoUserRecourse('<?php echo $recourse->recourseReply; ?>')">Ler Resposta</a>
                                     <?php
                                 }else{
-                                    echo strlen($recourse->recourseReply);
+                                    echo $recourse->recourseReply;
                                 }
                             }else{
                                 echo '<div class="alert info">Recurso ainda não respondido ou não foi publicado.</div>';

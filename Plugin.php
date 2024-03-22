@@ -72,6 +72,9 @@ class Plugin extends \MapasCulturais\Plugin {
             //Período configurado para verificação de data e hora corrente
             $strToEnd = $entity->opportunity->getMetadata('recourse_date_end').' '.$entity->opportunity->getMetadata('recourse_time_end');
             $endOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
+            $strToInitial = $entity->opportunity->getMetadata('recourse_date_initial').' '.$entity->opportunity->getMetadata('recourse_time_initial');
+            $initialOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToInitial);//Convertendo para formato Datetime
+            
             $baseUrl = $app->_config['base.url'];
             //So mostra o botão se o recurso tiver habilitado
             if($entity->opportunity->getMetadata('claimDisabled') == '0')
@@ -79,6 +82,7 @@ class Plugin extends \MapasCulturais\Plugin {
                 $this->part('recourse/recourse-user-registration-status', [
                     'entity' => $entity,
                     'endOfPeriod' => $endOfPeriod,
+                    'initialOfPeriod' => $initialOfPeriod,
                     'baseUrl' => $baseUrl
                 ]);
             }

@@ -1,8 +1,9 @@
 <?php
 
+use MapasCulturais\App;
 use function MapasCulturais\__exec;
 
-$app = MapasCulturais\App::i();
+$app = App::i();
 $em = $app->em;
 $conn = $em->getConnection();
 
@@ -38,9 +39,4 @@ return [
         FOREIGN KEY (agent_id) REFERENCES agent (id)
         ON DELETE CASCADE NOT DEFERRABLE INITIALLY IMMEDIATE");
     }
-
 ];
-
-
-
-

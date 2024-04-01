@@ -6,7 +6,8 @@ use Recourse\Controllers\Recourse as RecourseController;
 use Recourse\Entities\Recourse as EntityRecourse;
 
 class Plugin extends \MapasCulturais\Plugin {
-    function _init () {
+    function _init(): void
+    {
         $app = App::i();
         $plugin = $this;
         $app->hook('template(opportunity.single.tabs):end', function () use ($app,$plugin) {
@@ -97,7 +98,7 @@ class Plugin extends \MapasCulturais\Plugin {
                 'agent' =>  $registration->owner->id,
                 'opportunity' => $registration->opportunity->id
             ]);
-            //Inicia com verdadeiro, em condições igual a 0, trona-se falso
+            //Inicia com verdadeiro, em condições iguais a 0, trona-se falso
             $isSendrecourse = true;
             count($rec) > 0 ?: $isSendrecourse = false;
 
@@ -128,7 +129,7 @@ class Plugin extends \MapasCulturais\Plugin {
      * Publica todos os assets (css/js)
      *
      */
-    protected function _publishAssets()
+    protected function _publishAssets(): void
     {
         $app = App::i();
         $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
@@ -138,7 +139,8 @@ class Plugin extends \MapasCulturais\Plugin {
         $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
     }
 
-   function register () {
+    function register (): void
+    {
         $app = App::i();
         $app->registerController('recursos', 'Recourse\Controllers\Recourse');
         $this->registerOpportunityMetadata('recourse_date_initial', [
@@ -157,9 +159,28 @@ class Plugin extends \MapasCulturais\Plugin {
            'label' => i::__('Hora Final'),
            'type' => 'time',
         ]);
-   }
 
-   function verifyPeriodEnd($opportunity) {
+        $app->registerFileGroup(
+            'recursos',
+            // @todo: Mexer nos Mime-Types
+            new \MapasCulturais\Definitions\FileGroup(
+                'recourse-attachment',
+                [
+                    'text/plain',
+                    'application/pdf',
+                    'application/msword',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/vnd.ms-excel',
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'image/*',
+                ],
+                'Esse formato de arquivo não é válido'
+            )
+        );
+    }
+
+    function verifyPeriodEnd($opportunity): bool
+    {
        $strToEnd = $opportunity->getMetadata('recourse_date_end').' '.$opportunity->getMetadata('recourse_time_end');
        $endOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
 
@@ -170,5 +191,5 @@ class Plugin extends \MapasCulturais\Plugin {
            }
        }
        return false;
-   }
+    }
 }

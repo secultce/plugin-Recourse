@@ -5,9 +5,8 @@ use DateTime;
 use \MapasCulturais\App;
 use \MapasCulturais\Entities\EntityRevision;
 use MapasCulturais\Entities\EntityRevision as Revision;
-use \MapasCulturais\Entities\EntityRevisionData;
-use MapasCulturais\Traits;
 use Recourse\Entities\Recourse as EntityRecourse;
+use Recourse\Entities\RecourseFile;
 
 
 class Recourse extends \MapasCulturais\Controller{
@@ -59,7 +58,6 @@ class Recourse extends \MapasCulturais\Controller{
             $this->render('index', ['entity' => $entity, 'app' => $app, 'urlOpp' => $urlOpp]);
         }else{
             return $app->redirect($app->createUrl('panel', 'index'), 401);
-            dump($entity);
         }
     }
 
@@ -108,7 +106,7 @@ class Recourse extends \MapasCulturais\Controller{
             $app->em->flush();
             $revision->save(true);
             $this->json(['message' => 'Recurso respondido com sucesso!', 'status' => 200], 200);
-        }catch (Exception $e) {
+        }catch (\Exception $e) {
             return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
         }
 
@@ -119,7 +117,6 @@ class Recourse extends \MapasCulturais\Controller{
     public function GET_registration()
     {
         $app = App::i();
-        dump($this->data);
         $reg = $app->repo('Registration')->find($this->data['id']);
         return $this->json(['resultConsolidate' => $reg->consolidatedResult]);
     }
@@ -154,7 +151,8 @@ class Recourse extends \MapasCulturais\Controller{
     }
 
 
-    function POST_disabledResource(){
+    function POST_disabledResource()
+    {
         $app = App::i();
         //Alterando o claimDisabled no metadata
         $opp = $app->repo('Opportunity')->find($this->postData['id']);
@@ -199,25 +197,40 @@ class Recourse extends \MapasCulturais\Controller{
     {
         $app = App::i();
 
-        $registratrion = $app->repo('Registration')->find($this->data['registration']);
-        $opportinuty = $app->repo('Opportunity')->find($this->data['opportunity']);
-        $agent = $app->repo('Agent')->find($this->data['agent']);
-        if(!is_null($this->data['recourse'])) {
-            $recourse = new EntityRecourse;
-            $recourse->recourseText = $this->data['recourse'];
-            $recourse->recourseSend = new \DateTime();
-            $recourse->recourseStatus = EntityRecourse::STATUS_DRAFT;
-            $recourse->registration = $registratrion;
-            $recourse->opportunity = $opportinuty;
-            $recourse->agent = $agent ;
-            $recourse->create_timestamp = new \DateTime();
-            $situ = $recourse->save();
-            if(is_null($situ)){
-                return $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
-            }
-            return $this->errorJson('Erro Inesperado', 403);
-
+        if(is_null($this->data['recourse'])) {
+            return $this->errorJson('Informe o recurso', 400);
         }
+
+        $registration = $app->repo('Registration')->find($this->data['registration']);
+        $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
+        $agent = $app->repo('Agent')->find($this->data['agent']);
+
+        $recourse = new EntityRecourse;
+        $recourse->recourseText = $this->data['recourse'];
+        $recourse->recourseSend = new \DateTime();
+        $recourse->recourseStatus = EntityRecourse::STATUS_DRAFT;
+        $recourse->registration = $registration;
+        $recourse->opportunity = $opportunity;
+        $recourse->agent = $agent;
+        $recourse->create_timestamp = new \DateTime();
+
+        try {
+            foreach($_FILES as $file) {
+                $newFile = new RecourseFile($file);
+                $newFile->group = 'recourse-attachment';
+                $newFile->private = true;
+                $newFile->owner = $recourse;
+                $newFile->save();
+            }
+        } catch (\Exception $e) {
+            throw $e;
+        }
+
+        $situ = $recourse->save();
+        if(is_null($situ)){
+            return $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
+        }
+        return $this->errorJson('Erro Inesperado', 403);
     }
 
     /*

@@ -32,12 +32,12 @@ class Recourse extends \MapasCulturais\Controller{
 
         //Buscando todos os recursos publicados e do agente logado
         $agent = $app->repo('Agent')->find($idAgent);
-        $allRecourceUser = $app->repo('Recourse\Entities\Recourse')->findBy([
+        $allRecourseUser = $app->repo('Recourse\Entities\Recourse')->findBy([
             'agent' => $agent
         ]);
-        $this->render('recources-user',[
+        $this->render('recourses-user',[
             'isOwner' => $isOwner,
-            'allRecourceUser' => $allRecourceUser
+            'allRecourseUser' => $allRecourseUser
         ]);
     }
 
@@ -151,7 +151,7 @@ class Recourse extends \MapasCulturais\Controller{
     }
 
 
-    function POST_disabledResource()
+    function POST_disabledRecourse(): void
     {
         $app = App::i();
         //Alterando o claimDisabled no metadata
@@ -253,7 +253,7 @@ class Recourse extends \MapasCulturais\Controller{
      */
     public function POST_publish()
     {
-        $res = EntityRecourse::publishResource($this->postData['opportunity']);
+        $res = EntityRecourse::publishRecourse($this->postData['opportunity']);
         if($res > 0) {
             $this->json([ 'title' => 'Sucesso', 'message' => 'Publicação realizada com sucesso', 'status' => 200], 200);
         }

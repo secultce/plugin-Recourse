@@ -18,7 +18,7 @@ class Plugin extends \MapasCulturais\Plugin {
             $opportunity = $this->controller->requestedEntity;
 
             if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && !$opportunity->claimDisabled) {
-                $this->part('singles/opportunity-resources', ['entity' => $opportunity, 'app' => $app]);
+                $this->part('singles/opportunity-recourses', ['entity' => $opportunity, 'app' => $app]);
             }
         });
 
@@ -90,7 +90,7 @@ class Plugin extends \MapasCulturais\Plugin {
         });
 
         $app->hook('template(panel.registrations.panel-registration-meta):before', function($registration) use ($app, $plugin){
-            $validate = $plugin->verifyPeriodEnd($registration->opportunity);
+            $isActivePeriod = $plugin->verifyPeriodEnd($registration->opportunity);
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $plugin->_publishAssets();
             //Verificando se já houve envio de recurso
@@ -98,14 +98,14 @@ class Plugin extends \MapasCulturais\Plugin {
                 'agent' =>  $registration->owner->id,
                 'opportunity' => $registration->opportunity->id
             ]);
-            //Inicia com verdadeiro, em condições iguais a 0, trona-se falso
-            $isSendrecourse = true;
-            count($rec) > 0 ?: $isSendrecourse = false;
+            //Inicia com verdadeiro e em condições iguais a 0 trona-se falso
+            $isRecourseSent = true;
+            count($rec) > 0 || ($isRecourseSent = false);
 
             $this->part('recourse/user-open-recourse', [
                 'registration' => $registration,
-                'isSendrecourse' => $isSendrecourse,
-                'validate' => $validate
+                'isRecourseSent' => $isRecourseSent,
+                'isActivePeriod' => $isActivePeriod
             ]);
         });
 

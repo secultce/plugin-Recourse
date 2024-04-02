@@ -1,4 +1,9 @@
 <?php
+/**
+ * @var \MapasCulturais\App $app
+ * @var bool $isOwner
+ * @var array $allRecourseUser
+ */
 
 $this->layout = 'panel';
 ?>
@@ -13,7 +18,7 @@ $this->layout = 'panel';
     <div id="table-recourse" ng-app="ng.recourse">
         <?php if($isOwner): ?>
         <div class="table-responsive"  ng-controller="RecourseController">
-            <table class="table table-bordered" id="tableAllResource" style="width:100%;">
+            <table class="table table-bordered" id="tableAllRecourse" style="width:100%;">
                 <thead>
                 <tr>
                     <th>Oportunidade</th>
@@ -24,11 +29,11 @@ $this->layout = 'panel';
                     <th style="width:25%;">Resposta</th>
                     <th>Respondido em</th>
                 </tr>
-                <tbody id="bodyAllResource">
-                <?php foreach ($allRecourceUser as $recourse): ?>
+                <tbody id="bodyAllRecourse">
+                <?php foreach ($allRecourseUser as $recourse): ?>
                     <tr>
                         <td>
-                            <a href="<?php echo $app->createUrl('opportunity', $recourse->opportunity->id ) ?>">
+                            <a href="<?= $app->createUrl('opportunity', $recourse->opportunity->id ) ?>">
                                 <?php echo $recourse->opportunity->name; ?>
                             </a>
                         </td>

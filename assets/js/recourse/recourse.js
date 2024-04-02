@@ -4,8 +4,8 @@ $(function () {
     console.log('.opportunity-claim-box ready');
     $('.opportunity-claim-box').remove();//Removendo o botão existente no modulo de oportunidades
 
-    $( "#resourceOptions" ).change(function() {
-        var opt =  $( "#resourceOptions" ).val();
+    $( "#recourseOptions" ).change(function() {
+        var opt =  $( "#recourseOptions" ).val();
         console.log({opt})
         if (opt == '0'){
             $('#insertData').show();
@@ -24,7 +24,7 @@ function claimDisabled(opt)
 {
     $.ajax({
         type: "POST",
-        url: MapasCulturais.baseURL+'recursos/disabledResource',
+        url: MapasCulturais.baseURL+'recursos/disabledRecourse',
         data: {id:MapasCulturais.entity.id, claimDisabled: opt},
         dataType: "json",
         success: function (response) {

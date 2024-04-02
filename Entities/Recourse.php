@@ -116,11 +116,10 @@ class Recourse extends \MapasCulturais\Entity {
      *
      * @param $opportunityId integer
      */
-    public static function publishResource($opportunityId) {
+    public static function publishRecourse($opportunityId): array {
         $app = App::i();
         $dql = "UPDATE Recourse\Entities\Recourse r SET r.replyPublish = true WHERE r.opportunity = {$opportunityId}";
         $query = $app->em->createQuery($dql);
-        $resource = $query->getResult();
-        return $resource;
+        return $query->getResult();
     }
 }

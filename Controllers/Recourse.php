@@ -20,6 +20,10 @@ class Recourse extends \MapasCulturais\Controller{
     public function GET_agent()
     {
         $app = App::i();
+        if($app->user->is('guest')){
+            $app->redirect('/autenticacao');
+        }
+
         $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
         $this->_publishAssets();
         //Convertendo o valor para inteiro para uma comparação, caso nao seja ids iguais lança a mensagem de permissão
@@ -217,8 +221,8 @@ class Recourse extends \MapasCulturais\Controller{
         try {
             foreach($_FILES as $file) {
                 $newFile = new RecourseFile($file);
-                $newFile->group = 'recourse-attachment';
-                $newFile->private = true;
+                $newFile->setGroup('recourse-attachment');
+                $newFile->makePrivate();
                 $newFile->owner = $recourse;
                 $newFile->save();
             }

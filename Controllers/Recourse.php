@@ -5,6 +5,8 @@ use DateTime;
 use \MapasCulturais\App;
 use \MapasCulturais\Entities\EntityRevision;
 use MapasCulturais\Entities\EntityRevision as Revision;
+use MapasCulturais\Exceptions\PermissionDenied;
+use MapasCulturais\Exceptions\WorkflowRequest;
 use Recourse\Entities\Recourse as EntityRecourse;
 use Recourse\Entities\RecourseFile;
 
@@ -45,7 +47,7 @@ class Recourse extends \MapasCulturais\Controller{
         ]);
     }
 
-    public function GET_oportunidade()
+    public function GET_oportunidade(): void
     {
         $app = App::i();
         $this->requireAuthentication();
@@ -61,7 +63,7 @@ class Recourse extends \MapasCulturais\Controller{
             $urlOpp = $app->createUrl('oportunidade', $entity->id);
             $this->render('index', ['entity' => $entity, 'app' => $app, 'urlOpp' => $urlOpp]);
         }else{
-            return $app->redirect($app->createUrl('panel', 'index'), 401);
+            $app->redirect($app->createUrl('panel', 'index'), 401);
         }
     }
 
@@ -197,17 +199,24 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
-    public function POST_sendRecourse()
+    /**
+     * @throws WorkflowRequest
+     * @throws PermissionDenied
+     */
+    public function POST_sendRecourse(): void
     {
         $app = App::i();
 
         if(is_null($this->data['recourse'])) {
-            return $this->errorJson('Informe o recurso', 400);
+            $this->errorJson('Informe o recurso', 400);
+            return;
         }
 
         $registration = $app->repo('Registration')->find($this->data['registration']);
         $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
         $agent = $app->repo('Agent')->find($this->data['agent']);
+
+        $app->em->beginTransaction();
 
         $recourse = new EntityRecourse;
         $recourse->recourseText = $this->data['recourse'];
@@ -226,40 +235,43 @@ class Recourse extends \MapasCulturais\Controller{
                 $newFile->owner = $recourse;
                 $newFile->save();
             }
+
+            $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
+
+            $recourse->save();
+            $app->em->commit();
+            $app->em->flush();
+
+            $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
         } catch (\Exception $e) {
-            throw $e;
+            $this->errorJson(['Erro Inesperado'], 403);
         }
 
-        $situ = $recourse->save();
-        if(is_null($situ)){
-            return $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
-        }
-        return $this->errorJson('Erro Inesperado', 403);
     }
 
     /*
      * Função para verificar se já tem resposta de um recurso
      * */
-    public function verifyReply($recourse)
+    public function verifyReply($recourse): void
     {
         $app = App::i();
         $rec = $app->repo('Recourse\Entities\Recourse')->find($recourse);
         if(!is_null($rec->recourseReply) && !is_null($rec->recourseDateReply) && $rec->replyAgentId !== $app->getAuth()->getAuthenticatedUser()->profile->id)
         {
-            return $this->errorJson('Esse recurso foi respondido', 403);
+            $this->errorJson('Esse recurso foi respondido', 403);
         }
     }
 
-    /*
+    /**
      * Função que publica os recursos
      * @params $opportunity integer
-     * return void
      */
-    public function POST_publish()
+    public function POST_publish(): void
     {
         $res = EntityRecourse::publishRecourse($this->postData['opportunity']);
         if($res > 0) {
             $this->json([ 'title' => 'Sucesso', 'message' => 'Publicação realizada com sucesso', 'status' => 200], 200);
+            return;
         }
         $this->json([ 'title' => 'Error', 'message' => 'Ocorreu um erro inesperado.', 'type' => 'error'], 500);
     }
@@ -274,7 +286,7 @@ class Recourse extends \MapasCulturais\Controller{
         $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
     }
 
-    protected function createLogsRevision($dataRevision, $recourse)
+    protected function createLogsRevision(array $dataRevision, \Recourse\Entities\Recourse $recourse): void
     {
         $app = App::i();
         $conn = $app->em->getConnection();
@@ -318,9 +330,6 @@ class Recourse extends \MapasCulturais\Controller{
             ]);
 
         }
-
-
-
 
     }
 }

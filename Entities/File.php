@@ -2,6 +2,8 @@
 
 namespace Recourse\Entities;
 
+use Doctrine\ORM\Mapping as ORM;
+
 /**
 * File
 *

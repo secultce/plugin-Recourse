@@ -33,6 +33,11 @@ class Recourse extends \MapasCulturais\Entity {
     protected $recourseText;
 
     /**
+     * @ORM\OneToMany(targetEntity="Recourse\Entities\RecourseFile", mappedBy="owner", cascade="remove", orphanRemoval=true)
+     */
+    protected $recourseFiles = [];
+
+    /**
      * @var \DateTime
      *
      * @ORM\Column(name="recourse_send", type="datetime", nullable=true)
@@ -116,6 +121,11 @@ class Recourse extends \MapasCulturais\Entity {
      *
      * @param $opportunityId integer
      */
+
+    protected function canUserViewPrivateFiles($user): bool {
+        return $this->owner->registration->canUser('view');
+    }
+
     public static function publishRecourse($opportunityId): array {
         $app = App::i();
         $dql = "UPDATE Recourse\Entities\Recourse r SET r.replyPublish = true WHERE r.opportunity = {$opportunityId}";

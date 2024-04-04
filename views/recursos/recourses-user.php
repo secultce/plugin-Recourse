@@ -2,7 +2,7 @@
 /**
  * @var \MapasCulturais\App $app
  * @var bool $isOwner
- * @var array $allRecourseUser
+ * @var \Recourse\Entities\Recourse[] $allRecourseUser
  */
 
 $this->layout = 'panel';
@@ -22,7 +22,7 @@ $this->layout = 'panel';
                 <thead>
                 <tr>
                     <th>Oportunidade</th>
-                    <th>Inscrição</th>
+                    <th>Inscrição/Agente</th>
                     <th style="width:25%;">Recurso Solicitado</th>
                     <th>Enviado em</th>
                     <th>Situação</th>
@@ -33,24 +33,46 @@ $this->layout = 'panel';
                 <?php foreach ($allRecourseUser as $recourse): ?>
                     <tr>
                         <td>
-                            <a href="<?= $app->createUrl('opportunity', $recourse->opportunity->id ) ?>">
+                            <a href="<?= $app->createUrl('oportunidade', $recourse->opportunity->id ) ?>">
                                 <?php echo $recourse->opportunity->name; ?>
                             </a>
                         </td>
                         <td>
-                            <?php echo $recourse->registration->id; ?>
+                            <a href="<?= $app->createUrl('inscricao', $recourse->registration->id ) ?>">
+                                <?php echo $recourse->registration->number; ?>
+                            </a>
+                            <br>
+                            <a href="<?= $app->createUrl('agente', $recourse->registration->owner->id ) ?>">
+                                <?php echo $recourse->registration->owner->name; ?>
+                            </a>
+                            <?php
+                            $file = (new \MapasCulturais\App)->i()->repo('Recourse\Entities\RecourseFile')->find(5146919);
+                            dump($file->owner->registration->canUser('view'));
+                            ?>
                         </td>
                         <td>
-                            <?php
-                            if(strlen($recourse->recourseText) > 30){
-                                echo substr($recourse->recourseText, 0,100).'...<br/>'; ?>
-                                <a href="#" ng-click="infoUserRecourse('<?php echo $recourse->recourseText; ?>')">Ler Recurso</a>
-                            <?php
-                            }else{
-                                echo $recourse->recourseText;
-                            }
-                            ?>
+                            <span>
+                                <?php
+                                echo substr($recourse->recourseText, 0,100);
+                                if(strlen($recourse->recourseText) > 100):
+                                    echo <<<'HTML'
+                                            ...<br/>
+                                            <a href='#' ng-click="infoUserRecourse('{$recourse->recourseText}')">Ler Recurso</a>
+HTML;
+                                endif;
+                                ?>
+                            </span>
 
+                            <?php if(count($recourse->recourseFiles) > 0): ?>
+                            <div id="recourse-attachments">
+                                <?php
+                                    foreach ($recourse->recourseFiles as $attachment) {
+                                        dump($attachment->url);
+                                        echo "<a href='{$attachment->url}' target='_blank'>{$attachment->name}</a><br/>";
+                                    }
+                                ?>
+                            </div>
+                            <?php endif ?>
                         </td>
                         <td>
                             <?php echo $recourse->recourseSend->format('d/m/Y H:i:s'); ?>

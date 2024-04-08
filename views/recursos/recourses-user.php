@@ -45,10 +45,6 @@ $this->layout = 'panel';
                             <a href="<?= $app->createUrl('agente', $recourse->registration->owner->id ) ?>">
                                 <?php echo $recourse->registration->owner->name; ?>
                             </a>
-                            <?php
-                            $file = (new \MapasCulturais\App)->i()->repo('Recourse\Entities\RecourseFile')->find(5146919);
-                            dump($file->owner->registration->canUser('view'));
-                            ?>
                         </td>
                         <td>
                             <span>
@@ -63,11 +59,10 @@ HTML;
                                 ?>
                             </span>
 
-                            <?php if(count($recourse->recourseFiles) > 0): ?>
+                            <?php if(count($recourse->files) > 0): ?>
                             <div id="recourse-attachments">
                                 <?php
-                                    foreach ($recourse->recourseFiles as $attachment) {
-                                        dump($attachment->url);
+                                    foreach ($recourse->files as $attachment) {
                                         echo "<a href='{$attachment->url}' target='_blank'>{$attachment->name}</a><br/>";
                                     }
                                 ?>

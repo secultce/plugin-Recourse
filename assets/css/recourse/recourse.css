@@ -317,3 +317,6 @@ div:where(.swal2-icon) .swal2-icon-content {
     margin-top: 10px;
 }
 
+#recourse-attachments {
+    margin-top: 3em;
+}

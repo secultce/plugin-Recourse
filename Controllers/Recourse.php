@@ -275,13 +275,15 @@ class Recourse extends \MapasCulturais\Controller{
 
             $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
 
-            $app->em->commit();
-            $app->em->flush();
+            $app->em->commit(true);
 
             $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
         } catch (\Exception $e) {
-            $app->em->rollback();
-            $this->errorJson(['Erro Inesperado'], 403);
+            // @todo: Estudar qual o erro ocasional que acontece
+            throw $e;
+            exit;
+//            $app->em->rollback();
+//            $this->errorJson(['Erro Inesperado'], 403);
         }
 
     }

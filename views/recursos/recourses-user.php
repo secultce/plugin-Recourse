@@ -51,19 +51,21 @@ $this->layout = 'panel';
                                 <?php
                                 echo substr($recourse->recourseText, 0,100);
                                 if(strlen($recourse->recourseText) > 100):
-                                    echo <<<'HTML'
-                                            ...<br/>
-                                            <a href='#' ng-click="infoUserRecourse('{$recourse->recourseText}')">Ler Recurso</a>
-HTML;
+                                    echo "...<br/>
+                                          <a href='#' ng-click='infoUserRecourse(\"{$recourse->recourseText}\")'>Ler Recurso</a>";
                                 endif;
                                 ?>
                             </span>
 
                             <?php if(count($recourse->files) > 0): ?>
-                            <div id="recourse-attachments">
+                            <div class="recourse-attachments">
                                 <?php
                                     foreach ($recourse->files as $attachment) {
-                                        echo "<a href='{$attachment->url}' target='_blank'>{$attachment->name}</a><br/>";
+                                        echo "<a
+                                                  href='{$attachment->url}'
+                                                  target='_blank'
+                                                  class='recourse-attachment-item'
+                                              >{$attachment->name}</a>";
                                     }
                                 ?>
                             </div>

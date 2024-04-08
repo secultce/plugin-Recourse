@@ -1,4 +1,10 @@
 <?php
+/**
+ * @var $app \MapasCulturais\App
+ * @var $entity \MapasCulturais\Entities\Opportunity
+ * @var $urlOpp string
+ */
+
 $this->layout = 'panel';
 $app->view->jsObject['entity'] = $entity;
 
@@ -12,26 +18,20 @@ $op = $app->repo('Opportunity')->find($entity->id);
         antes da publicação. Não poderá ser editado por outra pessoa.
     </div>
     <div class="panel-header clearfix" ng-controller="RecourseController">
-        <p class="text-center">
         <h5 style="color:#636161;">
             Recursos da Oportunidade
         </h5>
-        </p>
-        <p>
         <h5>
             <a href="<?php echo $urlOpp; ?>" target="_blank">
                 <?php echo $entity->name; ?>
             </a>
         </h5>
-        </p>
         <p>
             Total de recursos: <small class="badge">{{data.recourses.length}}</small>
             Total rec. sem resposta: <small class="badge">{{countNotReply}}</small>
             <a href="#" class="btn btn-default" style="float: right" title="Imprimir todos recursos">Imprimir Recursos</a>
         </p>
-        <p>
-            <hr>
-        </p>
+        <hr/>
     </div>
     <div ng-controller="RecourseController">
         <div style="width: 100%;" ng-if="veriftRecourses">
@@ -54,13 +54,22 @@ $op = $app->repo('Opportunity')->find($entity->id);
                 <tr ng-repeat="recourses in data.recourses">
                     <td>
                         <a href="{{redirectRegistrarion(recourses.registration.id)}}" target="_blank">
-                            {{recourses.registration.id}}
+                            {{recourses.registration.number}}
                         </a>
                     </td>
                     <td>{{recourses.agent.name}}</td>
                     <td>
                         {{recourses.recourseText.substring(0, 100)}}...
                         <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)">Ler mais</a>
+
+                        <div class="recourse-attachments">
+                            <a
+                                ng-repeat="file in recourses.files"
+                                href="{{file.url}}"
+                                target="_blank"
+                                class="recourse-attachment-item"
+                            >{{file.name}}</a>
+                        </div>
                     </td>
 
                     <td>{{recourses.recourseSend}}</td>

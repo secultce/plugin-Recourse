@@ -89,7 +89,7 @@ class Plugin extends \MapasCulturais\Plugin {
             }
         });
 
-        $app->hook('template(panel.registrations.panel-registration-meta):before', function($registration) use ($app, $plugin){
+        $app->hook('template(panel.<<registrations|index>>.panel-registration-meta):after', function($registration) use ($app, $plugin){
             $isActivePeriod = $plugin->verifyPeriodEnd($registration->opportunity);
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $plugin->_publishAssets();

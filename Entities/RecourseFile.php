@@ -14,7 +14,7 @@ class RecourseFile extends File{
     /**
      * @var \Recourse\Entities\Recourse
      *
-     * @ORM\ManyToOne(targetEntity="Recourse\Entities\Recourse")
+     * @ORM\ManyToOne(targetEntity="Recourse\Entities\Recourse", cascade={"persist", "remove"})
      * @ORM\JoinColumn(name="object_id", referencedColumnName="id", onDelete="CASCADE")
      * })
      */
@@ -29,4 +29,9 @@ class RecourseFile extends File{
      * })
      */
     protected $parent;
+
+    public function getUrl(): string
+    {
+        return \MapasCulturais\App::i()->createUrl('recursos', 'arquivo', [$this->id]);
+    }
 }

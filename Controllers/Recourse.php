@@ -47,6 +47,40 @@ class Recourse extends \MapasCulturais\Controller{
         ]);
     }
 
+    public function GET_arquivo(): void
+    {
+        $this->requireAuthentication();
+
+        $app = App::i();
+
+        $file = $app->repo('\Recourse\Entities\RecourseFile')->find($this->data['id']);
+
+        $file_path = file_exists($file->getPath()) ? $file->getPath() : (string)str_replace('recourse-entities-recourse/'. $file->owner->id, 'recourse-entities-recourse', $file->getPath());
+
+        if (file_exists($file_path)) {
+            $headers = [
+                'Content-Description' => 'File Transfer',
+                'Content-Type' => mime_content_type($file_path),
+                'Content-Disposition' => 'attachment; filename="' . $file->name . '"',
+                'Content-Transfer-Encoding' => 'binary',
+                'Expires' => '0',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Pragma' => 'public',
+                'Content-Length' => filesize($file_path)
+            ];
+
+            foreach($headers as $name => $value){
+                header("{$name}: {$value}");
+            }
+
+            readfile($file_path);
+
+            exit;
+        }
+
+        $app->pass();
+    }
+
     public function GET_oportunidade(): void
     {
         $app = App::i();
@@ -229,21 +263,24 @@ class Recourse extends \MapasCulturais\Controller{
 
         try {
             foreach($_FILES as $file) {
+                $app->disableAccessControl();
+
                 $newFile = new RecourseFile($file);
                 $newFile->setGroup('recourse-attachment');
-                $newFile->makePrivate();
                 $newFile->owner = $recourse;
-                $newFile->save();
+                $newFile->makePrivate();
+
+                $app->enableAccessControl();
             }
 
             $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
 
-            $recourse->save();
             $app->em->commit();
             $app->em->flush();
 
             $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
         } catch (\Exception $e) {
+            $app->em->rollback();
             $this->errorJson(['Erro Inesperado'], 403);
         }
 

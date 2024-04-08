@@ -15,7 +15,7 @@ class Recourse extends \MapasCulturais\Entity {
     //const STATUS_ENABLED = 1; - self:STATUS_ENABLED para deferido
     //const STATUS_DISABLED = -9; - self:STATUS_DISABLED para indeferido
     // const STATUS_DRAFT = 0; - self:STATUS_DRAFT para status inicial
-   /**
+    /**
      * @var integer
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
@@ -35,7 +35,7 @@ class Recourse extends \MapasCulturais\Entity {
     /**
      * @ORM\OneToMany(targetEntity="Recourse\Entities\RecourseFile", mappedBy="owner", cascade="remove", orphanRemoval=true)
      */
-    protected $recourseFiles = [];
+    protected $files = [];
 
     /**
      * @var \DateTime

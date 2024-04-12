@@ -73,7 +73,7 @@ $op = $app->repo('Opportunity')->find($entity->id);
                     </td>
 
                     <td>{{recourses.recourseSend}}</td>
-                    <td>{{recourses.recourseStatus}}</td>
+                    <td>{{recourses.status}}</td>
                     <td>
                         <p ng-if="recourses.recourseReply.length > 100">
                             <small> {{recourses.recourseReply.substr(0, 100)}}...</small>
@@ -89,7 +89,7 @@ $op = $app->repo('Opportunity')->find($entity->id);
                                 recourses.agent,
                                 recourses.recourseText,
                                 recourses.recourseSend,
-                                recourses.recourseStatus,
+                                recourses.status,
                                 recourses.replyAgentId,
                                 recourses.recourseReply
                             )"

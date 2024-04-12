@@ -49,7 +49,7 @@ class Recourse extends \MapasCulturais\Entity {
      *
      * @ORM\Column(name="recourse_status", type="string", nullable=false)
      */
-    protected $recourseStatus;
+    protected $status;
     
      /**
      * @var string

@@ -130,7 +130,7 @@ class Recourse extends \MapasCulturais\Controller{
         $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         $recourse->recourseReply = $this->data['reply'];
         $recourse->recourseDateReply = new DateTime;
-        $recourse->recourseStatus = $statusRecourse;
+        $recourse->status = $statusRecourse;
         $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
         $recourse->createTimestamp = new DateTime();
         $recourseData = [
@@ -255,11 +255,14 @@ class Recourse extends \MapasCulturais\Controller{
         $recourse = new EntityRecourse;
         $recourse->recourseText = $this->data['recourse'];
         $recourse->recourseSend = new \DateTime();
-        $recourse->recourseStatus = EntityRecourse::STATUS_DRAFT;
+        $recourse->status = EntityRecourse::STATUS_DRAFT;
         $recourse->registration = $registration;
         $recourse->opportunity = $opportunity;
         $recourse->agent = $agent;
         $recourse->create_timestamp = new \DateTime();
+
+        $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
+        $recourse->save(true);
 
         try {
             foreach($_FILES as $file) {
@@ -277,15 +280,18 @@ class Recourse extends \MapasCulturais\Controller{
 
             $app->em->commit(true);
 
-            $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
+            http_response_code(200);
+            echo json_encode(['message' => 'Recurso enviado com sucesso']);
         } catch (\Exception $e) {
-            // @todo: Estudar qual o erro ocasional que acontece
-            throw $e;
-            exit;
-//            $app->em->rollback();
-//            $this->errorJson(['Erro Inesperado'], 403);
+            $recourse && $recourse->delete();
+            http_response_code(500);
+            echo json_encode([
+                'message' => 'Erro inesperado, tente novamente',
+                'errorMessage' => $e->getMessage(),
+            ]);
         }
 
+        exit;
     }
 
     /*

@@ -78,7 +78,7 @@ $this->layout = 'panel';
                             <?php
                            
                             if($recourse->replyPublish){
-                                switch ($recourse->recourseStatus) {
+                                switch ($recourse->status) {
                                     case '0':
                                         echo 'Aberto';
                                         break;

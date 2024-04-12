@@ -8,11 +8,10 @@
 $this->layout = 'panel';
 $app->view->jsObject['entity'] = $entity;
 
-$op = $app->repo('Opportunity')->find($entity->id);
 ?>
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
     <div class="alert info">
-        Lembramos que ao clicar em <strong>Responder <i class="fa fa-edit"></i>  </strong>, o recurso tem privilégio
+        Lembramos que ao clicar em <strong>Responder <i class="fa fa-edit"></i></strong>, o recurso tem privilégio
         de edição antes da publicação, somente para você. Não poderá mais ser editado por ninguém.
         Lembramos que ao clicar em Responder, o recurso só poderá ser respondido e editado exclusivamente por você,
         antes da publicação. Não poderá ser editado por outra pessoa.
@@ -53,7 +52,7 @@ $op = $app->repo('Opportunity')->find($entity->id);
             <tbody>
                 <tr ng-repeat="recourses in data.recourses">
                     <td>
-                        <a href="{{redirectRegistrarion(recourses.registration.id)}}" target="_blank">
+                        <a href="{{redirectRegistration(recourses.registration.id)}}" target="_blank">
                             {{recourses.registration.number}}
                         </a>
                     </td>
@@ -91,7 +90,8 @@ $op = $app->repo('Opportunity')->find($entity->id);
                                 recourses.recourseSend,
                                 recourses.status,
                                 recourses.replyAgentId,
-                                recourses.recourseReply
+                                recourses.recourseReply,
+                                recourses.replyResult
                             )"
                         >
                             <i class="fas fa-edit"></i>
@@ -105,21 +105,21 @@ $op = $app->repo('Opportunity')->find($entity->id);
             </tbody>
 
         </table>
+
+        <div style="width: 100%;"  ng-show="divReplyRecourse">
+            <button class="btn btn-default" ng-click="backRecourse()" title="Voltar para lista que tem todos os recursos">
+            <i class="fas fa-arrow-left"></i>
+                Voltar para lista
+            </button>
+        </div>
+
         <table class="table table-bordered" width='100%' ng-show="divReplyRecourse">
-            <tr>
-                <div style="width: 100%;"  ng-show="divReplyRecourse">
-                    <button class="btn btn-default" ng-click="backRecourse()" title="Voltar para lista que tem todos os recursos">
-                    <i class="fas fa-arrow-left"></i>
-                        Voltar para lista
-                    </button>
-                </div>
-            </tr>
             <tr>
                 <td width="50%">
                     <table width="100%">
                         <tr>
                             <td> <strong>Inscrição:</strong>
-                                <a href="{{redirectRegistrarion(recourseAdmin.registration)}}" target="_blank">
+                                <a href="{{redirectRegistration(recourseAdmin.registration)}}" target="_blank">
                                     {{recourseAdmin.registration}}
                                 </a>
                             </td>
@@ -132,17 +132,20 @@ $op = $app->repo('Opportunity')->find($entity->id);
                         </tr>
                         <tr>
                             <td>
-                                <strong>Aberto por: </strong>  {{recourseAdmin.agent.name}}
+                                <strong>Aberto por: </strong>
+                                {{recourseAdmin.agent.name}}
                             </td>
                         </tr>
                         <tr>
                             <td>
-                                <strong>Enviado em: </strong> {{recourseAdmin.recourseSend}}
+                                <strong>Enviado em: </strong>
+                                {{recourseAdmin.recourseSend}}
                             </td>
                         </tr>
                         <tr>
                             <td>
-                                <strong>Situação: </strong> {{getSituation(recourseAdmin.status)}}
+                                <strong>Situação: </strong>
+                                {{getSituation(recourseAdmin.status)}}
                             </td>
                         </tr>
                     </table>
@@ -158,8 +161,8 @@ $op = $app->repo('Opportunity')->find($entity->id);
                                 <option value="1">Deferido</option>
                                 <option value="-9" >Indeferido</option>
                             </select>
-                            <div class="form-group" ng-if="noteActual > 0">
-                                <label for="">Nota Atual: {{noteActual}}</label>
+                            <div class="form-group" ng-if="currentGrade > 0">
+                                <label for="">Nota Atual: {{currentGrade}}</label>
                                 <p class="textcenter">
                                     <small>--</small>
                                 </p>
@@ -167,14 +170,18 @@ $op = $app->repo('Opportunity')->find($entity->id);
                                     <label for="label-reply-form">
                                         <strong>Nova nota</strong>
                                     </label>
-                                    <input type="text" class="form-control" ng-model="newNoteReply">
+                                    <input type="text" class="form-control" ng-model="recourseAdmin.replyResult">
                                 </p>
                             </div>
                             <button
                                 class="btn btn-primary btn-reply-recourse"
                                 type="submit"
-                                ng-click="sendReplyRecourse(recourseAdmin.idRecourse, recourseAdmin.status,
-                                 recourseAdmin.reply)"
+                                ng-click="sendReplyRecourse(
+                                    recourseAdmin.idRecourse,
+                                    recourseAdmin.status,
+                                    recourseAdmin.reply,
+                                    recourseAdmin.replyResult
+                                )"
                             >
                                 Enviar resposta
                                 <i class="fas fa-paper-plane"></i>

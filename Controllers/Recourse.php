@@ -129,30 +129,37 @@ class Recourse extends \MapasCulturais\Controller{
 
         $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         $recourse->recourseReply = $this->data['reply'];
-        isset($this->data['replyResult']) && $recourse->replyResult = $this->data['replyResult'];
+        $recourse->replyResult = $this->data['replyResult'] ?: null;
         $recourse->recourseDateReply = new DateTime;
         $recourse->status = $statusRecourse;
         $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
         $recourse->createTimestamp = new DateTime();
+
         $recourseData = [
             'Resposta' => $this->data['reply'],
             'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
             'Alterado em: ' => $recourse->recourseDateReply,
-
         ];
+        ($recourse->replyResult) && ($recourseData['Nota'] = $recourse->replyResult);
         //Gravando dados para log de atividades
         $revision = new Revision($recourseData,$recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
         try {
+            $app->applyHookBoundTo($this, 'recourse.reply', [&$recourse]);
+
             $app->em->persist($recourse);
             $app->em->flush();
             $revision->save(true);
-            $this->json(['message' => 'Recurso respondido com sucesso!', 'status' => 200], 200);
+
+            http_response_code(202);
+            echo json_encode(['message' => 'Recurso respondido com sucesso!']);
         }catch (\Exception $e) {
-            return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
+            echo json_encode([
+                'message' => 'Ocorreu um erro inesperado!',
+                'errorMessage' => $e->getMessage(),
+            ]);
         }
 
-         $hook_prefix = $this->getHookPrefix();
-         $app->applyHookBoundTo($this, "{$hook_prefix}.recourses", [&$recourse]);
+        exit;
     }
 
     public function GET_registration()
@@ -281,7 +288,7 @@ class Recourse extends \MapasCulturais\Controller{
 
             $app->em->commit(true);
 
-            http_response_code(200);
+            http_response_code(201);
             echo json_encode(['message' => 'Recurso enviado com sucesso']);
         } catch (\Exception $e) {
             $recourse && $recourse->delete();

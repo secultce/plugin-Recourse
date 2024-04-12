@@ -72,7 +72,7 @@ $app->view->jsObject['entity'] = $entity;
                     </td>
 
                     <td>{{recourses.recourseSend}}</td>
-                    <td>{{recourses.status}}</td>
+                    <td>{{getSituation(recourses.status)}}</td>
                     <td>
                         <p ng-if="recourses.recourseReply.length > 100">
                             <small> {{recourses.recourseReply.substr(0, 100)}}...</small>
@@ -155,13 +155,13 @@ $app->view->jsObject['entity'] = $entity;
                         <div class="form-group">
                             <label for="label-reply-form">Responder ao recurso</label>
                             <textarea name="reply" class="form-control" rows="10" ng-model="recourseAdmin.reply">{{recourseAdmin.reply}}</textarea>
-                            <label for="label-reply-form">Alterar a situação {{recourseAdmin.status}}</label>
+                            <label for="label-reply-form">Alterar a situação {{getSituation(recourseAdmin.status)}}</label>
                             <select name="situation" ng-change="changeSituation()" ng-model="recourseAdmin.status" id="" class="form-control">
-                                <option value="">--Selecione--</option>
+                                <option value="" disabled selected>--Selecione--</option>
                                 <option value="1">Deferido</option>
                                 <option value="-9" >Indeferido</option>
                             </select>
-                            <div class="form-group" ng-if="currentGrade > 0">
+                            <div class="form-group" ng-if="<?= $entity->evaluationMethodConfiguration->type == 'technical' ?> && recourseAdmin.status == '1'">
                                 <label for="">Nota Atual: {{currentGrade}}</label>
                                 <p class="textcenter">
                                     <small>--</small>

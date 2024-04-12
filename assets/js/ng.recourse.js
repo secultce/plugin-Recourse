@@ -16,7 +16,7 @@
 
     // Seriço que executa no servidor as requisições HTTP
     module.factory('RecourseService', ['$http', function ($http) {
-        var urlBase = MapasCulturais.baseURL
+        const urlBase = MapasCulturais.baseURL
         return {
             getRecourseAll: function (opportunityId) {
                 return $http.get(urlBase + 'recursos/todos/' + opportunityId)

@@ -108,7 +108,7 @@ class Recourse extends \MapasCulturais\Controller{
         $this->json($entity, 200);
     }
 
-    public function POST_responder()
+    public function POST_responder(): void
     {
         //Verificando se o recurso foi respondido
         self::verifyReply($this->data['entityId']);
@@ -116,10 +116,12 @@ class Recourse extends \MapasCulturais\Controller{
         $app = App::i();
         //Validações
         if($this->data['reply'] == ''){
-            return $this->json(['message' => 'Você não poderá enviar sem antes responder ao candidato'], 403);
+            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 403);
+            return;
         }
         if($this->data['status'] == '' || $this->data['status'] == 'Aberto'){
-            return $this->json(['message' => 'Informe a situação da resposta do seu recurso'], 403);
+            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 403);
+            return;
         }
         //Formatando o status para gravar no banco
         $statusRecourse =  $this->data['status'];
@@ -153,6 +155,7 @@ class Recourse extends \MapasCulturais\Controller{
             http_response_code(202);
             echo json_encode(['message' => 'Recurso respondido com sucesso!']);
         }catch (\Exception $e) {
+            http_response_code(500);
             echo json_encode([
                 'message' => 'Ocorreu um erro inesperado!',
                 'errorMessage' => $e->getMessage(),

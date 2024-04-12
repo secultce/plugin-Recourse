@@ -129,6 +129,7 @@ class Recourse extends \MapasCulturais\Controller{
 
         $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         $recourse->recourseReply = $this->data['reply'];
+        isset($this->data['replyResult']) && $recourse->replyResult = $this->data['replyResult'];
         $recourse->recourseDateReply = new DateTime;
         $recourse->status = $statusRecourse;
         $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;

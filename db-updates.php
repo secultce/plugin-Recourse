@@ -37,8 +37,10 @@ return [
         CONSTRAINT resource_agent_fk
         FOREIGN KEY (agent_id) REFERENCES agent (id)
         ON DELETE CASCADE NOT DEFERRABLE INITIALLY IMMEDIATE");
-    }
-
+    },
+    'add column reply_result' => function() {
+        __exec("ALTER TABLE recourse ADD reply_result VARCHAR(10) NULL");
+    },
 ];
 
 

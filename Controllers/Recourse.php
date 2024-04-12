@@ -28,22 +28,20 @@ class Recourse extends \MapasCulturais\Controller{
 
         $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
         $this->_publishAssets();
-        //Convertendo o valor para inteiro para uma comparação, caso nao seja ids iguais lança a mensagem de permissão
-        //Todo: Averiguar em situação que o owner tem vários agentes individuais
-        $idAgent = (int) $this->data['id'];
-        $isOwner = true;
-        if(isset($app->getUser()->profile->id)){
-            $idAgent !== $app->getUser()->profile->id ? $isOwner = false : $isOwner = true;
-        }
 
-        //Buscando todos os recursos publicados e do agente logado
-        $agent = $app->repo('Agent')->find($idAgent);
-        $allRecourseUser = $app->repo('Recourse\Entities\Recourse')->findBy([
-            'agent' => $agent
-        ]);
+        $agent = $app->repo('Agent')->find($this->data['id']);
+        $isOwner = $agent->canUser('@control');
+
+        $allRecoursesUser = [];
+        foreach($app->user->agents as $agent) {
+            $agentRecourses = $app->repo('Recourse\Entities\Recourse')->findBy([
+                'agent' => $agent,
+            ]);
+            $allRecoursesUser = array_merge($allRecoursesUser, $agentRecourses);
+        }
         $this->render('recourses-user',[
             'isOwner' => $isOwner,
-            'allRecourseUser' => $allRecourseUser
+            'allRecoursesUser' => $allRecoursesUser,
         ]);
     }
 
@@ -257,25 +255,33 @@ class Recourse extends \MapasCulturais\Controller{
             return;
         }
 
+        /** @var \MapasCulturais\Entities\Registration $registration */
         $registration = $app->repo('Registration')->find($this->data['registration']);
-        $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
-        $agent = $app->repo('Agent')->find($this->data['agent']);
+        $agent = $registration->owner;
 
-        $app->em->beginTransaction();
+        if(!$agent->canUser('@control')) {
+            $this->errorJson(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            return;
+        }
+
+        $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
 
         $recourse = new EntityRecourse;
-        $recourse->recourseText = $this->data['recourse'];
-        $recourse->recourseSend = new \DateTime();
-        $recourse->status = EntityRecourse::STATUS_DRAFT;
-        $recourse->registration = $registration;
-        $recourse->opportunity = $opportunity;
-        $recourse->agent = $agent;
-        $recourse->create_timestamp = new \DateTime();
-
-        $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
-        $recourse->save(true);
 
         try {
+            $app->em->beginTransaction();
+
+            $recourse->recourseText = $this->data['recourse'];
+            $recourse->recourseSend = new \DateTime();
+            $recourse->status = EntityRecourse::STATUS_DRAFT;
+            $recourse->registration = $registration;
+            $recourse->opportunity = $opportunity;
+            $recourse->agent = $agent;
+            $recourse->create_timestamp = new \DateTime();
+
+            $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
+            $recourse->save(true);
+
             foreach($_FILES as $file) {
                 $app->disableAccessControl();
 

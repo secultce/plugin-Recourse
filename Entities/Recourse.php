@@ -59,6 +59,13 @@ class Recourse extends \MapasCulturais\Entity {
     protected $recourseReply;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(name="reply_result", type="text", nullable=true)
+     */
+    protected $replyResult;
+
+    /**
      * @var \DateTime
      *
      * @ORM\Column(name="recourse_date_reply", type="datetime", nullable=true)

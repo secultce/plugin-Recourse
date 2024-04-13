@@ -4,8 +4,8 @@ $(function () {
     console.log('.opportunity-claim-box ready');
     $('.opportunity-claim-box').remove();//Removendo o botão existente no modulo de oportunidades
 
-    $( "#resourceOptions" ).change(function() {
-        var opt =  $( "#resourceOptions" ).val();
+    $( "#recourseOptions" ).change(function() {
+        var opt =  $( "#recourseOptions" ).val();
         console.log({opt})
         if (opt == '0'){
             $('#insertData').show();
@@ -24,7 +24,7 @@ function claimDisabled(opt)
 {
     $.ajax({
         type: "POST",
-        url: MapasCulturais.baseURL+'recursos/disabledResource',
+        url: MapasCulturais.baseURL+'recursos/disabledRecourse',
         data: {id:MapasCulturais.entity.id, claimDisabled: opt},
         dataType: "json",
         success: function (response) {
@@ -35,19 +35,27 @@ function claimDisabled(opt)
 
 function sendRecourse(registration, opportunity)
 {
-    var ctxUser = '';
-    var idCtxUser = 'context-recourse-user-' + registration;
-    var agent = MapasCulturais.userProfile.id;
-    console.log(registration, agent);
+    const recourseTextareaId = 'context-recourse-user-' + registration;
+    const recourseAttachmentsId = 'attachment-recourse-user-' + registration;
+    const agent = MapasCulturais.userProfile.id;
+
     Swal.fire({
         title: "Escrever o Recurso",
-        input: "textarea",
-        inputLabel: "Envie todos os destaques do seu recurso por escrito uma vez em um único campo",
-        inputPlaceholder: "Mensagem para a banca",
-        inputAttributes: {
-            "aria-label": "Type your message here",
-            "id": idCtxUser
-        },
+        html: `<div style="display: grid">
+            <label to="${recourseTextareaId}">Envie todos os destaques do seu recurso por escrito uma vez em um único campo</label>
+            <textarea
+                id=${recourseTextareaId}
+                aria-label="Type your message here"
+                placeholder="Mensagem para a banca avaliadora"
+                class="swal2-textarea"
+                style="margin: 5px"></textarea>
+            <input
+                id=${recourseAttachmentsId}
+                type="file"
+                multiple
+                max="2"
+                class="swal2-file">
+        </div>`,
         showCancelButton: true,
         confirmButtonText: 'Enviar recurso',
         cancelButtonText: 'Sair',
@@ -56,13 +64,12 @@ function sendRecourse(registration, opportunity)
             confirmButton: "btn-success-rec",
             cancelButton: "btn-warning-rec"
         },
-        preConfirm: async (login) => {
-            console.log(login);
-            ctxUser = login;
-            if(ctxUser == ''){
+        preConfirm: async () => {
+            const recourseText = document.getElementById(recourseTextareaId).value;
+
+            if(recourseText === ''){
                 Swal.fire({
                     position: "top-center",
-                    // icon: "success",
                     title: "Precisa preencher o campo de recurso",
                     showConfirmButton: true,
                     timer: 2000
@@ -70,51 +77,51 @@ function sendRecourse(registration, opportunity)
                 return false;
             }
 
+            return [
+                recourseText,
+                document.getElementById(recourseAttachmentsId).files,
+            ];
         },
         allowOutsideClick: false
-    }).then((result) => {
-        console.log({result});
+    }).then(async content => {
+        const [recourseText, files] = content.value;
 
-        console.log({ctxUser})
-        if(ctxUser !== '') {
-            var send = {
-                registration,
-                opportunity,
-                agent,
-                recourse: ctxUser
-            };
-            var panelRecourse = MapasCulturais.createUrl('recursos/agent/'+agent);
-            $.ajax({
-                method: "POST",
-                url: MapasCulturais.baseURL + 'recursos/sendRecourse',
-                data: send,
-                success: function(res) {
-                    Swal.fire({
-                        position: "top-center",
-                        // icon: "success",
-                        title: res.message,
-                        html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-                            "<a href='"+panelRecourse+"' class='btn btn-default'>Ir p/ painel</a>",
-                        showConfirmButton: false,
-                        // timer: 1500
-                    });
-                    //Ocutando botão para não ter mais de um envio
-                    $("#btn-recourse-"+registration).hide();
+        const formData = new FormData();
+        formData.append('registration', registration)
+        formData.append('opportunity', opportunity)
+        formData.append('agent', agent)
+        formData.append('recourse', recourseText)
+        Array.from(files).forEach((file, index) => {
+            formData.append(index,  file)
+        })
 
-                },
-                error: function() {
-                    Swal.fire({
-                        position: "top-center",
-                        // icon: "success",
-                        title: 'Ops! Ocorreu um erro inesperado',
-                        html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-                            "<a href='#' class='btn btn-default'>Ir p/ painel</a> <a href='#' class='btn btn-info'>Sair</a> ",
-                        showConfirmButton: false,
-                        // timer: 1500
-                    });
-                }
+        const panelRecourse = MapasCulturais.createUrl('recursos/agent/'+agent);
+        const response = await fetch(MapasCulturais.baseURL + 'recursos/sendRecourse', {
+            method: 'POST',
+            body: formData,
+        })
+        const data = await response.json()
+
+        // @todo: Entender como fazer para saber se deu erro
+        if(data) {
+            Swal.fire({
+                position: "top-center",
+                title: data.message,
+                html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
+                    "<a href='"+panelRecourse+"' class='btn btn-default'>Ir p/ painel</a>",
+                showConfirmButton: false,
             });
-
+            //Ocutando botão para não ter mais de um envio
+            $("#btn-recourse-"+registration).hide();
+        }
+        if(!data) {
+            Swal.fire({
+                position: "top-center",
+                title: 'Ops! Ocorreu um erro inesperado',
+                html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
+                    "<a href='#' class='btn btn-default'>Ir p/ painel</a> <a href='#' class='btn btn-info'>Sair</a> ",
+                showConfirmButton: false,
+            })
         }
     });
 }

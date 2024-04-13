@@ -25,7 +25,7 @@ $can_edit = $entity->canUser('modifyRegistrationFields');
             Se habilitar os recursos tem a possibilidade de adicionar um período onde o usuário enviará seus recursos.
         </p>
     <div class="panel-body">
-        <form id="resourceFormData">
+        <form id="recourseFormData">
             <div id="insertData" class="">
                 <table class="table-full">
                     <tr class="table-full">

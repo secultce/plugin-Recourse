@@ -5,9 +5,10 @@ use DateTime;
 use \MapasCulturais\App;
 use \MapasCulturais\Entities\EntityRevision;
 use MapasCulturais\Entities\EntityRevision as Revision;
-use \MapasCulturais\Entities\EntityRevisionData;
-use MapasCulturais\Traits;
+use MapasCulturais\Exceptions\PermissionDenied;
+use MapasCulturais\Exceptions\WorkflowRequest;
 use Recourse\Entities\Recourse as EntityRecourse;
+use Recourse\Entities\RecourseFile;
 
 
 class Recourse extends \MapasCulturais\Controller{
@@ -21,6 +22,10 @@ class Recourse extends \MapasCulturais\Controller{
     public function GET_agent()
     {
         $app = App::i();
+        if($app->user->is('guest')){
+            $app->redirect('/autenticacao');
+        }
+
         $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
         $this->_publishAssets();
         //Convertendo o valor para inteiro para uma comparação, caso nao seja ids iguais lança a mensagem de permissão
@@ -33,16 +38,50 @@ class Recourse extends \MapasCulturais\Controller{
 
         //Buscando todos os recursos publicados e do agente logado
         $agent = $app->repo('Agent')->find($idAgent);
-        $allRecourceUser = $app->repo('Recourse\Entities\Recourse')->findBy([
+        $allRecourseUser = $app->repo('Recourse\Entities\Recourse')->findBy([
             'agent' => $agent
         ]);
-        $this->render('recources-user',[
+        $this->render('recourses-user',[
             'isOwner' => $isOwner,
-            'allRecourceUser' => $allRecourceUser
+            'allRecourseUser' => $allRecourseUser
         ]);
     }
 
-    public function GET_oportunidade()
+    public function GET_arquivo(): void
+    {
+        $this->requireAuthentication();
+
+        $app = App::i();
+
+        $file = $app->repo('\Recourse\Entities\RecourseFile')->find($this->data['id']);
+
+        $file_path = file_exists($file->getPath()) ? $file->getPath() : (string)str_replace('recourse-entities-recourse/'. $file->owner->id, 'recourse-entities-recourse', $file->getPath());
+
+        if (file_exists($file_path)) {
+            $headers = [
+                'Content-Description' => 'File Transfer',
+                'Content-Type' => mime_content_type($file_path),
+                'Content-Disposition' => 'attachment; filename="' . $file->name . '"',
+                'Content-Transfer-Encoding' => 'binary',
+                'Expires' => '0',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Pragma' => 'public',
+                'Content-Length' => filesize($file_path)
+            ];
+
+            foreach($headers as $name => $value){
+                header("{$name}: {$value}");
+            }
+
+            readfile($file_path);
+
+            exit;
+        }
+
+        $app->pass();
+    }
+
+    public function GET_oportunidade(): void
     {
         $app = App::i();
         $this->requireAuthentication();
@@ -58,8 +97,7 @@ class Recourse extends \MapasCulturais\Controller{
             $urlOpp = $app->createUrl('oportunidade', $entity->id);
             $this->render('index', ['entity' => $entity, 'app' => $app, 'urlOpp' => $urlOpp]);
         }else{
-            return $app->redirect($app->createUrl('panel', 'index'), 401);
-            dump($entity);
+            $app->redirect($app->createUrl('panel', 'index'), 401);
         }
     }
 
@@ -92,7 +130,7 @@ class Recourse extends \MapasCulturais\Controller{
         $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         $recourse->recourseReply = $this->data['reply'];
         $recourse->recourseDateReply = new DateTime;
-        $recourse->recourseStatus = $statusRecourse;
+        $recourse->status = $statusRecourse;
         $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
         $recourse->createTimestamp = new DateTime();
         $recourseData = [
@@ -108,7 +146,7 @@ class Recourse extends \MapasCulturais\Controller{
             $app->em->flush();
             $revision->save(true);
             $this->json(['message' => 'Recurso respondido com sucesso!', 'status' => 200], 200);
-        }catch (Exception $e) {
+        }catch (\Exception $e) {
             return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
         }
 
@@ -119,7 +157,6 @@ class Recourse extends \MapasCulturais\Controller{
     public function GET_registration()
     {
         $app = App::i();
-        dump($this->data);
         $reg = $app->repo('Registration')->find($this->data['id']);
         return $this->json(['resultConsolidate' => $reg->consolidatedResult]);
     }
@@ -154,7 +191,8 @@ class Recourse extends \MapasCulturais\Controller{
     }
 
 
-    function POST_disabledResource(){
+    function POST_disabledRecourse(): void
+    {
         $app = App::i();
         //Alterando o claimDisabled no metadata
         $opp = $app->repo('Opportunity')->find($this->postData['id']);
@@ -195,54 +233,90 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
-    public function POST_sendRecourse()
+    /**
+     * @throws WorkflowRequest
+     * @throws PermissionDenied
+     */
+    public function POST_sendRecourse(): void
     {
         $app = App::i();
 
-        $registratrion = $app->repo('Registration')->find($this->data['registration']);
-        $opportinuty = $app->repo('Opportunity')->find($this->data['opportunity']);
-        $agent = $app->repo('Agent')->find($this->data['agent']);
-        if(!is_null($this->data['recourse'])) {
-            $recourse = new EntityRecourse;
-            $recourse->recourseText = $this->data['recourse'];
-            $recourse->recourseSend = new \DateTime();
-            $recourse->recourseStatus = EntityRecourse::STATUS_DRAFT;
-            $recourse->registration = $registratrion;
-            $recourse->opportunity = $opportinuty;
-            $recourse->agent = $agent ;
-            $recourse->create_timestamp = new \DateTime();
-            $situ = $recourse->save();
-            if(is_null($situ)){
-                return $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
-            }
-            return $this->errorJson('Erro Inesperado', 403);
-
+        if(is_null($this->data['recourse'])) {
+            $this->errorJson('Informe o recurso', 400);
+            return;
         }
+
+        $registration = $app->repo('Registration')->find($this->data['registration']);
+        $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
+        $agent = $app->repo('Agent')->find($this->data['agent']);
+
+        $app->em->beginTransaction();
+
+        $recourse = new EntityRecourse;
+        $recourse->recourseText = $this->data['recourse'];
+        $recourse->recourseSend = new \DateTime();
+        $recourse->status = EntityRecourse::STATUS_DRAFT;
+        $recourse->registration = $registration;
+        $recourse->opportunity = $opportunity;
+        $recourse->agent = $agent;
+        $recourse->create_timestamp = new \DateTime();
+
+        $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
+        $recourse->save(true);
+
+        try {
+            foreach($_FILES as $file) {
+                $app->disableAccessControl();
+
+                $newFile = new RecourseFile($file);
+                $newFile->setGroup('recourse-attachment');
+                $newFile->owner = $recourse;
+                $newFile->makePrivate();
+
+                $app->enableAccessControl();
+            }
+
+            $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
+
+            $app->em->commit(true);
+
+            http_response_code(200);
+            echo json_encode(['message' => 'Recurso enviado com sucesso']);
+        } catch (\Exception $e) {
+            $recourse && $recourse->delete();
+            http_response_code(500);
+            echo json_encode([
+                'message' => 'Erro inesperado, tente novamente',
+                'errorMessage' => $e->getMessage(),
+            ]);
+        }
+
+        exit;
     }
 
     /*
      * Função para verificar se já tem resposta de um recurso
      * */
-    public function verifyReply($recourse)
+    public function verifyReply($recourse): void
     {
         $app = App::i();
         $rec = $app->repo('Recourse\Entities\Recourse')->find($recourse);
         if(!is_null($rec->recourseReply) && !is_null($rec->recourseDateReply) && $rec->replyAgentId !== $app->getAuth()->getAuthenticatedUser()->profile->id)
         {
-            return $this->errorJson('Esse recurso foi respondido', 403);
+            $this->errorJson('Esse recurso foi respondido', 403);
         }
     }
 
-    /*
+    /**
      * Função que publica os recursos
      * @params $opportunity integer
-     * return void
      */
-    public function POST_publish()
+    public function POST_publish(): void
     {
-        $res = EntityRecourse::publishResource($this->postData['opportunity']);
+        $res = EntityRecourse::publishRecourse($this->postData['opportunity']);
         if($res > 0) {
             $this->json([ 'title' => 'Sucesso', 'message' => 'Publicação realizada com sucesso', 'status' => 200], 200);
+            return;
         }
         $this->json([ 'title' => 'Error', 'message' => 'Ocorreu um erro inesperado.', 'type' => 'error'], 500);
     }
@@ -257,7 +331,7 @@ class Recourse extends \MapasCulturais\Controller{
         $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
     }
 
-    protected function createLogsRevision($dataRevision, $recourse)
+    protected function createLogsRevision(array $dataRevision, \Recourse\Entities\Recourse $recourse): void
     {
         $app = App::i();
         $conn = $app->em->getConnection();
@@ -301,9 +375,6 @@ class Recourse extends \MapasCulturais\Controller{
             ]);
 
         }
-
-
-
 
     }
 }

@@ -140,8 +140,8 @@
                             res[i]['recourseDateReply'] = moment(res[i]['recourseDateReply'].date).format('DD/MM/YYYY hh:mm')
                         }
                         //Formatando o status de nome
-                        if(res[i]['recourseStatus']) {
-                            res[i]['recourseStatus'] =  $scope.getSituation(res[i]['recourseStatus']);
+                        if(res[i]['status']) {
+                            res[i]['status'] =  $scope.getSituation(res[i]['status']);
                         }
 
                         if(res[i]['recourseReply'] == null || res[i]['recourseReply'] == '')

@@ -1,4 +1,9 @@
 <?php
+/**
+ * @var \MapasCulturais\App $app
+ * @var bool $isOwner
+ * @var \Recourse\Entities\Recourse[] $allRecourseUser
+ */
 
 $this->layout = 'panel';
 ?>
@@ -13,39 +18,58 @@ $this->layout = 'panel';
     <div id="table-recourse" ng-app="ng.recourse">
         <?php if($isOwner): ?>
         <div class="table-responsive"  ng-controller="RecourseController">
-            <table class="table table-bordered" id="tableAllResource" style="width:100%;">
+            <table class="table table-bordered" id="tableAllRecourse" style="width:100%;">
                 <thead>
                 <tr>
                     <th>Oportunidade</th>
-                    <th>Inscrição</th>
+                    <th>Inscrição/Agente</th>
                     <th style="width:25%;">Recurso Solicitado</th>
                     <th>Enviado em</th>
                     <th>Situação</th>
                     <th style="width:25%;">Resposta</th>
                     <th>Respondido em</th>
                 </tr>
-                <tbody id="bodyAllResource">
-                <?php foreach ($allRecourceUser as $recourse): ?>
+                <tbody id="bodyAllRecourse">
+                <?php foreach ($allRecourseUser as $recourse): ?>
                     <tr>
                         <td>
-                            <a href="<?php echo $app->createUrl('opportunity', $recourse->opportunity->id ) ?>">
+                            <a href="<?= $app->createUrl('oportunidade', $recourse->opportunity->id ) ?>">
                                 <?php echo $recourse->opportunity->name; ?>
                             </a>
                         </td>
                         <td>
-                            <?php echo $recourse->registration->id; ?>
+                            <a href="<?= $app->createUrl('inscricao', $recourse->registration->id ) ?>">
+                                <?php echo $recourse->registration->number; ?>
+                            </a>
+                            <br>
+                            <a href="<?= $app->createUrl('agente', $recourse->registration->owner->id ) ?>">
+                                <?php echo $recourse->registration->owner->name; ?>
+                            </a>
                         </td>
                         <td>
-                            <?php
-                            if(strlen($recourse->recourseText) > 30){
-                                echo substr($recourse->recourseText, 0,100).'...<br/>'; ?>
-                                <a href="#" ng-click="infoUserRecourse('<?php echo $recourse->recourseText; ?>')">Ler Recurso</a>
-                            <?php
-                            }else{
-                                echo $recourse->recourseText;
-                            }
-                            ?>
+                            <span>
+                                <?php
+                                echo substr($recourse->recourseText, 0,100);
+                                if(strlen($recourse->recourseText) > 100):
+                                    echo "...<br/>
+                                          <a href='#' ng-click='infoUserRecourse(\"{$recourse->recourseText}\")'>Ler Recurso</a>";
+                                endif;
+                                ?>
+                            </span>
 
+                            <?php if(count($recourse->files) > 0): ?>
+                            <div class="recourse-attachments">
+                                <?php
+                                    foreach ($recourse->files as $attachment) {
+                                        echo "<a
+                                                  href='{$attachment->url}'
+                                                  target='_blank'
+                                                  class='recourse-attachment-item'
+                                              >{$attachment->name}</a>";
+                                    }
+                                ?>
+                            </div>
+                            <?php endif ?>
                         </td>
                         <td>
                             <?php echo $recourse->recourseSend->format('d/m/Y H:i:s'); ?>
@@ -54,7 +78,7 @@ $this->layout = 'panel';
                             <?php
                            
                             if($recourse->replyPublish){
-                                switch ($recourse->recourseStatus) {
+                                switch ($recourse->status) {
                                     case '0':
                                         echo 'Aberto';
                                         break;

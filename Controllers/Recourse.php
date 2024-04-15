@@ -251,16 +251,22 @@ class Recourse extends \MapasCulturais\Controller{
         $app = App::i();
 
         if(is_null($this->data['recourse'])) {
-            $this->errorJson('Informe o recurso', 400);
+            $this->json(['message' => 'Informe o recurso'], 400);
             return;
         }
 
         /** @var \MapasCulturais\Entities\Registration $registration */
         $registration = $app->repo('Registration')->find($this->data['registration']);
+        $recourse = $app->repo('Recourse\Entities\Recourse')->findBy(['registration' => $registration]);
+        if($recourse > 0) {
+            $this->json(['message' => 'Você já enviou um recurso para esta inscrição'], 400);
+            return;
+        }
+
         $agent = $registration->owner;
 
         if(!$agent->canUser('@control')) {
-            $this->errorJson(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
             return;
         }
 

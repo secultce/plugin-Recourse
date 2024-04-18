@@ -54,16 +54,23 @@
                         }
                     })
                     .error(function (data, status) {
+                        if(status === 403) {
+                            Swal.fire({
+                                title: "Ops!",
+                                text: 'Você não poderá responder esse recurso por que ele foi respondido ' +
+                                    'por outra comissão.'
+                            });
+                            return false;
+                        }
+
                         console.error(status)
                         console.error(data)
                         Swal.fire({
                             title: "Ops!",
                             icon: 'error',
-                            text: data.errorMessage,
+                            text: data.message,
+                            footer: data.errorMessage,
                         });
-                        setTimeout(() => {
-                            window.location.reload()
-                        }, 1500);
                     });
             },
             getRegistration: function (registration) {
@@ -185,9 +192,9 @@
             return statusSituation;
         };
 
-        $scope.replyRecourse = function (id, registration, agent, text, send, status, agentReply, reply, replyResult) {
+        $scope.replyRecourse = function (id, registration, agent, text, send, status, replyAgent, reply, replyResult) {
             //Caso o agente que clicou não foi o mesmo que respondeu ao recurso, então é bloqueado para responder
-            if((agentReply !== null) && agentReply !== MapasCulturais.userProfile.id) {
+            if((replyAgent !== null) && replyAgent.id !== MapasCulturais.userProfile.id) {
                 Swal.fire({
                     title: "Ops!",
                     text: 'Você não poderá responder esse recurso por que ele foi respondido ' +
@@ -204,7 +211,7 @@
                 recourseText: text,
                 recourseSend: send,
                 status,
-                agentReply,
+                replyAgent,
                 reply,
                 replyResult,
             }

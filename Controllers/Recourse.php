@@ -108,31 +108,35 @@ class Recourse extends \MapasCulturais\Controller{
 
     public function POST_responder(): void
     {
-        //Verificando se o recurso foi respondido
-        self::verifyReply($this->data['entityId']);
 
-        $app = App::i();
         //Validações
+        if(!self::canReply($this->data['entityId'])) {
+            $this->json(['message' => 'O recurso já foi respondido'], 403);
+            return;
+        };
         if($this->data['reply'] == ''){
-            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 403);
+            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 400);
             return;
         }
         if($this->data['status'] == '' || $this->data['status'] == 'Aberto'){
-            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 403);
+            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
             return;
         }
+
         //Formatando o status para gravar no banco
         $statusRecourse =  $this->data['status'];
         if($this->data['status'] == 'Deferido' || $this->data['status'] == 'Indeferido'){
             $statusRecourse = self::getSituationToStatus( $this->data['status'] );
         }
 
+        $app = App::i();
+
         $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         $recourse->recourseReply = $this->data['reply'];
         $recourse->replyResult = $this->data['replyResult'] ?: null;
         $recourse->recourseDateReply = new DateTime;
         $recourse->status = $statusRecourse;
-        $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
+        $recourse->replyAgent = $app->getAuth()->getAuthenticatedUser()->profile;
         $recourse->createTimestamp = new DateTime();
 
         $recourseData = [
@@ -320,14 +324,18 @@ class Recourse extends \MapasCulturais\Controller{
     /*
      * Função para verificar se já tem resposta de um recurso
      * */
-    public function verifyReply($recourse): void
+    public static function canReply($recourse): bool
     {
         $app = App::i();
         $rec = $app->repo('Recourse\Entities\Recourse')->find($recourse);
-        if(!is_null($rec->recourseReply) && !is_null($rec->recourseDateReply) && $rec->replyAgentId !== $app->getAuth()->getAuthenticatedUser()->profile->id)
-        {
-            $this->errorJson('Esse recurso foi respondido', 403);
+        if($rec->replyPublish) {
+            return false;
         }
+        if($rec->replyAgent && $rec->replyAgent->id !== $app->getAuth()->getAuthenticatedUser()->profile->id) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

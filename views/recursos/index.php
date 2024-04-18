@@ -89,7 +89,7 @@ $app->view->jsObject['entity'] = $entity;
                                 recourses.recourseText,
                                 recourses.recourseSend,
                                 recourses.status,
-                                recourses.replyAgentId,
+                                recourses.replyAgent,
                                 recourses.recourseReply,
                                 recourses.replyResult
                             )"
@@ -100,7 +100,11 @@ $app->view->jsObject['entity'] = $entity;
                             <i class="fas fa-eye"></i>
                         </a>
                     </td>
-                    <td>{{recourses.recourseDateReply}}</td>
+                    <td>
+                        {{recourses.recourseDateReply}}
+                        <br>
+                        {{recourses.replyAgent.name}}
+                    </td>
                 </tr>
             </tbody>
 

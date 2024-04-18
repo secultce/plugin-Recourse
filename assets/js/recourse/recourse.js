@@ -33,11 +33,12 @@ function claimDisabled(opt)
     });
 }
 
-function sendRecourse(registration, opportunity)
+function sendRecourse(registration, opportunity, agentId)
 {
     const recourseTextareaId = 'context-recourse-user-' + registration;
     const recourseAttachmentsId = 'attachment-recourse-user-' + registration;
-    const agent = MapasCulturais.userProfile.id;
+
+    console.log(MapasCulturais.profile)
 
     Swal.fire({
         title: "Escrever o Recurso",
@@ -89,13 +90,12 @@ function sendRecourse(registration, opportunity)
         const formData = new FormData();
         formData.append('registration', registration)
         formData.append('opportunity', opportunity)
-        formData.append('agent', agent)
         formData.append('recourse', recourseText)
         Array.from(files).forEach((file, index) => {
             formData.append(index,  file)
         })
 
-        const panelRecourse = MapasCulturais.createUrl('recursos/agent/'+agent);
+        const panelRecourse = MapasCulturais.createUrl('recursos/agent/'+agentId);
         const response = await fetch(MapasCulturais.baseURL + 'recursos/sendRecourse', {
             method: 'POST',
             body: formData,

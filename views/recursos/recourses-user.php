@@ -2,7 +2,7 @@
 /**
  * @var \MapasCulturais\App $app
  * @var bool $isOwner
- * @var \Recourse\Entities\Recourse[] $allRecourseUser
+ * @var \Recourse\Entities\Recourse[] $allRecoursesUser
  */
 
 $this->layout = 'panel';
@@ -30,7 +30,7 @@ $this->layout = 'panel';
                     <th>Respondido em</th>
                 </tr>
                 <tbody id="bodyAllRecourse">
-                <?php foreach ($allRecourseUser as $recourse): ?>
+                <?php foreach ($allRecoursesUser as $recourse): ?>
                     <tr>
                         <td>
                             <a href="<?= $app->createUrl('oportunidade', $recourse->opportunity->id ) ?>">

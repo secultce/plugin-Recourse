@@ -28,22 +28,20 @@ class Recourse extends \MapasCulturais\Controller{
 
         $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
         $this->_publishAssets();
-        //Convertendo o valor para inteiro para uma comparação, caso nao seja ids iguais lança a mensagem de permissão
-        //Todo: Averiguar em situação que o owner tem vários agentes individuais
-        $idAgent = (int) $this->data['id'];
-        $isOwner = true;
-        if(isset($app->getUser()->profile->id)){
-            $idAgent !== $app->getUser()->profile->id ? $isOwner = false : $isOwner = true;
-        }
 
-        //Buscando todos os recursos publicados e do agente logado
-        $agent = $app->repo('Agent')->find($idAgent);
-        $allRecourseUser = $app->repo('Recourse\Entities\Recourse')->findBy([
-            'agent' => $agent
-        ]);
+        $agent = $app->repo('Agent')->find($this->data['id']);
+        $isOwner = $agent->canUser('@control');
+
+        $allRecoursesUser = [];
+        foreach($app->user->agents as $agent) {
+            $agentRecourses = $app->repo('Recourse\Entities\Recourse')->findBy([
+                'agent' => $agent,
+            ]);
+            $allRecoursesUser = array_merge($allRecoursesUser, $agentRecourses);
+        }
         $this->render('recourses-user',[
             'isOwner' => $isOwner,
-            'allRecourseUser' => $allRecourseUser
+            'allRecoursesUser' => $allRecoursesUser,
         ]);
     }
 
@@ -253,29 +251,43 @@ class Recourse extends \MapasCulturais\Controller{
         $app = App::i();
 
         if(is_null($this->data['recourse'])) {
-            $this->errorJson('Informe o recurso', 400);
+            $this->json(['message' => 'Informe o recurso'], 400);
             return;
         }
 
+        /** @var \MapasCulturais\Entities\Registration $registration */
         $registration = $app->repo('Registration')->find($this->data['registration']);
-        $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
-        $agent = $app->repo('Agent')->find($this->data['agent']);
+        $recourse = $app->repo('Recourse\Entities\Recourse')->findBy(['registration' => $registration]);
+        if($recourse > 0) {
+            $this->json(['message' => 'Você já enviou um recurso para esta inscrição'], 400);
+            return;
+        }
 
-        $app->em->beginTransaction();
+        $agent = $registration->owner;
+
+        if(!$agent->canUser('@control')) {
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            return;
+        }
+
+        $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
 
         $recourse = new EntityRecourse;
-        $recourse->recourseText = $this->data['recourse'];
-        $recourse->recourseSend = new \DateTime();
-        $recourse->status = EntityRecourse::STATUS_DRAFT;
-        $recourse->registration = $registration;
-        $recourse->opportunity = $opportunity;
-        $recourse->agent = $agent;
-        $recourse->create_timestamp = new \DateTime();
-
-        $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
-        $recourse->save(true);
 
         try {
+            $app->em->beginTransaction();
+
+            $recourse->recourseText = $this->data['recourse'];
+            $recourse->recourseSend = new \DateTime();
+            $recourse->status = EntityRecourse::STATUS_DRAFT;
+            $recourse->registration = $registration;
+            $recourse->opportunity = $opportunity;
+            $recourse->agent = $agent;
+            $recourse->create_timestamp = new \DateTime();
+
+            $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
+            $recourse->save(true);
+
             foreach($_FILES as $file) {
                 $app->disableAccessControl();
 
@@ -340,52 +352,5 @@ class Recourse extends \MapasCulturais\Controller{
         $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
         $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
-    }
-
-    protected function createLogsRevision(array $dataRevision, \Recourse\Entities\Recourse $recourse): void
-    {
-        $app = App::i();
-        $conn = $app->em->getConnection();
-
-
-        dump($recourse->getClassName());
-        foreach ($dataRevision as $keysRevision => $revisionData)
-        {
-            $lastRevsisionDataId = $conn
-                ->executeQuery('SELECT id FROM entity_revision_data ORDER BY "timestamp" DESC LIMIT 1')
-                ->fetch()['id'];
-            $sqlRevisionData = "INSERT INTO
-            entity_revision_data (\"id\", \"timestamp\", \"key\", \"value\")
-            VALUES (:id, :timestamp, :key, :value)";
-            $conn->executeUpdate($sqlRevisionData, [
-                'id' => $lastRevsisionDataId + 1,
-                'timestamp' => (new \DateTime())->format(DATE_W3C),
-                'key' => $keysRevision,
-                'value' => $revisionData,
-            ]);
-//
-            $lastEntityRevisionId = $conn
-                ->executeQuery('SELECT id FROM entity_revision ORDER BY "create_timestamp" DESC LIMIT 1')
-                ->fetch()['id'];
-            $sqlEntityRevision = "INSERT INTO
-                    entity_revision (id, user_id, object_id, object_type, create_timestamp, action, message)
-                    VALUES (:id, :user_id, :object_id, :object_type, :create_timestamp, :action, :message)";
-            $conn->executeUpdate($sqlEntityRevision, [
-                'id' => $lastEntityRevisionId+1,
-                'user_id' => $app->user->id,
-                'object_id' => $recourse->id,
-                'object_type' => $recourse->getClassName(),
-                'create_timestamp' => (new \DateTime())->format(DATE_W3C),
-                'action' => EntityRevision::ACTION_CREATED,
-                'message' => 'Registro criado.',
-            ]);
-
-            $conn->executeUpdate("INSERT INTO entity_revision_revision_data VALUES (:revision_id, :revision_data_id)", [
-                'revision_id' => $lastEntityRevisionId + 1,
-                'revision_data_id' => $lastRevsisionDataId + 1
-            ]);
-
-        }
-
     }
 }

@@ -107,9 +107,12 @@ class Recourse extends \MapasCulturais\Entity {
     /**
      * @var integer
      *
-     * @ORM\Column(name="reply_agent_id", type="integer", nullable=true)
+     * @ORM\ManyToOne(targetEntity="MapasCulturais\Entities\Agent")
+     * @ORM\JoinColumns({
+     *    @ORM\JoinColumn(name="reply_agent_id", referencedColumnName="id", nullable=true)
+     * })
      */
-    protected $replyAgentId = null;
+    protected $replyAgent = null;
 
     /**
      * @var bool
@@ -135,7 +138,8 @@ class Recourse extends \MapasCulturais\Entity {
         return $this->owner->registration->canUser('view');
     }
 
-    public static function publishRecourse($opportunityId): array {
+    public static function publishRecourse($opportunityId): int
+    {
         $app = App::i();
         $dql = "UPDATE Recourse\Entities\Recourse r SET r.replyPublish = true WHERE r.opportunity = {$opportunityId}";
         $query = $app->em->createQuery($dql);

@@ -121,6 +121,7 @@ class Recourse extends \MapasCulturais\Controller{
             $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
             return;
         }
+
         //Formatando o status para gravar no banco
         $statusRecourse =  $this->data['status'];
         if($this->data['status'] == 'Deferido' || $this->data['status'] == 'Indeferido'){

@@ -108,17 +108,17 @@ class Recourse extends \MapasCulturais\Controller{
 
     public function POST_responder(): void
     {
-        //Verificando se o recurso foi respondido
-        self::verifyReply($this->data['entityId']);
-
-        $app = App::i();
         //Validações
+        if(!self::canReply($this->data['entityId'])) {
+            $this->json(['message' => 'O recurso já foi respondido'], 403);
+            return;
+        };
         if($this->data['reply'] == ''){
-            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 403);
+            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 400);
             return;
         }
         if($this->data['status'] == '' || $this->data['status'] == 'Aberto'){
-            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 403);
+            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
             return;
         }
         //Formatando o status para gravar no banco
@@ -127,28 +127,40 @@ class Recourse extends \MapasCulturais\Controller{
             $statusRecourse = self::getSituationToStatus( $this->data['status'] );
         }
 
-        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
-        $recourse->recourseReply = $this->data['reply'];
-        $recourse->replyResult = $this->data['replyResult'] ?: null;
-        $recourse->recourseDateReply = new DateTime;
-        $recourse->status = $statusRecourse;
-        $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
-        $recourse->createTimestamp = new DateTime();
+        $app = App::i();
 
-        $recourseData = [
-            'Resposta' => $this->data['reply'],
-            'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
-            'Alterado em: ' => $recourse->recourseDateReply,
-        ];
-        ($recourse->replyResult) && ($recourseData['Nota'] = $recourse->replyResult);
-        //Gravando dados para log de atividades
-        $revision = new Revision($recourseData,$recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
         try {
+            $app->em->beginTransaction();
+
+            $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
+            $recourse->recourseReply = $this->data['reply'];
+            $recourse->replyResult = $this->data['replyResult'] ?: null;
+            $recourse->recourseDateReply = new DateTime;
+            $recourse->status = $statusRecourse;
+            $recourse->replyAgent = $app->getAuth()->getAuthenticatedUser()->profile;
+            $recourse->createTimestamp = new DateTime();
+
             $app->applyHookBoundTo($this, 'recourse.reply', [&$recourse]);
 
-            $app->em->persist($recourse);
+            if($recourse->status === \Recourse\Entities\Recourse::STATUS_APPROVED) {
+                $query = $app->em->createQuery("UPDATE MapasCulturais\Entities\Registration r SET r.status = :status WHERE r.id = :id");
+                $query->setParameter('status', \MapasCulturais\Entities\Registration::STATUS_APPROVED);
+                $query->setParameter('id', $recourse->registration->id);
+                $query->getResult();
+            }
+
+            $recourseData = [
+                'status' => $statusRecourse,
+                'Resposta' => $this->data['reply'],
+                'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
+                'Alterado em: ' => $recourse->recourseDateReply,
+            ];
+            ($recourse->replyResult) && ($recourseData['Nota'] = $recourse->replyResult);
+            //Gravando dados para log de atividades
+            $revision = new Revision($recourseData, $recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
+
+            $app->em->commit();
             $app->em->flush();
-            $revision->save(true);
 
             http_response_code(202);
             echo json_encode(['message' => 'Recurso respondido com sucesso!']);
@@ -320,14 +332,18 @@ class Recourse extends \MapasCulturais\Controller{
     /*
      * Função para verificar se já tem resposta de um recurso
      * */
-    public function verifyReply($recourse): void
+    public static function canReply($recourse): bool
     {
         $app = App::i();
         $rec = $app->repo('Recourse\Entities\Recourse')->find($recourse);
-        if(!is_null($rec->recourseReply) && !is_null($rec->recourseDateReply) && $rec->replyAgentId !== $app->getAuth()->getAuthenticatedUser()->profile->id)
-        {
-            $this->errorJson('Esse recurso foi respondido', 403);
+        if($rec->replyPublish) {
+            return false;
         }
+        if($rec->replyAgent && $rec->replyAgent->id !== $app->getAuth()->getAuthenticatedUser()->profile->id) {
+            return false;
+        }
+
+        return true;
     }
 
     /**

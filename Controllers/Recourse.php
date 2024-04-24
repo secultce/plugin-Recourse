@@ -3,7 +3,6 @@ namespace Recourse\Controllers;
 
 use DateTime;
 use \MapasCulturais\App;
-use \MapasCulturais\Entities\EntityRevision;
 use MapasCulturais\Entities\EntityRevision as Revision;
 use MapasCulturais\Exceptions\PermissionDenied;
 use MapasCulturais\Exceptions\WorkflowRequest;
@@ -143,13 +142,6 @@ class Recourse extends \MapasCulturais\Controller{
 
             $app->applyHookBoundTo($this, 'recourse.reply', [&$recourse]);
 
-            if($recourse->status === \Recourse\Entities\Recourse::STATUS_APPROVED) {
-                $query = $app->em->createQuery("UPDATE MapasCulturais\Entities\Registration r SET r.status = :status WHERE r.id = :id");
-                $query->setParameter('status', \MapasCulturais\Entities\Registration::STATUS_APPROVED);
-                $query->setParameter('id', $recourse->registration->id);
-                $query->getResult();
-            }
-
             $recourseData = [
                 'status' => $statusRecourse,
                 'Resposta' => $this->data['reply'],
@@ -271,7 +263,7 @@ class Recourse extends \MapasCulturais\Controller{
         /** @var \MapasCulturais\Entities\Registration $registration */
         $registration = $app->repo('Registration')->find($this->data['registration']);
         $recourse = $app->repo('Recourse\Entities\Recourse')->findBy(['registration' => $registration]);
-        if($recourse > 0) {
+        if(count($recourse) > 0) {
             $this->json(['message' => 'Você já enviou um recurso para esta inscrição'], 400);
             return;
         }
@@ -353,12 +345,23 @@ class Recourse extends \MapasCulturais\Controller{
      */
     public function POST_publish(): void
     {
-        $res = EntityRecourse::publishRecourse($this->postData['opportunity']);
-        if($res > 0) {
-            $this->json([ 'title' => 'Sucesso', 'message' => 'Publicação realizada com sucesso', 'status' => 200], 200);
+        $app = App::i();
+        try {
+            $app->repo('Recourse\Entities\Recourse')->publish($this->postData['opportunity']);
+        } catch (\Exception $e) {
+            $this->json([
+                'title' => 'Error',
+                'message' => 'Ocorreu um erro inesperado.',
+                'type' => 'error',
+                'errorMessage' => $e->getMessage(),
+            ], 500);
             return;
         }
-        $this->json([ 'title' => 'Error', 'message' => 'Ocorreu um erro inesperado.', 'type' => 'error'], 500);
+
+        $this->json([
+            'title' => 'Sucesso',
+            'message' => 'Publicação realizada com sucesso',
+        ]);
     }
 
     protected function _publishAssets()

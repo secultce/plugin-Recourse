@@ -8,7 +8,7 @@ use \MapasCulturais\App;
  * 
  * @ORM\Table(name="recourse")
  * @ORM\Entity
- * @ORM\entity(repositoryClass="MapasCulturais\Repository")
+ * @ORM\entity(repositoryClass="Recourse\Repositories\Recourse")
  */
 class Recourse extends \MapasCulturais\Entity {
     use \MapasCulturais\Traits\EntityRevision;
@@ -77,7 +77,7 @@ class Recourse extends \MapasCulturais\Entity {
     /**
      * @var \MapasCulturais\Entities\Registration
      *
-     * @ORM\ManyToOne(targetEntity="MapasCulturais\Entities\Registration", cascade={"persist"})
+     * @ORM\ManyToOne(targetEntity="MapasCulturais\Entities\Registration", inversedBy="Recourse\Entities\Recourse", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="registration_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })

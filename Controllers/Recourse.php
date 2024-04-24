@@ -8,6 +8,7 @@ use MapasCulturais\Exceptions\PermissionDenied;
 use MapasCulturais\Exceptions\WorkflowRequest;
 use Recourse\Entities\Recourse as EntityRecourse;
 use Recourse\Entities\RecourseFile;
+use Slim\Exception\Stop;
 
 
 class Recourse extends \MapasCulturais\Controller{
@@ -344,7 +345,7 @@ class Recourse extends \MapasCulturais\Controller{
                 'title' => 'Sucesso',
                 'message' => 'Publicação realizada com sucesso',
             ]);
-        } catch (Slim\Exception\Stop $stop) {
+        } catch (Stop $stop) {
         } catch (\Exception $e) {
             $this->json([
                 'title' => 'Error',

@@ -21,6 +21,12 @@ class Recourse extends \MapasCulturais\Repository
                 $query->setParameter('status', \MapasCulturais\Entities\Registration::STATUS_APPROVED);
                 $query->setParameter('id', $recourse->registration->id);
                 $query->getResult();
+                if($recourse->opportunity->evaluationMethodConfiguration->type == 'technical') {
+                    $query = $app->em->createQuery("UPDATE MapasCulturais\Entities\Registration r SET r.consolidatedResult = :result WHERE r.id = :id");
+                    $query->setParameter('result', $recourse->replyResult);
+                    $query->setParameter('id', $recourse->registration->id);
+                    $query->getResult();
+                }
             }
         }
         $app->em->commit();

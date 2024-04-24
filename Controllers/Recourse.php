@@ -155,17 +155,13 @@ class Recourse extends \MapasCulturais\Controller{
             $app->em->commit();
             $app->em->flush();
 
-            http_response_code(202);
-            echo json_encode(['message' => 'Recurso respondido com sucesso!']);
-        }catch (\Exception $e) {
-            http_response_code(500);
-            echo json_encode([
+            $this->json(['message' => 'Recurso respondido com sucesso!'], 202);
+        }catch (\PDOException $e) {
+            $this->json([
                 'message' => 'Ocorreu um erro inesperado!',
                 'errorMessage' => $e->getMessage(),
-            ]);
+            ], 500);
         }
-
-        exit;
     }
 
     public function GET_registration()
@@ -308,18 +304,14 @@ class Recourse extends \MapasCulturais\Controller{
 
             $app->em->commit(true);
 
-            http_response_code(201);
-            echo json_encode(['message' => 'Recurso enviado com sucesso']);
-        } catch (\Exception $e) {
+            $this->json(['message' => 'Recurso enviado com sucesso'], 201);
+        } catch (\PDOException $e) {
             $recourse && $recourse->delete();
-            http_response_code(500);
-            echo json_encode([
+            $this->json([
                 'message' => 'Erro inesperado, tente novamente',
                 'errorMessage' => $e->getMessage(),
-            ]);
+            ], 500);
         }
-
-        exit;
     }
 
     /*
@@ -348,6 +340,11 @@ class Recourse extends \MapasCulturais\Controller{
         $app = App::i();
         try {
             $app->repo('Recourse\Entities\Recourse')->publish($this->postData['opportunity']);
+            $this->json([
+                'title' => 'Sucesso',
+                'message' => 'Publicação realizada com sucesso',
+            ]);
+        } catch (Slim\Exception\Stop $stop) {
         } catch (\Exception $e) {
             $this->json([
                 'title' => 'Error',
@@ -357,11 +354,6 @@ class Recourse extends \MapasCulturais\Controller{
             ], 500);
             return;
         }
-
-        $this->json([
-            'title' => 'Sucesso',
-            'message' => 'Publicação realizada com sucesso',
-        ]);
     }
 
     protected function _publishAssets()

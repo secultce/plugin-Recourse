@@ -244,10 +244,6 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
-    /**
-     * @throws WorkflowRequest
-     * @throws PermissionDenied
-     */
     public function POST_sendRecourse(): void
     {
         $app = App::i();

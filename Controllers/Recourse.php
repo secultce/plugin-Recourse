@@ -3,12 +3,12 @@ namespace Recourse\Controllers;
 
 use DateTime;
 use \MapasCulturais\App;
-use \MapasCulturais\Entities\EntityRevision;
 use MapasCulturais\Entities\EntityRevision as Revision;
 use MapasCulturais\Exceptions\PermissionDenied;
 use MapasCulturais\Exceptions\WorkflowRequest;
 use Recourse\Entities\Recourse as EntityRecourse;
 use Recourse\Entities\RecourseFile;
+use Slim\Exception\Stop;
 
 
 class Recourse extends \MapasCulturais\Controller{
@@ -108,7 +108,6 @@ class Recourse extends \MapasCulturais\Controller{
 
     public function POST_responder(): void
     {
-
         //Validações
         if(!self::canReply($this->data['entityId'])) {
             $this->json(['message' => 'O recurso já foi respondido'], 403);
@@ -131,40 +130,39 @@ class Recourse extends \MapasCulturais\Controller{
 
         $app = App::i();
 
-        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
-        $recourse->recourseReply = $this->data['reply'];
-        $recourse->replyResult = $this->data['replyResult'] ?: null;
-        $recourse->recourseDateReply = new DateTime;
-        $recourse->status = $statusRecourse;
-        $recourse->replyAgent = $app->getAuth()->getAuthenticatedUser()->profile;
-        $recourse->createTimestamp = new DateTime();
-
-        $recourseData = [
-            'Resposta' => $this->data['reply'],
-            'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
-            'Alterado em: ' => $recourse->recourseDateReply,
-        ];
-        ($recourse->replyResult) && ($recourseData['Nota'] = $recourse->replyResult);
-        //Gravando dados para log de atividades
-        $revision = new Revision($recourseData,$recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
         try {
+            $app->em->beginTransaction();
+
+            $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
+            $recourse->recourseReply = $this->data['reply'];
+            $recourse->replyResult = $this->data['replyResult'] ?: null;
+            $recourse->recourseDateReply = new DateTime;
+            $recourse->status = $statusRecourse;
+            $recourse->replyAgent = $app->getAuth()->getAuthenticatedUser()->profile;
+            $recourse->createTimestamp = new DateTime();
+
             $app->applyHookBoundTo($this, 'recourse.reply', [&$recourse]);
 
-            $app->em->persist($recourse);
-            $app->em->flush();
-            $revision->save(true);
+            $recourseData = [
+                'status' => $statusRecourse,
+                'Resposta' => $this->data['reply'],
+                'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
+                'Alterado em: ' => $recourse->recourseDateReply,
+            ];
+            ($recourse->replyResult) && ($recourseData['Nota'] = $recourse->replyResult);
+            //Gravando dados para log de atividades
+            $revision = new Revision($recourseData, $recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
 
-            http_response_code(202);
-            echo json_encode(['message' => 'Recurso respondido com sucesso!']);
-        }catch (\Exception $e) {
-            http_response_code(500);
-            echo json_encode([
+            $app->em->commit();
+            $app->em->flush();
+
+            $this->json(['message' => 'Recurso respondido com sucesso!'], 202);
+        }catch (\PDOException $e) {
+            $this->json([
                 'message' => 'Ocorreu um erro inesperado!',
                 'errorMessage' => $e->getMessage(),
-            ]);
+            ], 500);
         }
-
-        exit;
     }
 
     public function GET_registration()
@@ -246,10 +244,6 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
-    /**
-     * @throws WorkflowRequest
-     * @throws PermissionDenied
-     */
     public function POST_sendRecourse(): void
     {
         $app = App::i();
@@ -262,7 +256,7 @@ class Recourse extends \MapasCulturais\Controller{
         /** @var \MapasCulturais\Entities\Registration $registration */
         $registration = $app->repo('Registration')->find($this->data['registration']);
         $recourse = $app->repo('Recourse\Entities\Recourse')->findBy(['registration' => $registration]);
-        if($recourse > 0) {
+        if(count($recourse) > 0) {
             $this->json(['message' => 'Você já enviou um recurso para esta inscrição'], 400);
             return;
         }
@@ -307,18 +301,14 @@ class Recourse extends \MapasCulturais\Controller{
 
             $app->em->commit(true);
 
-            http_response_code(201);
-            echo json_encode(['message' => 'Recurso enviado com sucesso']);
-        } catch (\Exception $e) {
+            $this->json(['message' => 'Recurso enviado com sucesso'], 201);
+        } catch (\PDOException $e) {
             $recourse && $recourse->delete();
-            http_response_code(500);
-            echo json_encode([
+            $this->json([
                 'message' => 'Erro inesperado, tente novamente',
                 'errorMessage' => $e->getMessage(),
-            ]);
+            ], 500);
         }
-
-        exit;
     }
 
     /*
@@ -344,12 +334,23 @@ class Recourse extends \MapasCulturais\Controller{
      */
     public function POST_publish(): void
     {
-        $res = EntityRecourse::publishRecourse($this->postData['opportunity']);
-        if($res > 0) {
-            $this->json([ 'title' => 'Sucesso', 'message' => 'Publicação realizada com sucesso', 'status' => 200], 200);
+        $app = App::i();
+        try {
+            $app->repo('Recourse\Entities\Recourse')->publish($this->postData['opportunity']);
+            $this->json([
+                'title' => 'Sucesso',
+                'message' => 'Publicação realizada com sucesso',
+            ]);
+        } catch (Stop $stop) {
+        } catch (\Exception $e) {
+            $this->json([
+                'title' => 'Error',
+                'message' => 'Ocorreu um erro inesperado.',
+                'type' => 'error',
+                'errorMessage' => $e->getMessage(),
+            ], 500);
             return;
         }
-        $this->json([ 'title' => 'Error', 'message' => 'Ocorreu um erro inesperado.', 'type' => 'error'], 500);
     }
 
     protected function _publishAssets()

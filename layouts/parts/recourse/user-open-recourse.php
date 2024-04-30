@@ -17,7 +17,7 @@
 <div class="opportunity-claim-button">
     <?php if(!$isRecourseSent && $isActivePeriod): ?>
     <a class="btn btn-primary"
-            onclick="sendRecourse(<?php echo $registration->id; ?>, <?php echo $registration->opportunity->id; ?>)"
+            onclick="sendRecourse(<?php echo $registration->id .', '. $registration->opportunity->id .', '. $registration->owner->id ?>)"
             id="btn-recourse-<?php echo $registration->id; ?>">
         Abrir Recurso
     </a>

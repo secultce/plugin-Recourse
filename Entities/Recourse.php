@@ -8,13 +8,15 @@ use \MapasCulturais\App;
  * 
  * @ORM\Table(name="recourse")
  * @ORM\Entity
- * @ORM\entity(repositoryClass="MapasCulturais\Repository")
+ * @ORM\entity(repositoryClass="Recourse\Repositories\Recourse")
  */
 class Recourse extends \MapasCulturais\Entity {
     use \MapasCulturais\Traits\EntityRevision;
-    //const STATUS_ENABLED = 1; - self:STATUS_ENABLED para deferido
-    //const STATUS_DISABLED = -9; - self:STATUS_DISABLED para indeferido
+
+    const STATUS_APPROVED = self::STATUS_ENABLED; // 1 - self:STATUS_ENABLED para deferido
+    const STATUS_REJECTED =  self::STATUS_DISABLED; // -9 - self:STATUS_DISABLED para indeferido
     // const STATUS_DRAFT = 0; - self:STATUS_DRAFT para status inicial
+
     /**
      * @var integer
      *
@@ -75,7 +77,7 @@ class Recourse extends \MapasCulturais\Entity {
     /**
      * @var \MapasCulturais\Entities\Registration
      *
-     * @ORM\ManyToOne(targetEntity="MapasCulturais\Entities\Registration")
+     * @ORM\ManyToOne(targetEntity="MapasCulturais\Entities\Registration", inversedBy="Recourse\Entities\Recourse", cascade={"persist"})
      * @ORM\JoinColumns({
      *   @ORM\JoinColumn(name="registration_id", referencedColumnName="id", nullable=false, onDelete="CASCADE")
      * })

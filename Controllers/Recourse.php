@@ -3,11 +3,12 @@ namespace Recourse\Controllers;
 
 use DateTime;
 use \MapasCulturais\App;
-use \MapasCulturais\Entities\EntityRevision;
 use MapasCulturais\Entities\EntityRevision as Revision;
-use \MapasCulturais\Entities\EntityRevisionData;
-use MapasCulturais\Traits;
+use MapasCulturais\Exceptions\PermissionDenied;
+use MapasCulturais\Exceptions\WorkflowRequest;
 use Recourse\Entities\Recourse as EntityRecourse;
+use Recourse\Entities\RecourseFile;
+use Slim\Exception\Stop;
 
 
 class Recourse extends \MapasCulturais\Controller{
@@ -21,28 +22,64 @@ class Recourse extends \MapasCulturais\Controller{
     public function GET_agent()
     {
         $app = App::i();
-        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
-        $this->_publishAssets();
-        //Convertendo o valor para inteiro para uma comparação, caso nao seja ids iguais lança a mensagem de permissão
-        //Todo: Averiguar em situação que o owner tem vários agentes individuais
-        $idAgent = (int) $this->data['id'];
-        $isOwner = true;
-        if(isset($app->getUser()->profile->id)){
-            $idAgent !== $app->getUser()->profile->id ? $isOwner = false : $isOwner = true;
+        if($app->user->is('guest')){
+            $app->redirect('/autenticacao');
         }
 
-        //Buscando todos os recursos publicados e do agente logado
-        $agent = $app->repo('Agent')->find($idAgent);
-        $allRecourceUser = $app->repo('Recourse\Entities\Recourse')->findBy([
-            'agent' => $agent
-        ]);
-        $this->render('recources-user',[
+        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
+        $this->_publishAssets();
+
+        $agent = $app->repo('Agent')->find($this->data['id']);
+        $isOwner = $agent->canUser('@control');
+
+        $allRecoursesUser = [];
+        foreach($app->user->agents as $agent) {
+            $agentRecourses = $app->repo('Recourse\Entities\Recourse')->findBy([
+                'agent' => $agent,
+            ]);
+            $allRecoursesUser = array_merge($allRecoursesUser, $agentRecourses);
+        }
+        $this->render('recourses-user',[
             'isOwner' => $isOwner,
-            'allRecourceUser' => $allRecourceUser
+            'allRecoursesUser' => $allRecoursesUser,
         ]);
     }
 
-    public function GET_oportunidade()
+    public function GET_arquivo(): void
+    {
+        $this->requireAuthentication();
+
+        $app = App::i();
+
+        $file = $app->repo('\Recourse\Entities\RecourseFile')->find($this->data['id']);
+
+        $file_path = file_exists($file->getPath()) ? $file->getPath() : (string)str_replace('recourse-entities-recourse/'. $file->owner->id, 'recourse-entities-recourse', $file->getPath());
+
+        if (file_exists($file_path)) {
+            $headers = [
+                'Content-Description' => 'File Transfer',
+                'Content-Type' => mime_content_type($file_path),
+                'Content-Disposition' => 'attachment; filename="' . $file->name . '"',
+                'Content-Transfer-Encoding' => 'binary',
+                'Expires' => '0',
+                'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+                'Pragma' => 'public',
+                'Content-Length' => filesize($file_path)
+            ];
+
+            foreach($headers as $name => $value){
+                header("{$name}: {$value}");
+            }
+
+            readfile($file_path);
+
+            exit;
+        }
+
+        $app->pass();
+    }
+
+    public function GET_oportunidade(): void
     {
         $app = App::i();
         $this->requireAuthentication();
@@ -58,8 +95,7 @@ class Recourse extends \MapasCulturais\Controller{
             $urlOpp = $app->createUrl('oportunidade', $entity->id);
             $this->render('index', ['entity' => $entity, 'app' => $app, 'urlOpp' => $urlOpp]);
         }else{
-            return $app->redirect($app->createUrl('panel', 'index'), 401);
-            dump($entity);
+            $app->redirect($app->createUrl('panel', 'index'), 401);
         }
     }
 
@@ -70,56 +106,68 @@ class Recourse extends \MapasCulturais\Controller{
         $this->json($entity, 200);
     }
 
-    public function POST_responder()
+    public function POST_responder(): void
     {
-        //Verificando se o recurso foi respondido
-        self::verifyReply($this->data['entityId']);
-
-        $app = App::i();
         //Validações
+        if(!self::canReply($this->data['entityId'])) {
+            $this->json(['message' => 'O recurso já foi respondido'], 403);
+            return;
+        };
         if($this->data['reply'] == ''){
-            return $this->json(['message' => 'Você não poderá enviar sem antes responder ao candidato'], 403);
+            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 400);
+            return;
         }
         if($this->data['status'] == '' || $this->data['status'] == 'Aberto'){
-            return $this->json(['message' => 'Informe a situação da resposta do seu recurso'], 403);
+            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
+            return;
         }
+
         //Formatando o status para gravar no banco
         $statusRecourse =  $this->data['status'];
         if($this->data['status'] == 'Deferido' || $this->data['status'] == 'Indeferido'){
             $statusRecourse = self::getSituationToStatus( $this->data['status'] );
         }
 
-        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
-        $recourse->recourseReply = $this->data['reply'];
-        $recourse->recourseDateReply = new DateTime;
-        $recourse->recourseStatus = $statusRecourse;
-        $recourse->replyAgentId = $app->getAuth()->getAuthenticatedUser()->profile->id;
-        $recourse->createTimestamp = new DateTime();
-        $recourseData = [
-            'Resposta' => $this->data['reply'],
-            'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
-            'Alterado em: ' => $recourse->recourseDateReply,
+        $app = App::i();
 
-        ];
-        //Gravando dados para log de atividades
-        $revision = new Revision($recourseData,$recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
         try {
-            $app->em->persist($recourse);
-            $app->em->flush();
-            $revision->save(true);
-            $this->json(['message' => 'Recurso respondido com sucesso!', 'status' => 200], 200);
-        }catch (Exception $e) {
-            return $this->json(['message' => 'Ocorreu um erro inesperado!'], 400);
-        }
+            $app->em->beginTransaction();
 
-         $hook_prefix = $this->getHookPrefix();
-         $app->applyHookBoundTo($this, "{$hook_prefix}.recourses", [&$recourse]);
+            $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
+            $recourse->recourseReply = $this->data['reply'];
+            $recourse->replyResult = $this->data['replyResult'] ?: null;
+            $recourse->recourseDateReply = new DateTime;
+            $recourse->status = $statusRecourse;
+            $recourse->replyAgent = $app->getAuth()->getAuthenticatedUser()->profile;
+            $recourse->createTimestamp = new DateTime();
+
+            $app->applyHookBoundTo($this, 'recourse.reply', [&$recourse]);
+
+            $recourseData = [
+                'status' => $statusRecourse,
+                'Resposta' => $this->data['reply'],
+                'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
+                'Alterado em: ' => $recourse->recourseDateReply,
+            ];
+            ($recourse->replyResult) && ($recourseData['Nota'] = $recourse->replyResult);
+            //Gravando dados para log de atividades
+            $revision = new Revision($recourseData, $recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
+
+            $app->em->commit();
+            $app->em->flush();
+
+            $this->json(['message' => 'Recurso respondido com sucesso!'], 202);
+        }catch (\PDOException $e) {
+            $this->json([
+                'message' => 'Ocorreu um erro inesperado!',
+                'errorMessage' => $e->getMessage(),
+            ], 500);
+        }
     }
 
     public function GET_registration()
     {
         $app = App::i();
-        dump($this->data);
         $reg = $app->repo('Registration')->find($this->data['id']);
         return $this->json(['resultConsolidate' => $reg->consolidatedResult]);
     }
@@ -154,7 +202,8 @@ class Recourse extends \MapasCulturais\Controller{
     }
 
 
-    function POST_disabledResource(){
+    function POST_disabledRecourse(): void
+    {
         $app = App::i();
         //Alterando o claimDisabled no metadata
         $opp = $app->repo('Opportunity')->find($this->postData['id']);
@@ -195,56 +244,113 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
-    public function POST_sendRecourse()
+    public function POST_sendRecourse(): void
     {
         $app = App::i();
 
-        $registratrion = $app->repo('Registration')->find($this->data['registration']);
-        $opportinuty = $app->repo('Opportunity')->find($this->data['opportunity']);
-        $agent = $app->repo('Agent')->find($this->data['agent']);
-        if(!is_null($this->data['recourse'])) {
-            $recourse = new EntityRecourse;
+        if(is_null($this->data['recourse'])) {
+            $this->json(['message' => 'Informe o recurso'], 400);
+            return;
+        }
+
+        /** @var \MapasCulturais\Entities\Registration $registration */
+        $registration = $app->repo('Registration')->find($this->data['registration']);
+        $recourse = $app->repo('Recourse\Entities\Recourse')->findBy(['registration' => $registration]);
+        if(count($recourse) > 0) {
+            $this->json(['message' => 'Você já enviou um recurso para esta inscrição'], 400);
+            return;
+        }
+
+        $agent = $registration->owner;
+
+        if(!$agent->canUser('@control')) {
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            return;
+        }
+
+        $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
+
+        $recourse = new EntityRecourse;
+
+        try {
+            $app->em->beginTransaction();
+
             $recourse->recourseText = $this->data['recourse'];
             $recourse->recourseSend = new \DateTime();
-            $recourse->recourseStatus = EntityRecourse::STATUS_DRAFT;
-            $recourse->registration = $registratrion;
-            $recourse->opportunity = $opportinuty;
-            $recourse->agent = $agent ;
+            $recourse->status = EntityRecourse::STATUS_DRAFT;
+            $recourse->registration = $registration;
+            $recourse->opportunity = $opportunity;
+            $recourse->agent = $agent;
             $recourse->create_timestamp = new \DateTime();
-            $situ = $recourse->save();
-            if(is_null($situ)){
-                return $this->json(['message' => 'Recurso enviado com sucesso', 'status' => 200]);
-            }
-            return $this->errorJson('Erro Inesperado', 403);
 
+            $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
+            $recourse->save(true);
+
+            foreach($_FILES as $file) {
+                $app->disableAccessControl();
+
+                $newFile = new RecourseFile($file);
+                $newFile->setGroup('recourse-attachment');
+                $newFile->owner = $recourse;
+                $newFile->makePrivate();
+
+                $app->enableAccessControl();
+            }
+
+            $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
+
+            $app->em->commit(true);
+
+            $this->json(['message' => 'Recurso enviado com sucesso'], 201);
+        } catch (\PDOException $e) {
+            $recourse && $recourse->delete();
+            $this->json([
+                'message' => 'Erro inesperado, tente novamente',
+                'errorMessage' => $e->getMessage(),
+            ], 500);
         }
     }
 
     /*
      * Função para verificar se já tem resposta de um recurso
      * */
-    public function verifyReply($recourse)
+    public static function canReply($recourse): bool
     {
         $app = App::i();
         $rec = $app->repo('Recourse\Entities\Recourse')->find($recourse);
-        if(!is_null($rec->recourseReply) && !is_null($rec->recourseDateReply) && $rec->replyAgentId !== $app->getAuth()->getAuthenticatedUser()->profile->id)
-        {
-            return $this->errorJson('Esse recurso foi respondido', 403);
+        if($rec->replyPublish) {
+            return false;
         }
+        if($rec->replyAgent && $rec->replyAgent->id !== $app->getAuth()->getAuthenticatedUser()->profile->id) {
+            return false;
+        }
+
+        return true;
     }
 
-    /*
+    /**
      * Função que publica os recursos
      * @params $opportunity integer
-     * return void
      */
-    public function POST_publish()
+    public function POST_publish(): void
     {
-        $res = EntityRecourse::publishResource($this->postData['opportunity']);
-        if($res > 0) {
-            $this->json([ 'title' => 'Sucesso', 'message' => 'Publicação realizada com sucesso', 'status' => 200], 200);
+        $app = App::i();
+        try {
+            $app->repo('Recourse\Entities\Recourse')->publish($this->postData['opportunity']);
+            $this->json([
+                'title' => 'Sucesso',
+                'message' => 'Publicação realizada com sucesso',
+            ]);
+        } catch (Stop $stop) {
+        } catch (\Exception $e) {
+            $this->json([
+                'title' => 'Error',
+                'message' => 'Ocorreu um erro inesperado.',
+                'type' => 'error',
+                'errorMessage' => $e->getMessage(),
+            ], 500);
+            return;
         }
-        $this->json([ 'title' => 'Error', 'message' => 'Ocorreu um erro inesperado.', 'type' => 'error'], 500);
     }
 
     protected function _publishAssets()
@@ -255,55 +361,5 @@ class Recourse extends \MapasCulturais\Controller{
         $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
         $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
-    }
-
-    protected function createLogsRevision($dataRevision, $recourse)
-    {
-        $app = App::i();
-        $conn = $app->em->getConnection();
-
-
-        dump($recourse->getClassName());
-        foreach ($dataRevision as $keysRevision => $revisionData)
-        {
-            $lastRevsisionDataId = $conn
-                ->executeQuery('SELECT id FROM entity_revision_data ORDER BY "timestamp" DESC LIMIT 1')
-                ->fetch()['id'];
-            $sqlRevisionData = "INSERT INTO
-            entity_revision_data (\"id\", \"timestamp\", \"key\", \"value\")
-            VALUES (:id, :timestamp, :key, :value)";
-            $conn->executeUpdate($sqlRevisionData, [
-                'id' => $lastRevsisionDataId + 1,
-                'timestamp' => (new \DateTime())->format(DATE_W3C),
-                'key' => $keysRevision,
-                'value' => $revisionData,
-            ]);
-//
-            $lastEntityRevisionId = $conn
-                ->executeQuery('SELECT id FROM entity_revision ORDER BY "create_timestamp" DESC LIMIT 1')
-                ->fetch()['id'];
-            $sqlEntityRevision = "INSERT INTO
-                    entity_revision (id, user_id, object_id, object_type, create_timestamp, action, message)
-                    VALUES (:id, :user_id, :object_id, :object_type, :create_timestamp, :action, :message)";
-            $conn->executeUpdate($sqlEntityRevision, [
-                'id' => $lastEntityRevisionId+1,
-                'user_id' => $app->user->id,
-                'object_id' => $recourse->id,
-                'object_type' => $recourse->getClassName(),
-                'create_timestamp' => (new \DateTime())->format(DATE_W3C),
-                'action' => EntityRevision::ACTION_CREATED,
-                'message' => 'Registro criado.',
-            ]);
-
-            $conn->executeUpdate("INSERT INTO entity_revision_revision_data VALUES (:revision_id, :revision_data_id)", [
-                'revision_id' => $lastEntityRevisionId + 1,
-                'revision_data_id' => $lastRevsisionDataId + 1
-            ]);
-
-        }
-
-
-
-
     }
 }

@@ -16,57 +16,72 @@
 
     // Seriço que executa no servidor as requisições HTTP
     module.factory('RecourseService', ['$http', function ($http) {
-        var urlBase = MapasCulturais.baseURL
+        const urlBase = MapasCulturais.baseURL
         return {
             getRecourseAll: function (opportunityId) {
-                return $http.get(urlBase + 'recursos/todos/' + opportunityId).
-                    success(function (data, status) {
-                        console.log({ data })
-                        return data
-                    }).
-                    error(function (data, status) {
-                        console.log({data})
+                return $http.get(urlBase + 'recursos/todos/' + opportunityId)
+                    .success(data => data)
+                    .error(function (data, status) {
+                        console.error(status)
+                        console.error(data)
                     });
             },
-            sendReply: function (id, status, reply) {
-                var data = {
+            sendReply: function (id, status, reply, replyResult = null) {
+                const data = {
                     entityId: id,
                     status,
-                    reply
+                    reply,
+                    replyResult,
                 };
-                return $http.post(urlBase + 'recursos/responder', data).
-                    success(function (data, status) {
-                        if(data.status == 200){
+
+                return $http.post(urlBase + 'recursos/responder', data)
+                    .success(function (response, status) {
+                        if(status === 202){
                             Swal.fire({
                                 title: "Sucesso!",
-                                text: data.message
+                                text: response.message,
+                                showConfirmButton: false,
+                                allowOutsideClick: false,
+                                timer: 1500,
+                                timerProgressBar: true,
+                                customClass: {
+                                    popup: 'colored-toast',
+                                },
                             });
                             setTimeout(function () {
                                 window.location.reload();
                             }, 1500);
                         }
-                    }).
-                    error(function (data, status) {
-                        console.log(data)
+                    })
+                    .error(function (data, status) {
+                        if(status === 403) {
+                            Swal.fire({
+                                title: "Ops!",
+                                text: 'Você não poderá responder esse recurso por que ele foi respondido ' +
+                                    'por outra comissão.'
+                            });
+                            return false;
+                        }
+
+                        console.error(status)
+                        console.error(data)
                         Swal.fire({
                             title: "Ops!",
                             icon: 'error',
-                            text: data.data
+                            text: data.message,
+                            footer: data.errorMessage,
                         });
-                        setTimeout(() => {
-                            window.location.reload()
-                        }, "1500");
                     });
             },
             getRegistration: function (registration) {
-                return $http.get(urlBase + 'recursos/registration/'+ registration).
-                success(function (data, status) {
-                    console.log({ data })
-                    return data
-                }).
-                error(function (data, status) {
-                    console.log(data)
-                });
+                return $http.get(urlBase + 'recursos/registration/'+ registration)
+                    .success(function (data, status) {
+                        return data
+                    })
+                    .error(function (data, status) {
+                        console.error(status)
+                        console.error(data)
+                    });
             },
             verifyView: function (entity) {
                 return $http.post(urlBase + 'recursos/verifyPermission', entity)
@@ -111,8 +126,8 @@
             recourseSend: '',
             status: ''
         };
-        $scope.noteActual=  '';
-        $scope.newNoteReply = '';
+        $scope.currentGrade =  '';
+        $scope.newGrade = '';
         $scope.reply = '';
         $scope.countNotReply = 0;
         $scope.isPublish = false;
@@ -120,74 +135,66 @@
         $scope.modelSelectConfigurationRecourse = false;
         $scope.divSelectConfiguration = false;
 
-        var recoursesAll = {};
         if(MapasCulturais.hasOwnProperty('entity')){
-            var recoursesAll = RecourseService.getRecourseAll(MapasCulturais.entity.id)
-                .then(res => JSON.parse(JSON.stringify(res)).data)
-                .then(res => {
-                    console.log({res})
-                    //Se tiver um publicado o botão no front é desabilitado
-                    res.forEach(function (valor, indice) {
-                        if(valor.replyPublish == true){
+            const recoursesAll = RecourseService.getRecourseAll(MapasCulturais.entity.id)
+                .success(data => {
+                    data.forEach(recourse => {
+                        //Se tiver um publicado o botão no front é desabilitado
+                        if (recourse.replyPublish) {
                             $scope.isPublish = true;
                         }
-                    });
-                    for (i = 0; i < res.length; i++){
-                        if(res[i]['recourseSend']){
-                            res[i]['recourseSend'] = moment(res[i]['recourseSend'].date).format('DD/MM/YYYY hh:mm')
-                        }
-                        if(res[i]['recourseDateReply']){
-                            res[i]['recourseDateReply'] = moment(res[i]['recourseDateReply'].date).format('DD/MM/YYYY hh:mm')
-                        }
-                        //Formatando o status de nome
-                        if(res[i]['recourseStatus']) {
-                            res[i]['recourseStatus'] =  $scope.getSituation(res[i]['recourseStatus']);
+
+                        recourse.recourseSend = moment(recourse.recourseSend?.date).format('DD/MM/YYYY hh:mm');
+                        recourse.recourseDateReply = recourse.recourseDateReply?.date ? moment(recourse.recourseDateReply.date).format('DD/MM/YYYY hh:mm') : null;
+                        recourse.recourseStatus = $scope.getSituation(recourse.recourseStatus);
+
+                        if (recourse.recourseReply === null || recourse.recourseReply === '') {
+                            $scope.countNotReply++;
                         }
 
-                        if(res[i]['recourseReply'] == null || res[i]['recourseReply'] == '')
-                        {
-                            $scope.countNotReply++;
-                            console.log('Dentro do If: ',$scope.countNotReply);
-                        }
-                    }
-                    $scope.data.recourses = res;
-                    if(res.length > 0 )
-                    {
+                        $scope.data.recourses.push(recourse);
+                    });
+
+
+                    if($scope.data.recourses.length > 0 ) {
                         $scope.tableRecourse = true;
                         $scope.veriftRecourses = false;
                         $scope.textVerifyRecourses = '';
                     }
-                    if(res.length == 0)
-                    {
-                        $scope.textVerifyRecourses = 'Não existe recursos para essa oportunidade'
+                    if($scope.data.recourses.length === 0) {
+                        $scope.textVerifyRecourses = 'Não existem recursos para essa oportunidade'
                     }
                     // you returned no value here!
-
+                })
+                .error((error, status) => {
+                    console.error(status);
+                    console.error(error);
+                    $scope.textVerifyRecourses = 'Não existem recursos para essa oportunidade';
                 });
         }
 
 
         $scope.getSituation = function (situation) {
-            var statusStituation = '';
+            let statusSituation = '';
 
                 switch (situation) {
                     case '0':
-                        statusStituation = 'Aberto';
+                        statusSituation = 'Aberto';
                         break;
                     case '1':
-                        statusStituation = 'Deferido';
+                        statusSituation = 'Deferido';
                         break;
                     case '-9':
-                        statusStituation = 'Indeferido';
+                        statusSituation = 'Indeferido';
                         break;
                 }
 
-            return statusStituation;
+            return statusSituation;
         };
 
-        $scope.replyRecourse = function (id, registration, agent, text, send, status, agentReply, reply) {
+        $scope.replyRecourse = function (id, registration, agent, text, send, status, replyAgent, reply, replyResult) {
             //Caso o agente que clicou não foi o mesmo que respondeu ao recurso, então é bloqueado para responder
-            if( (agentReply !== null) && agentReply !== MapasCulturais.userProfile.id){
+            if((replyAgent !== null) && replyAgent.id !== MapasCulturais.userProfile.id) {
                 Swal.fire({
                     title: "Ops!",
                     text: 'Você não poderá responder esse recurso por que ele foi respondido ' +
@@ -199,13 +206,14 @@
             $scope.divReplyRecourse = true
             $scope.recourseAdmin = {
                 idRecourse: id,
-                registration: registration,
-                agent: agent,
+                registration,
+                agent,
                 recourseText: text,
                 recourseSend: send,
-                status: status,
-                agentReply: agentReply,
-                reply: reply
+                status,
+                replyAgent,
+                reply,
+                replyResult,
             }
         }
 
@@ -213,18 +221,19 @@
             var registration = '';
             if($scope.recourseAdmin.status == '1'){
                 registration =  RecourseService.getRegistration($scope.recourseAdmin.registration)
-                registration.then(res => {
-                    console.log(res)
-                    $scope.noteActual = res.data.resultConsolidate
-                }).catch(err => {
-                    console.log(err)
-                });
+                registration
+                    .then(res => {
+                        $scope.currentGrade = res.data.resultConsolidate
+                    })
+                    .catch(err => {
+                        console.error(err)
+                    });
             }
         };
 
-        $scope.sendReplyRecourse = function (id, status, reply) {
-            var reply = RecourseService.sendReply(id, status, reply);
-            console.log({reply})
+        $scope.sendReplyRecourse = function (id, status, reply, replyResult) {
+            const response = RecourseService.sendReply(id, status, reply, replyResult);
+            console.log(response);
         };
 
         $scope.backRecourse = function () {
@@ -232,7 +241,7 @@
             $scope.divReplyRecourse = false
         }
 
-        $scope.redirectRegistrarion = function (registration) {
+        $scope.redirectRegistration = function (registration) {
            return MapasCulturais.createUrl('inscricao', registration);
         };
 

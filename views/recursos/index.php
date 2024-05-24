@@ -1,37 +1,36 @@
 <?php
+/**
+ * @var $app \MapasCulturais\App
+ * @var $entity \MapasCulturais\Entities\Opportunity
+ * @var $urlOpp string
+ */
+
 $this->layout = 'panel';
 $app->view->jsObject['entity'] = $entity;
 
-$op = $app->repo('Opportunity')->find($entity->id);
 ?>
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
     <div class="alert info">
-        Lembramos que ao clicar em <strong>Responder <i class="fa fa-edit"></i>  </strong>, o recurso tem privilégio
+        Lembramos que ao clicar em <strong>Responder <i class="fa fa-edit"></i></strong>, o recurso tem privilégio
         de edição antes da publicação, somente para você. Não poderá mais ser editado por ninguém.
         Lembramos que ao clicar em Responder, o recurso só poderá ser respondido e editado exclusivamente por você,
         antes da publicação. Não poderá ser editado por outra pessoa.
     </div>
     <div class="panel-header clearfix" ng-controller="RecourseController">
-        <p class="text-center">
         <h5 style="color:#636161;">
             Recursos da Oportunidade
         </h5>
-        </p>
-        <p>
         <h5>
             <a href="<?php echo $urlOpp; ?>" target="_blank">
                 <?php echo $entity->name; ?>
             </a>
         </h5>
-        </p>
         <p>
             Total de recursos: <small class="badge">{{data.recourses.length}}</small>
             Total rec. sem resposta: <small class="badge">{{countNotReply}}</small>
             <a href="#" class="btn btn-default" style="float: right" title="Imprimir todos recursos">Imprimir Recursos</a>
         </p>
-        <p>
-            <hr>
-        </p>
+        <hr/>
     </div>
     <div ng-controller="RecourseController">
         <div style="width: 100%;" ng-if="veriftRecourses">
@@ -53,18 +52,27 @@ $op = $app->repo('Opportunity')->find($entity->id);
             <tbody>
                 <tr ng-repeat="recourses in data.recourses">
                     <td>
-                        <a href="{{redirectRegistrarion(recourses.registration.id)}}" target="_blank">
-                            {{recourses.registration.id}}
+                        <a href="{{redirectRegistration(recourses.registration.id)}}" target="_blank">
+                            {{recourses.registration.number}}
                         </a>
                     </td>
                     <td>{{recourses.agent.name}}</td>
                     <td>
                         {{recourses.recourseText.substring(0, 100)}}...
                         <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)">Ler mais</a>
+
+                        <div class="recourse-attachments">
+                            <a
+                                ng-repeat="file in recourses.files"
+                                href="{{file.url}}"
+                                target="_blank"
+                                class="recourse-attachment-item"
+                            >{{file.name}}</a>
+                        </div>
                     </td>
 
                     <td>{{recourses.recourseSend}}</td>
-                    <td>{{recourses.recourseStatus}}</td>
+                    <td>{{getSituation(recourses.status)}}</td>
                     <td>
                         <p ng-if="recourses.recourseReply.length > 100">
                             <small> {{recourses.recourseReply.substr(0, 100)}}...</small>
@@ -80,9 +88,10 @@ $op = $app->repo('Opportunity')->find($entity->id);
                                 recourses.agent,
                                 recourses.recourseText,
                                 recourses.recourseSend,
-                                recourses.recourseStatus,
-                                recourses.replyAgentId,
-                                recourses.recourseReply
+                                recourses.status,
+                                recourses.replyAgent,
+                                recourses.recourseReply,
+                                recourses.replyResult
                             )"
                         >
                             <i class="fas fa-edit"></i>
@@ -91,26 +100,30 @@ $op = $app->repo('Opportunity')->find($entity->id);
                             <i class="fas fa-eye"></i>
                         </a>
                     </td>
-                    <td>{{recourses.recourseDateReply}}</td>
+                    <td>
+                        {{recourses.recourseDateReply}}
+                        <br>
+                        {{recourses.replyAgent.name}}
+                    </td>
                 </tr>
             </tbody>
 
         </table>
+
+        <div style="width: 100%;"  ng-show="divReplyRecourse">
+            <button class="btn btn-default" ng-click="backRecourse()" title="Voltar para lista que tem todos os recursos">
+            <i class="fas fa-arrow-left"></i>
+                Voltar para lista
+            </button>
+        </div>
+
         <table class="table table-bordered" width='100%' ng-show="divReplyRecourse">
-            <tr>
-                <div style="width: 100%;"  ng-show="divReplyRecourse">
-                    <button class="btn btn-default" ng-click="backRecourse()" title="Voltar para lista que tem todos os recursos">
-                    <i class="fas fa-arrow-left"></i>
-                        Voltar para lista
-                    </button>
-                </div>
-            </tr>
             <tr>
                 <td width="50%">
                     <table width="100%">
                         <tr>
                             <td> <strong>Inscrição:</strong>
-                                <a href="{{redirectRegistrarion(recourseAdmin.registration)}}" target="_blank">
+                                <a href="{{redirectRegistration(recourseAdmin.registration)}}" target="_blank">
                                     {{recourseAdmin.registration}}
                                 </a>
                             </td>
@@ -123,17 +136,20 @@ $op = $app->repo('Opportunity')->find($entity->id);
                         </tr>
                         <tr>
                             <td>
-                                <strong>Aberto por: </strong>  {{recourseAdmin.agent.name}}
+                                <strong>Aberto por: </strong>
+                                {{recourseAdmin.agent.name}}
                             </td>
                         </tr>
                         <tr>
                             <td>
-                                <strong>Enviado em: </strong> {{recourseAdmin.recourseSend}}
+                                <strong>Enviado em: </strong>
+                                {{recourseAdmin.recourseSend}}
                             </td>
                         </tr>
                         <tr>
                             <td>
-                                <strong>Situação: </strong> {{getSituation(recourseAdmin.status)}}
+                                <strong>Situação: </strong>
+                                {{getSituation(recourseAdmin.status)}}
                             </td>
                         </tr>
                     </table>
@@ -143,14 +159,14 @@ $op = $app->repo('Opportunity')->find($entity->id);
                         <div class="form-group">
                             <label for="label-reply-form">Responder ao recurso</label>
                             <textarea name="reply" class="form-control" rows="10" ng-model="recourseAdmin.reply">{{recourseAdmin.reply}}</textarea>
-                            <label for="label-reply-form">Alterar a situação {{recourseAdmin.status}}</label>
+                            <label for="label-reply-form">Alterar a situação {{getSituation(recourseAdmin.status)}}</label>
                             <select name="situation" ng-change="changeSituation()" ng-model="recourseAdmin.status" id="" class="form-control">
-                                <option value="">--Selecione--</option>
+                                <option value="" disabled selected>--Selecione--</option>
                                 <option value="1">Deferido</option>
                                 <option value="-9" >Indeferido</option>
                             </select>
-                            <div class="form-group" ng-if="noteActual > 0">
-                                <label for="">Nota Atual: {{noteActual}}</label>
+                            <div class="form-group" ng-if="<?= $entity->evaluationMethodConfiguration->type == 'technical' ?> && recourseAdmin.status == '1'">
+                                <label for="">Nota Atual: {{currentGrade}}</label>
                                 <p class="textcenter">
                                     <small>--</small>
                                 </p>
@@ -158,14 +174,18 @@ $op = $app->repo('Opportunity')->find($entity->id);
                                     <label for="label-reply-form">
                                         <strong>Nova nota</strong>
                                     </label>
-                                    <input type="text" class="form-control" ng-model="newNoteReply">
+                                    <input type="text" class="form-control" ng-model="recourseAdmin.replyResult">
                                 </p>
                             </div>
                             <button
                                 class="btn btn-primary btn-reply-recourse"
                                 type="submit"
-                                ng-click="sendReplyRecourse(recourseAdmin.idRecourse, recourseAdmin.status,
-                                 recourseAdmin.reply)"
+                                ng-click="sendReplyRecourse(
+                                    recourseAdmin.idRecourse,
+                                    recourseAdmin.status,
+                                    recourseAdmin.reply,
+                                    recourseAdmin.replyResult
+                                )"
                             >
                                 Enviar resposta
                                 <i class="fas fa-paper-plane"></i>

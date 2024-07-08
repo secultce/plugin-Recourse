@@ -1,12 +1,10 @@
 // A $( document ).ready() block.
 
 $(function () {
-    console.log('.opportunity-claim-box ready');
     $('.opportunity-claim-box').remove();//Removendo o botão existente no modulo de oportunidades
 
     $( "#recourseOptions" ).change(function() {
         var opt =  $( "#recourseOptions" ).val();
-        console.log({opt})
         if (opt == '0'){
             $('#insertData').show();
             //$('#resourceOptions option[value=0]').attr('selected','selected');
@@ -37,8 +35,6 @@ function sendRecourse(registration, opportunity, agentId)
 {
     const recourseTextareaId = 'context-recourse-user-' + registration;
     const recourseAttachmentsId = 'attachment-recourse-user-' + registration;
-
-    console.log(MapasCulturais.profile)
 
     Swal.fire({
         title: "Escrever o Recurso",

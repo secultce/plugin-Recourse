@@ -18,14 +18,6 @@ $this->applyTemplateHook('opportunity-recourse--tab', 'end');
 $this->applyTemplateHook('opportunity-recourse--tab', 'after');
 ?>
 <script>
-    $(document).ready(function(){
-        console.log('rec')
-        let visibled = false;
-
-        if(MapasCulturais.roles.include("admin")){
-            console.log(MapasCulturais.roles);
-        }
-    })
     function redirectRecourse() {
         window.location.href=MapasCulturais.baseURL+'recursos/oportunidade/'+MapasCulturais.entity.id
     }

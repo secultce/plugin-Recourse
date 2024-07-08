@@ -298,7 +298,6 @@
                     RecourseService.publish(id)
                     .then(res => JSON.parse(JSON.stringify(res)).data)
                     .then(res => {
-                        console.log({res})
                         Swal.close();
                         if(res.status == 200){
                             Swal.fire({

@@ -3,6 +3,10 @@ Todas as mudanças relevantes serão documentadas nesse arquivo.
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0), e esse projeto adere ao [Semantic Versionning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2024-07-08
+### Correções
+- Removido código com erro no console.
+
 ## [1.1.0] - 2024-05-24
 ### Melhorias
 - Adicionado campo para anexar vários arquivos num recurso.

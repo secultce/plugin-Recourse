@@ -89,9 +89,13 @@ class Recourse extends \MapasCulturais\Controller{
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
 
         $entity = $app->repo('Opportunity')->find($this->data['id']);
+        $evaluators = $entity->getEvaluationCommittee(false);
+        $isEvaluator = array_filter($evaluators, function ($evaluator) use ($app) {
+            return $evaluator->userId === $app->auth->authenticatedUser->id;
+        });
 
         //Se for administrador
-        if($entity->canUser('@control')){
+        if($entity->canUser('@control') || $isEvaluator){
             $urlOpp = $app->createUrl('oportunidade', $entity->id);
             $this->render('index', ['entity' => $entity, 'app' => $app, 'urlOpp' => $urlOpp]);
         }else{
@@ -335,11 +339,23 @@ class Recourse extends \MapasCulturais\Controller{
     public function POST_publish(): void
     {
         $app = App::i();
+        $opportunity = $app->repo('Opportunity')->find($this->postData['opportunity']);
+
+        if (!$opportunity->canUser('@control')) {
+            $this->json([
+                'title' => 'Error',
+                'message' => 'Você não tem permissão para realizar esta ação',
+                'type' => 'error',
+            ], 401);
+            return;
+        }
+
         try {
             $app->repo('Recourse\Entities\Recourse')->publish($this->postData['opportunity']);
             $this->json([
                 'title' => 'Sucesso',
                 'message' => 'Publicação realizada com sucesso',
+                'status' => 200,
             ]);
         } catch (Stop $stop) {
         } catch (\Exception $e) {

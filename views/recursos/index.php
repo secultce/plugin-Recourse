@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @var $app \MapasCulturais\App
  * @var $entity \MapasCulturais\Entities\Opportunity
@@ -9,6 +10,7 @@ $this->layout = 'panel';
 $app->view->jsObject['entity'] = $entity;
 
 ?>
+
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
     <div class="alert info">
         Lembramos que ao clicar em <strong>Responder <i class="fa fa-edit"></i></strong>, o recurso tem privilégio
@@ -30,7 +32,7 @@ $app->view->jsObject['entity'] = $entity;
             Total rec. sem resposta: <small class="badge">{{countNotReply}}</small>
             <a href="#" class="btn btn-default" style="float: right" title="Imprimir todos recursos">Imprimir Recursos</a>
         </p>
-        <hr/>
+        <hr />
     </div>
     <div ng-controller="RecourseController">
         <div style="width: 100%;" ng-if="veriftRecourses">
@@ -66,8 +68,7 @@ $app->view->jsObject['entity'] = $entity;
                                 ng-repeat="file in recourses.files"
                                 href="{{file.url}}"
                                 target="_blank"
-                                class="recourse-attachment-item"
-                            >{{file.name}}</a>
+                                class="recourse-attachment-item">{{file.name}}</a>
                         </div>
                     </td>
 
@@ -81,8 +82,8 @@ $app->view->jsObject['entity'] = $entity;
                             <small> {{recourses.recourseReply}}</small>
                         </p>
                         <a class="btn btn-recourse" style="color: #0a766a" ng-if="!isPublish"
-                           title="Responder ou editar o recurso do candidato"
-                           ng-click="replyRecourse(
+                            title="Responder ou editar o recurso do candidato"
+                            ng-click="replyRecourse(
                                 recourses.id,
                                 recourses.registration.id,
                                 recourses.agent,
@@ -92,8 +93,7 @@ $app->view->jsObject['entity'] = $entity;
                                 recourses.replyAgent,
                                 recourses.recourseReply,
                                 recourses.replyResult
-                            )"
-                        >
+                            )">
                             <i class="fas fa-edit"></i>
                         </a>
                         <a class="btn btn-recourse" title="Visualizar Resposta" ng-click="verifyView(recourses.recourseReply)">
@@ -110,9 +110,9 @@ $app->view->jsObject['entity'] = $entity;
 
         </table>
 
-        <div style="width: 100%;"  ng-show="divReplyRecourse">
+        <div style="width: 100%;" ng-show="divReplyRecourse">
             <button class="btn btn-default" ng-click="backRecourse()" title="Voltar para lista que tem todos os recursos">
-            <i class="fas fa-arrow-left"></i>
+                <i class="fas fa-arrow-left"></i>
                 Voltar para lista
             </button>
         </div>
@@ -155,7 +155,7 @@ $app->view->jsObject['entity'] = $entity;
                     </table>
                 </td>
                 <td width="50%">
-                    <div class="reply-shadow" >
+                    <div class="reply-shadow">
                         <div class="form-group">
                             <label for="label-reply-form">Responder ao recurso</label>
                             <textarea name="reply" class="form-control" rows="10" ng-model="recourseAdmin.reply">{{recourseAdmin.reply}}</textarea>
@@ -163,7 +163,7 @@ $app->view->jsObject['entity'] = $entity;
                             <select name="situation" ng-change="changeSituation()" ng-model="recourseAdmin.status" id="" class="form-control">
                                 <option value="" disabled selected>--Selecione--</option>
                                 <option value="1">Deferido</option>
-                                <option value="-9" >Indeferido</option>
+                                <option value="-9">Indeferido</option>
                             </select>
                             <div class="form-group" ng-if="<?= $entity->evaluationMethodConfiguration->type == 'technical' ?> && recourseAdmin.status == '1'">
                                 <label for="">Nota Atual: {{currentGrade}}</label>
@@ -185,8 +185,7 @@ $app->view->jsObject['entity'] = $entity;
                                     recourseAdmin.status,
                                     recourseAdmin.reply,
                                     recourseAdmin.replyResult
-                                )"
-                            >
+                                )">
                                 Enviar resposta
                                 <i class="fas fa-paper-plane"></i>
                             </button>
@@ -196,21 +195,22 @@ $app->view->jsObject['entity'] = $entity;
             </tr>
         </table>
         <div>
-           <div ng-if="!isPublish">
-               <button
-                       class="btn btn-primary"
-                       title="Publica esses recursos para os proponentes visualizem a resposta"
-                       ng-click="clickPublish(<?php echo $entity->id; ?>)"
-                       ng-if="data.recourses.length > 0"
-                       type="button"
-               >
-                   <?php \MapasCulturais\i::_e('Publicar Recursos'); ?>
-                   <i class="fas fa-paper-plane"></i>
-               </button>
-           </div>
-            <div ng-else class="alert success"  ng-if="isPublish">
+            <?php if ($entity->canUser('@control')): ?>
+                <div ng-if="!isPublish">
+                    <button
+                        class="btn btn-primary"
+                        title="Publica esses recursos para os proponentes visualizem a resposta"
+                        ng-click="clickPublish(<?php echo $entity->id; ?>)"
+                        ng-if="data.recourses.length > 0"
+                        type="button">
+                        <?php \MapasCulturais\i::_e('Publicar Recursos'); ?>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            <?php endif; ?>
+            <div ng-else class="alert success" ng-if="isPublish">
                 <label for="">
-                    <h5>Recursos publicado</h5>
+                    <h5>Recursos publicados</h5>
                 </label>
             </div>
         </div>

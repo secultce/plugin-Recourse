@@ -4,6 +4,7 @@ namespace Recourse\Controllers;
 use DateTime;
 use \MapasCulturais\App;
 use MapasCulturais\Entities\EntityRevision as Revision;
+use MapasCulturais\Entities\RegistrationEvaluation;
 use MapasCulturais\Exceptions\PermissionDenied;
 use MapasCulturais\Exceptions\WorkflowRequest;
 use Recourse\Entities\Recourse as EntityRecourse;
@@ -87,6 +88,8 @@ class Recourse extends \MapasCulturais\Controller{
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
         $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
+        $app->view->enqueueStyle('app', 'opinionManagement','OpinionManagement/css/opinionManagement.css');
+        $app->view->enqueueScript('app', 'opinion-management', 'OpinionManagement/js/opinionManagement.js');
 
         $entity = $app->repo('Opportunity')->find($this->data['id']);
         $evaluators = $entity->getEvaluationCommittee(false);
@@ -106,8 +109,21 @@ class Recourse extends \MapasCulturais\Controller{
     public function GET_todos()
     {
         $app = App::i();
-        $entity = $app->repo(EntityRecourse::class)->findBy(['opportunity' => $this->data['id']]);
-        $this->json($entity, 200);
+        $recources = $app->repo(EntityRecourse::class)->findBy(['opportunity' => $this->data['id']]);
+        $opportunity = $app->repo('Opportunity')->find($this->data['id']);
+
+        if ($opportunity->canUser('@control')) $this->json($recources, 200);
+
+        $recources = array_filter($recources, function ($recource) use ($app) {
+            $registrationEvaluation = $app->repo(RegistrationEvaluation::class)->findBy([
+                'registration' => $recource->registration->id,
+                'user' => $app->auth->authenticatedUser->id,
+            ]);
+
+            return boolval($registrationEvaluation);
+        });
+
+        $this->json(array_values($recources), 200);
     }
 
     public function POST_responder(): void
@@ -121,15 +137,15 @@ class Recourse extends \MapasCulturais\Controller{
             $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 400);
             return;
         }
-        if($this->data['status'] == '' || $this->data['status'] == 'Aberto'){
+        if($this->data['status'] == '0' || $this->data['status'] == 'Aberto'){
             $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
             return;
         }
 
         //Formatando o status para gravar no banco
         $statusRecourse =  $this->data['status'];
-        if($this->data['status'] == 'Deferido' || $this->data['status'] == 'Indeferido'){
-            $statusRecourse = self::getSituationToStatus( $this->data['status'] );
+        if (in_array($this->data['status'], ['Deferido', 'Deferido parcialmente', 'Indeferido'])) {
+            $statusRecourse = self::getSituationToStatus($this->data['status']);
         }
 
         $app = App::i();
@@ -187,6 +203,9 @@ class Recourse extends \MapasCulturais\Controller{
         switch ($situation) {
             case 'Deferido':
                 $situ = EntityRecourse::STATUS_ENABLED;
+                break;
+            case 'Deferido parcialmente':
+                $situ = EntityRecourse::STATUS_PARTIALLY_APPROVED;
                 break;
             case 'Indeferido':
                 $situ = EntityRecourse::STATUS_DISABLED;

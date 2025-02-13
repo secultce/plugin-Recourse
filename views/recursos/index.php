@@ -30,7 +30,7 @@ $app->view->jsObject['entity'] = $entity;
         <p>
             Total de recursos: <small class="badge">{{data.recourses.length}}</small>
             Total rec. sem resposta: <small class="badge">{{countNotReply}}</small>
-            <a href="#" class="btn btn-default" style="float: right" title="Imprimir todos recursos">Imprimir Recursos</a>
+            <!-- <a href="#" class="btn btn-default" style="float: right" title="Imprimir todos recursos">Imprimir Recursos</a> -->
         </p>
         <hr />
     </div>
@@ -41,12 +41,12 @@ $app->view->jsObject['entity'] = $entity;
         <table class="table table-bordered table-hover" ng-show="tableRecourse">
             <thead>
                 <tr class="tr-active">
-                    <!-- <th>Publicar</th> -->
                     <th>Inscrição</th>
                     <th>Aberto por</th>
                     <th>Recurso</th>
                     <th>Enviado em </th>
                     <th>Situação</th>
+                    <th>Pareceres</th>
                     <th>Resposta</th>
                     <th>Respondido em </th>
                 </tr>
@@ -74,6 +74,15 @@ $app->view->jsObject['entity'] = $entity;
 
                     <td>{{recourses.recourseSend}}</td>
                     <td>{{getSituation(recourses.status)}}</td>
+                    <td>
+                        <a
+                            class="btn btn-recourse"
+                            title="Visualizar pareceres"
+                            data-id="<?= '{{ recourses.registration.id }}' ?>"
+                            onclick="showOpinions(this.getAttribute('data-id'))">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
                     <td>
                         <p ng-if="recourses.recourseReply.length > 100">
                             <small> {{recourses.recourseReply.substr(0, 100)}}...</small>
@@ -117,7 +126,7 @@ $app->view->jsObject['entity'] = $entity;
             </button>
         </div>
 
-        <table class="table table-bordered" width='100%' ng-show="divReplyRecourse">
+        <table class="table table-bordered response-table" width='100%' ng-show="divReplyRecourse">
             <tr>
                 <td width="50%">
                     <table width="100%">
@@ -157,22 +166,23 @@ $app->view->jsObject['entity'] = $entity;
                 <td width="50%">
                     <div class="reply-shadow">
                         <div class="form-group">
-                            <label for="label-reply-form">Responder ao recurso</label>
-                            <textarea name="reply" class="form-control" rows="10" ng-model="recourseAdmin.reply">{{recourseAdmin.reply}}</textarea>
-                            <label for="label-reply-form">Alterar a situação {{getSituation(recourseAdmin.status)}}</label>
+                            <label for="label-reply-form"><b>Responder ao recurso:</b></label>
+                            <textarea name="reply" class="form-control resource-response__textarea" rows="10" ng-model="recourseAdmin.reply">{{recourseAdmin.reply}}</textarea>
+                            <label for="label-reply-form"><b>Alterar a situação:</b></label>
                             <select name="situation" ng-change="changeSituation()" ng-model="recourseAdmin.status" id="" class="form-control">
                                 <option value="" disabled selected>--Selecione--</option>
                                 <option value="1">Deferido</option>
+                                <option value="8">Deferido parcialmente</option>
                                 <option value="-9">Indeferido</option>
                             </select>
-                            <div class="form-group" ng-if="<?= $entity->evaluationMethodConfiguration->type == 'technical' ?> && recourseAdmin.status == '1'">
+                            <div class="form-group" ng-if="<?= $entity->evaluationMethodConfiguration->type == 'technical' ?> && (recourseAdmin.status == '1' || recourseAdmin.status == '8')">
                                 <label for="">Nota Atual: {{currentGrade}}</label>
                                 <p class="textcenter">
                                     <small>--</small>
                                 </p>
                                 <p>
                                     <label for="label-reply-form">
-                                        <strong>Nova nota</strong>
+                                        <strong>Nova nota:</strong>
                                     </label>
                                     <input type="text" class="form-control" ng-model="recourseAdmin.replyResult">
                                 </p>

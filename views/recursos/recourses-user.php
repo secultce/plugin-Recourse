@@ -27,7 +27,6 @@ $this->layout = 'panel';
                     <th>Enviado em</th>
                     <th>Situação</th>
                     <th style="width:25%;">Resposta</th>
-                    <th>Respondido em</th>
                 </tr>
                 <tbody id="bodyAllRecourse">
                 <?php foreach ($allRecoursesUser as $recourse): ?>
@@ -85,6 +84,9 @@ $this->layout = 'panel';
                                     case '1':
                                         echo 'Deferido';
                                         break;
+                                    case '8':
+                                        echo 'Deferido parcialmente';
+                                        break;
                                     case '-9':
                                         echo 'Indeferido';
                                 }
@@ -107,13 +109,6 @@ $this->layout = 'panel';
                                 echo '<div class="alert info">Recurso ainda não respondido ou não foi publicado.</div>';
                             }
                             ?>
-                        </td>
-                        <td>
-                            <?php
-                            if($recourse->replyPublish){
-                                echo $recourse->recourseDateReply->format('d/m/Y H:i:s');
-                            }?>
-
                         </td>
                     </tr>
                 <?php endforeach; ?>

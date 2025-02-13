@@ -57,8 +57,7 @@
                         if(status === 403) {
                             Swal.fire({
                                 title: "Ops!",
-                                text: 'Você não poderá responder esse recurso por que ele foi respondido ' +
-                                    'por outra comissão.'
+                                text: 'Este recurso já foi respondido por outro parecerista.',
                             });
                             return false;
                         }
@@ -184,6 +183,9 @@
                     case '1':
                         statusSituation = 'Deferido';
                         break;
+                    case '8':
+                        statusSituation = 'Deferido parcialmente';
+                        break;
                     case '-9':
                         statusSituation = 'Indeferido';
                         break;
@@ -194,11 +196,10 @@
 
         $scope.replyRecourse = function (id, registration, agent, text, send, status, replyAgent, reply, replyResult) {
             //Caso o agente que clicou não foi o mesmo que respondeu ao recurso, então é bloqueado para responder
-            if((replyAgent !== null) && replyAgent.id !== MapasCulturais.userProfile.id) {
+            if ((replyAgent !== null) && replyAgent.id !== MapasCulturais.userProfile.id) {
                 Swal.fire({
                     title: "Ops!",
-                    text: 'Você não poderá responder esse recurso por que ele foi respondido ' +
-                        'por outra comissão.'
+                    text: `Este recurso já foi respondido pelo parecerista ${replyAgent.name}`,
                 });
                 return false;
             }
@@ -215,11 +216,20 @@
                 reply,
                 replyResult,
             }
+
+            registration = RecourseService.getRegistration(registration)
+            registration
+                .then(res => {
+                    $scope.currentGrade = res.data.resultConsolidate
+                })
+                .catch(err => {
+                    console.error(err)
+                });
         }
 
         $scope.changeSituation = function () {
             var registration = '';
-            if($scope.recourseAdmin.status == '1'){
+            if($scope.recourseAdmin.status == '1' || $scope.recourseAdmin.status == '8'){
                 registration =  RecourseService.getRegistration($scope.recourseAdmin.registration)
                 registration
                     .then(res => {

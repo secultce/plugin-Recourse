@@ -3,6 +3,10 @@ Todas as mudanças relevantes serão documentadas nesse arquivo.
 
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0), e esse projeto adere ao [Semantic Versionning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-02-17
+### Modificação
+- Alterando visualização de recursos para os pareceristas.
+
 ## [1.1.1] - 2024-07-08
 ### Correções
 - Removido código com erro no console.

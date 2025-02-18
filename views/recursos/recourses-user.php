@@ -27,6 +27,7 @@ $this->layout = 'panel';
                     <th>Enviado em</th>
                     <th>Situação</th>
                     <th style="width:25%;">Resposta</th>
+                    <th>Ações</th>
                 </tr>
                 <tbody id="bodyAllRecourse">
                 <?php foreach ($allRecoursesUser as $recourse): ?>
@@ -60,11 +61,14 @@ $this->layout = 'panel';
                             <div class="recourse-attachments">
                                 <?php
                                     foreach ($recourse->files as $attachment) {
-                                        echo "<a
-                                                  href='{$attachment->url}'
-                                                  target='_blank'
-                                                  class='recourse-attachment-item'
-                                              >{$attachment->name}</a>";
+                                        echo "<div style='margin-bottom: 2px;'>
+                                                <a
+                                                    href='{$attachment->url}'
+                                                    target='_blank'
+                                                    class='recourse-attachment-item'
+                                                >{$attachment->name}</a>
+                                                <span delete-recourse-file-btn class='icon icon-close hltip delete-file-btn' data-file-id='{$attachment->id}' title='Excluir arquivo'></span>
+                                            </div>";
                                     }
                                 ?>
                             </div>
@@ -109,6 +113,16 @@ $this->layout = 'panel';
                                 echo '<div class="alert info">Recurso ainda não respondido ou não foi publicado.</div>';
                             }
                             ?>
+                        </td>
+                        <td>
+                            <a
+                                class="btn btn-recourse" 
+                                style="color: #0a766a" 
+                                title="Editar recurso"
+                                onclick='editRecourse(<?php echo "{$recourse->id}, \"{$recourse->recourseText}\"" ?>)'
+                            >
+                                <i class="fas fa-edit"></i>
+                            </a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

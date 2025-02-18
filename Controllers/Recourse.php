@@ -334,6 +334,81 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
+    public function POST_updateRecourse(): void
+    {
+        $this->requireAuthentication();
+
+        $app = App::i();
+        $recourse = $app->repo(EntityRecourse::class)->findOneBy(['id' => $this->data['recourseId']]);
+
+        if (!$recourse->registration->canUser('@control')) {
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            return;
+        }
+
+        try {
+            foreach ($_FILES as $file) {
+                $app->disableAccessControl();
+
+                $newFile = new RecourseFile($file);
+                $newFile->setGroup('recourse-attachment');
+                $newFile->owner = $recourse;
+                $newFile->makePrivate();
+                $newFile->save();
+
+                $app->enableAccessControl();
+            }
+
+            $recourse->recourseText = $this->data['recourseText'];
+            $recourse->recourseSend = new \DateTime();
+            $recourse->save(true);
+
+            $app->em->flush();
+
+            $this->json(['message' => 'Recurso atualizado com sucesso'], 201);
+        } catch (\PDOException $e) {
+            $this->json([
+                'message' => 'Erro inesperado, tente novamente',
+                'errorMessage' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function POST_deleteFile(): void
+    {
+        $this->requireAuthentication();
+
+        $app = App::i();
+        $conn = $app->em->getConnection();
+
+        $query = "SELECT * FROM file WHERE id = :id";
+        $params = [
+            "id" => $this->data['fileId'],
+        ];
+        $file = $conn->fetchAssociative($query, $params);
+
+        $recourse = $app->repo(EntityRecourse::class)->findOneBy(['id' => $file['object_id']]);
+        if (!$recourse->registration->canUser('@control')) {
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            return;
+        }
+
+        try {
+            $stmt = $conn->prepare('DELETE FROM file WHERE id = :id');
+            $stmt->bindParam('id', $file["id"]);
+            $stmt->executeStatement();
+
+            unlink(PRIVATE_FILES_PATH . $file["path"]);
+
+            $this->json(['message' => 'O arquivo foi removido do recurso com sucesso'], 201);
+        } catch (\PDOException $e) {
+            $this->json([
+                'message' => 'Erro inesperado, tente novamente',
+                'errorMessage' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     /*
      * Função para verificar se já tem resposta de um recurso
      * */

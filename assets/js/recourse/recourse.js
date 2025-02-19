@@ -64,6 +64,46 @@ $(function () {
         }
     });
 
+    $('[edit-recourse-btn]').on('click', event => {
+        if ($(event.currentTarget).hasClass('disabled')) {
+            showSimpleSwal('O período do recurso está encerrado')
+            return
+        }
+
+        const recourseId = event.currentTarget.dataset.recourseId
+        const recourseText = event.currentTarget.dataset.recourseText
+        const recourseTextareaId = 'edit-recourse-textarea-' + recourseId
+        const recourseAttachmentsId = 'edit-recourse-file-' + recourseId
+
+        Swal.fire(recourse.getConfigSwalSend(recourseTextareaId, recourseAttachmentsId, recourseText)).then(async content => {
+            const [recourseText, files] = content.value;
+
+            const formData = new FormData();
+            formData.append('recourseId', recourseId)
+            formData.append('recourseText', recourseText)
+            Array.from(files).forEach((file, index) => {
+                formData.append(index, file)
+            })
+
+            const response = await fetch(MapasCulturais.baseURL + 'recursos/updateRecourse', {
+                method: 'POST',
+                body: formData,
+            })
+
+            if (response.ok) {
+                const data = await response.json()
+
+                showConfirmationSwal(data.message)
+            } else if (response.status === 400) {
+                const data = await response.json()
+
+                showConfirmationSwal(data.message)
+            } else {
+                showSimpleSwal('Erro inesperado, tente novamente')
+            }
+        });
+    })
+
     $('[delete-recourse-file-btn]').on('click', event => {
         Swal.fire({
             title: "Remover arquivo",
@@ -85,27 +125,40 @@ $(function () {
                     data: { fileId: event.currentTarget.dataset.fileId },
                     dataType: "json",
                     success: function (res) {
-                        Swal.fire({
-                            position: "top-center",
-                            title: res.message,
-                            showConfirmButton: true,
-                            allowOutsideClick: false
-                        }).then((res) => {
-                            if (res.isConfirmed) location.reload()
-                        });
+                        showConfirmationSwal(res.message)
                     },
-                    error: function () {
-                        Swal.fire({
-                            position: "top-center",
-                            title: 'Erro inesperado, tente novamente',
-                            showConfirmButton: true,
-                        });
+                    error: function (err) {
+                        if (err.status === 400) {
+                            showConfirmationSwal('Você não pode mais remover este arquivo. Período do recurso encerrado')
+                            return
+                        }
+
+                        showSimpleSwal('Erro inesperado, tente novamente')
                     }
                 });
             }
         });
     })
 });
+
+function showSimpleSwal(message) {
+    Swal.fire({
+        position: "top-center",
+        title: message,
+        showConfirmButton: true,
+    });
+}
+
+function showConfirmationSwal(message) {
+    Swal.fire({
+        position: "top-center",
+        title: message,
+        showConfirmButton: true,
+        allowOutsideClick: false
+    }).then((res) => {
+        if (res.isConfirmed) location.reload()
+    })
+}
 
 function claimDisabled(opt) {
     $.ajax({
@@ -161,47 +214,6 @@ function sendRecourse(registration, opportunity, agentId) {
                     "<a href='#' class='btn btn-default'>Ir p/ painel</a> <a href='#' class='btn btn-info'>Sair</a> ",
                 showConfirmButton: false,
             })
-        }
-    });
-}
-
-function editRecourse(recourseId, recourseText) {
-
-    const recourseTextareaId = 'edit-recourse-textarea-' + recourseId;
-    const recourseAttachmentsId = 'edit-recourse-file-' + recourseId;
-
-    Swal.fire(recourse.getConfigSwalSend(recourseTextareaId, recourseAttachmentsId, recourseText)).then(async content => {
-        const [recourseText, files] = content.value;
-
-        const formData = new FormData();
-        formData.append('recourseId', recourseId)
-        formData.append('recourseText', recourseText)
-        Array.from(files).forEach((file, index) => {
-            formData.append(index, file)
-        })
-
-        const response = await fetch(MapasCulturais.baseURL + 'recursos/updateRecourse', {
-            method: 'POST',
-            body: formData,
-        })
-
-        if (response.ok) {
-            const data = await response.json()
-
-            Swal.fire({
-                position: "top-center",
-                title: data.message,
-                showConfirmButton: true,
-                allowOutsideClick: false
-            }).then((res) => {
-                if (res.isConfirmed) location.reload()
-            });
-        } else {
-            Swal.fire({
-                position: "top-center",
-                title: 'Erro inesperado, tente novamente',
-                showConfirmButton: true,
-            });
         }
     });
 }

@@ -1,4 +1,7 @@
 <?php
+
+use Recourse\Utils\Util;
+
 /**
  * @var \MapasCulturais\App $app
  * @var bool $isOwner
@@ -6,7 +9,9 @@
  */
 
 $this->layout = 'panel';
+
 ?>
+
 <div class="panel-list panel-main-content">
     <?php $this->applyTemplateHook('panel-header','before'); ?>
     <header class="panel-header clearfix">
@@ -61,14 +66,17 @@ $this->layout = 'panel';
                             <div class="recourse-attachments">
                                 <?php
                                     foreach ($recourse->files as $attachment) {
+                                        $delBtn = "<span delete-recourse-file-btn class='icon icon-close hltip delete-file-btn' data-file-id='%s' title='Excluir arquivo'></span>";
+                                        $showDelBtn = Util::isRecoursePeriod($recourse->opportunity) ? $delBtn : "";
+
                                         echo "<div style='margin-bottom: 2px;'>
                                                 <a
                                                     href='{$attachment->url}'
                                                     target='_blank'
                                                     class='recourse-attachment-item'
-                                                >{$attachment->name}</a>
-                                                <span delete-recourse-file-btn class='icon icon-close hltip delete-file-btn' data-file-id='{$attachment->id}' title='Excluir arquivo'></span>
-                                            </div>";
+                                                >{$attachment->name}</a>"
+                                                . sprintf($showDelBtn, $attachment->id) .
+                                            "</div>";
                                     }
                                 ?>
                             </div>
@@ -116,10 +124,12 @@ $this->layout = 'panel';
                         </td>
                         <td>
                             <a
-                                class="btn btn-recourse" 
-                                style="color: #0a766a" 
+                                class="btn btn-recourse <?= Util::isRecoursePeriod($recourse->opportunity) ? '' : 'disabled' ?>"
+                                style="color: #0a766a"
                                 title="Editar recurso"
-                                onclick='editRecourse(<?php echo "{$recourse->id}, \"{$recourse->recourseText}\"" ?>)'
+                                edit-recourse-btn
+                                data-recourse-id="<?= $recourse->id ?>"
+                                data-recourse-text="<?= $recourse->recourseText ?>"
                             >
                                 <i class="fas fa-edit"></i>
                             </a>

@@ -1,14 +1,14 @@
 <?php
+
 namespace Recourse\Controllers;
 
 use DateTime;
 use \MapasCulturais\App;
 use MapasCulturais\Entities\EntityRevision as Revision;
 use MapasCulturais\Entities\RegistrationEvaluation;
-use MapasCulturais\Exceptions\PermissionDenied;
-use MapasCulturais\Exceptions\WorkflowRequest;
 use Recourse\Entities\Recourse as EntityRecourse;
 use Recourse\Entities\RecourseFile;
+use Recourse\Utils\Util;
 use Slim\Exception\Stop;
 
 
@@ -346,6 +346,11 @@ class Recourse extends \MapasCulturais\Controller{
             return;
         }
 
+        if (!Util::isRecoursePeriod($recourse->opportunity)) {
+            $this->json(['message' => 'O período do recurso está encerrado'], 400);
+            return;
+        }
+
         try {
             foreach ($_FILES as $file) {
                 $app->disableAccessControl();
@@ -390,6 +395,11 @@ class Recourse extends \MapasCulturais\Controller{
         $recourse = $app->repo(EntityRecourse::class)->findOneBy(['id' => $file['object_id']]);
         if (!$recourse->registration->canUser('@control')) {
             $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            return;
+        }
+
+        if (!Util::isRecoursePeriod($recourse->opportunity)) {
+            $this->json(['message' => 'Você não pode mais remover este arquivo, pois o período do recurso está encerrado'], 400);
             return;
         }
 

@@ -370,6 +370,6 @@ div:where(.swal2-icon) .swal2-icon-content {
     height: 12px;
     width: 12px;
     font-size: 10px;
-    margin-left: 3px;
+    margin-left: 5px;
     cursor: pointer;
 }

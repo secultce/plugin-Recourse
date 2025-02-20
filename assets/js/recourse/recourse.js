@@ -94,7 +94,7 @@ $(function () {
                 const data = await response.json()
 
                 showConfirmationSwal(data.message)
-            } else if (response.status === 400) {
+            } else if (response.status === 403) {
                 const data = await response.json()
 
                 showConfirmationSwal(data.message)
@@ -128,7 +128,7 @@ $(function () {
                         showConfirmationSwal(res.message)
                     },
                     error: function (err) {
-                        if (err.status === 400) {
+                        if (err.status === 403) {
                             showConfirmationSwal('Você não pode mais remover este arquivo. Período do recurso encerrado')
                             return
                         }

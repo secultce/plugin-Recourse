@@ -128,9 +128,12 @@ class Recourse extends \MapasCulturais\Controller{
 
     public function POST_responder(): void
     {
+        $app = App::i();
+        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
+
         //Validações
         if(!self::canReply($this->data['entityId'])) {
-            $this->json(['message' => 'O recurso já foi respondido'], 403);
+            $this->json(['message' => 'Este recurso já foi respondido por outro parecerista.'], 403);
             return;
         };
         if($this->data['reply'] == ''){
@@ -141,14 +144,16 @@ class Recourse extends \MapasCulturais\Controller{
             $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
             return;
         }
+        if (!Util::isRecourseResponsePeriod($recourse->opportunity)) {
+            $this->json(['message' => 'Resposta não enviada. A inscrição ainda está no período de recurso'], 403);
+            return;
+        }
 
         //Formatando o status para gravar no banco
         $statusRecourse =  $this->data['status'];
         if (in_array($this->data['status'], ['Deferido', 'Deferido parcialmente', 'Indeferido'])) {
             $statusRecourse = self::getSituationToStatus($this->data['status']);
         }
-
-        $app = App::i();
 
         try {
             $app->em->beginTransaction();
@@ -159,7 +164,6 @@ class Recourse extends \MapasCulturais\Controller{
             $recourse->recourseDateReply = new DateTime;
             $recourse->status = $statusRecourse;
             $recourse->replyAgent = $app->getAuth()->getAuthenticatedUser()->profile;
-            $recourse->createTimestamp = new DateTime();
 
             $app->applyHookBoundTo($this, 'recourse.reply', [&$recourse]);
 
@@ -347,7 +351,7 @@ class Recourse extends \MapasCulturais\Controller{
         }
 
         if (!Util::isRecoursePeriod($recourse->opportunity)) {
-            $this->json(['message' => 'O período do recurso está encerrado'], 400);
+            $this->json(['message' => 'O período do recurso está encerrado'], 403);
             return;
         }
 
@@ -399,7 +403,7 @@ class Recourse extends \MapasCulturais\Controller{
         }
 
         if (!Util::isRecoursePeriod($recourse->opportunity)) {
-            $this->json(['message' => 'Você não pode mais remover este arquivo, pois o período do recurso está encerrado'], 400);
+            $this->json(['message' => 'Você não pode mais remover este arquivo, pois o período do recurso está encerrado'], 403);
             return;
         }
 
@@ -451,6 +455,11 @@ class Recourse extends \MapasCulturais\Controller{
                 'message' => 'Você não tem permissão para realizar esta ação',
                 'type' => 'error',
             ], 401);
+            return;
+        }
+
+        if (!Util::canPostResponses($opportunity)) {
+            $this->json(['message' => 'Respostas não publicadas. Há recursos não respondidos ou o período do recurso está aberto'], 403);
             return;
         }
 

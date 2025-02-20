@@ -57,7 +57,7 @@
                         if(status === 403) {
                             Swal.fire({
                                 title: "Ops!",
-                                text: 'Este recurso já foi respondido por outro parecerista.',
+                                text: data.message,
                             });
                             return false;
                         }
@@ -94,15 +94,21 @@
                     console.log({data});
                     console.log({status});
                 }).error(function (err, status) {
-                    // console.log({err});
-                    console.log({status});
-                    if(status !== 200){
+                    if (status === 403) {
                         Swal.fire({
                             title: "Ops!",
-                            icon: 'error',
-                            text: 'Ocorreu um erro inesperado'
+                            text: err.message,
                         });
+                        return false;
                     }
+                    
+                    // console.log({err});
+                    console.log({status});
+                    Swal.fire({
+                        title: "Ops!",
+                        icon: 'error',
+                        text: 'Ocorreu um erro inesperadoooo'
+                    });
                 });
             }
         };

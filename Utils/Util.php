@@ -7,6 +7,12 @@ use Recourse\Entities\Recourse;
 
 class Util
 {
+    /**
+     * Verifica se está no período de envio de recursos
+     *
+     * @param \MapasCulturais\Entities\Opportunity $opportunity
+     * @return boolean
+     */
     public static function isRecoursePeriod($opportunity): bool
     {
         $finalPeriod = $opportunity->getMetadata('recourse_date_end') . ' ' . $opportunity->getMetadata('recourse_time_end');
@@ -17,6 +23,12 @@ class Util
         return false;
     }
 
+    /**
+     * Verifica se o período de envio de recursos já passou, sendo assim, o período de resposta
+     *
+     * @param \MapasCulturais\Entities\Opportunity $opportunity
+     * @return boolean
+     */
     public static function isRecourseResponsePeriod($opportunity): bool
     {
         $finalPeriod = $opportunity->getMetadata('recourse_date_end') . ' ' . $opportunity->getMetadata('recourse_time_end');
@@ -27,6 +39,13 @@ class Util
         return false;
     }
 
+    /**
+     * Verifica se todos os recursos da oportunidade já foram respondidos para que as respostas possam ser publicadas
+     * Verifica também se o período de recurso já passou
+     *
+     * @param \MapasCulturais\Entities\Opportunity $opportunity
+     * @return boolean
+     */
     public static function canPostResponses($opportunity): bool
     {
         $app = App::i();

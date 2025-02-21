@@ -1,9 +1,11 @@
 <?php
+
 namespace Recourse;
+
 use MapasCulturais\App;
 use MapasCulturais\i;
 use Recourse\Controllers\Recourse as RecourseController;
-use Recourse\Entities\Recourse as EntityRecourse;
+use Recourse\Utils\Util;
 
 class Plugin extends \MapasCulturais\Plugin {
     function _init(): void
@@ -90,7 +92,6 @@ class Plugin extends \MapasCulturais\Plugin {
         });
 
         $app->hook('template(panel.<<registrations|index>>.panel-registration-meta):after', function($registration) use ($app, $plugin){
-            $isActivePeriod = $plugin->verifyPeriodEnd($registration->opportunity);
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $plugin->_publishAssets();
             //Verificando se já houve envio de recurso
@@ -105,7 +106,7 @@ class Plugin extends \MapasCulturais\Plugin {
             $this->part('recourse/user-open-recourse', [
                 'registration' => $registration,
                 'isRecourseSent' => $isRecourseSent,
-                'isActivePeriod' => $isActivePeriod
+                'isActivePeriod' => Util::isRecoursePeriod($registration->opportunity)
             ]);
         });
 
@@ -177,19 +178,5 @@ class Plugin extends \MapasCulturais\Plugin {
                 'Esse formato de arquivo não é válido'
             )
         );
-    }
-
-    function verifyPeriodEnd($opportunity): bool
-    {
-       $strToEnd = $opportunity->getMetadata('recourse_date_end').' '.$opportunity->getMetadata('recourse_time_end');
-       $endOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
-
-       $now = new \DateTime();
-       if($opportunity->getMetadata('claimDisabled') == '0'){
-           if(  $endOfPeriod >= $now) {
-              return true;
-           }
-       }
-       return false;
     }
 }

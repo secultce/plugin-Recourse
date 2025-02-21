@@ -102,12 +102,10 @@
                         return false;
                     }
                     
-                    // console.log({err});
-                    console.log({status});
                     Swal.fire({
                         title: "Ops!",
                         icon: 'error',
-                        text: 'Ocorreu um erro inesperadoooo'
+                        text: 'Ocorreu um erro inesperado'
                     });
                 });
             }

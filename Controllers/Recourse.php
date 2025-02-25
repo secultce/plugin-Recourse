@@ -465,9 +465,6 @@ class Recourse extends \MapasCulturais\Controller{
         try {
             $app->repo('Recourse\Entities\Recourse')->publish($this->postData['opportunity']);
 
-            $revision = new Revision([], $opportunity, Revision::ACTION_PUBLISHED, 'Resposta(s) do(s) recurso(s) publicada(s)');
-            $revision->save(true);
-
             $this->json([
                 'title' => 'Sucesso',
                 'message' => 'Publicação realizada com sucesso',

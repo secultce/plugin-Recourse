@@ -1,5 +1,6 @@
 <?php
 
+use MapasCulturais\i;
 use Recourse\Utils\Util;
 
 /**
@@ -32,7 +33,14 @@ $app->view->jsObject['entity'] = $entity;
         <p>
             Total de recursos: <small class="badge">{{data.recourses.length}}</small>
             Total rec. sem resposta: <small class="badge">{{countNotReply}}</small>
-            <!-- <a href="#" class="btn btn-default" style="float: right" title="Imprimir todos recursos">Imprimir Recursos</a> -->
+            <a
+                href="<?= $this->controller->createUrl('exportResponses', ['oportunityId' => $entity->id]) ?>"
+                class="btn btn-default download" 
+                style="float: right" 
+                title="<?= i::_e("Exportar todos recursos"); ?>"
+            >
+                <?= i::_e("Exportar Recursos"); ?>
+            </a>
         </p>
         <hr />
     </div>

@@ -6,11 +6,11 @@ use DateTime;
 use \MapasCulturais\App;
 use MapasCulturais\Entities\EntityRevision as Revision;
 use MapasCulturais\Entities\RegistrationEvaluation;
+use MapasCulturais\i;
 use Recourse\Entities\Recourse as EntityRecourse;
 use Recourse\Entities\RecourseFile;
 use Recourse\Utils\Util;
 use Slim\Exception\Stop;
-
 
 class Recourse extends \MapasCulturais\Controller{
 
@@ -131,23 +131,8 @@ class Recourse extends \MapasCulturais\Controller{
         $app = App::i();
         $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
 
-        //Validações
-        if(!self::canReply($this->data['entityId'])) {
-            $this->json(['message' => 'Este recurso já foi respondido por outro parecerista.'], 403);
-            return;
-        };
-        if($this->data['reply'] == ''){
-            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 400);
-            return;
-        }
-        if($this->data['status'] == '0' || $this->data['status'] == 'Aberto'){
-            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
-            return;
-        }
-        if (!Util::isRecourseResponsePeriod($recourse->opportunity)) {
-            $this->json(['message' => 'Resposta não enviada. A inscrição ainda está no período de recurso'], 403);
-            return;
-        }
+        // Validações
+        $this->responseValidations($recourse, $this->data);
 
         //Formatando o status para gravar no banco
         $statusRecourse =  $this->data['status'];
@@ -186,6 +171,30 @@ class Recourse extends \MapasCulturais\Controller{
                 'message' => 'Ocorreu um erro inesperado!',
                 'errorMessage' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    private function responseValidations($recourse, $responseData)
+    {
+        if (!Util::isRecourseResponsePeriod($recourse->opportunity)) {
+            $this->json(['message' => 'Resposta não enviada. A inscrição ainda está no período de recurso'], 403);
+            return;
+        }
+        if (!self::canReply($recourse)) {
+            $this->json(['message' => 'Este recurso já foi respondido por outro parecerista.'], 403);
+            return;
+        }
+        if ($recourse->replyPublish) {
+            $this->json(['message' => 'Não foi possível enviar a resposta, pois as respostas dos recursos já foram publicadas'], 403);
+            return;
+        }
+        if ($responseData['reply'] == '') {
+            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 400);
+            return;
+        }
+        if ($responseData['status'] == '0' || $responseData['status'] == 'Aberto') {
+            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
+            return;
         }
     }
 
@@ -426,14 +435,11 @@ class Recourse extends \MapasCulturais\Controller{
     /*
      * Função para verificar se já tem resposta de um recurso
      * */
-    public static function canReply($recourse): bool
+    public static function canReply(EntityRecourse $recourse): bool
     {
         $app = App::i();
-        $rec = $app->repo('Recourse\Entities\Recourse')->find($recourse);
-        if($rec->replyPublish) {
-            return false;
-        }
-        if($rec->replyAgent && $rec->replyAgent->id !== $app->getAuth()->getAuthenticatedUser()->profile->id) {
+
+        if ($recourse->replyAgent && $recourse->replyAgent->id !== $app->getAuth()->getAuthenticatedUser()->profile->id) {
             return false;
         }
 
@@ -480,6 +486,56 @@ class Recourse extends \MapasCulturais\Controller{
             ], 500);
             return;
         }
+    }
+
+    public function GET_exportResponses(): void
+    {
+        $this->requireAuthentication();
+
+        $app = App::i();
+        $opportunity = $app->repo('Opportunity')->find($this->data["oportunityId"]);
+
+        $opportunity->evaluationMethodConfiguration->checkPermission('@control');
+
+        $date = date('Y-m-d');
+        $filename = sprintf(i::__("oportunidade-%s--recursos--%s"), $opportunity->id, $date);
+
+        $this->exportResponsesOutput('export-responses-csv', ['opportunity' => $opportunity], $filename);
+    }
+
+    private function exportResponsesOutput($view, $opportunity, $filename)
+    {
+        ini_set('max_execution_time', 0);
+        ini_set('memory_limit', '-1');
+
+        $app = App::i();
+
+        $response = $app->response();
+        $response['Content-Encoding'] = 'UTF-8';
+        $response['Content-Type'] = 'application/force-download';
+        $response['Content-Disposition'] = 'attachment; filename=' . $filename . '.csv';
+        $response['Pragma'] = 'no-cache';
+
+        $app->contentType('text/csv; charset=UTF-8');
+
+        ob_start();
+
+        $this->partial($view, $opportunity);
+
+        $output = ob_get_clean();
+
+        $viewPath = PLUGINS_PATH . 'Recourse/views/recursos/export-responses-csv.php';
+        $stringHooks = [
+            "<!-- {$viewPath} # BEGIN -->",
+            "<!-- {$viewPath} # END -->",
+        ];
+
+        // Remove as strings para que não saiam no arquivo de saída
+        foreach ($stringHooks as $stringHook) {
+            $output = str_replace($stringHook, '', $output);
+        }
+
+        echo $output;
     }
 
     protected function _publishAssets()

@@ -170,12 +170,11 @@ class Recourse extends \MapasCulturais\Controller{
             $recourseData = [
                 'status' => $statusRecourse,
                 'Resposta' => $this->data['reply'],
-                'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
-                'Alterado em: ' => $recourse->recourseDateReply,
             ];
             ($recourse->replyResult) && ($recourseData['Nota'] = $recourse->replyResult);
             //Gravando dados para log de atividades
             $revision = new Revision($recourseData, $recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
+            $revision->save(true);
 
             $app->em->commit();
             $app->em->flush();
@@ -465,6 +464,7 @@ class Recourse extends \MapasCulturais\Controller{
 
         try {
             $app->repo('Recourse\Entities\Recourse')->publish($this->postData['opportunity']);
+
             $this->json([
                 'title' => 'Sucesso',
                 'message' => 'Publicação realizada com sucesso',

@@ -16,10 +16,12 @@ class Util
     public static function isRecoursePeriod($opportunity): bool
     {
         $finalPeriod = $opportunity->getMetadata('recourse_date_end') . ' ' . $opportunity->getMetadata('recourse_time_end');
+        $initialPeriod = $opportunity->getMetadata('recourse_date_initial') . ' ' . $opportunity->getMetadata('recourse_time_initial');
         $finalPeriodFormatted = \DateTime::createFromFormat('Y-m-d H:i', $finalPeriod); // Converte para formato Datetime
+        $initialPeriodFormatted = \DateTime::createFromFormat('Y-m-d H:i', $initialPeriod); // Converte para formato Datetime
         $now = new \DateTime();
 
-        if ($opportunity->getMetadata('claimDisabled') == '0' && $finalPeriodFormatted >= $now) return true;
+        if ($opportunity->getMetadata('claimDisabled') == '0' && $finalPeriodFormatted >= $now && $now >= $initialPeriodFormatted) return true;
         return false;
     }
 

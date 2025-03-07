@@ -2,7 +2,17 @@
 
 use Recourse\Entities\Recourse;
 
-$header = ['Inscrição', 'Agente', 'Data de envio do recurso', 'Situação', 'Nota'];
+$header = [
+    'INSCRIÇÃO',
+    'AGENTE',
+    'RECURSO',
+    'ENVIADO EM',
+    'SITUAÇÃO',
+    'RESPOSTA',
+    'RESPONDIDO EM',
+    'RESPONDIDO POR',
+    'NOTA',
+];
 
 $recources = $app->repo(Recourse::class)->findBy(['opportunity' => $opportunity->id]);
 
@@ -14,9 +24,13 @@ foreach ($recources as $recourse) {
     $row = [
         $recourse->registration->number,
         $recourse->agent->name,
+        $recourse->recourseText,
         date_format($recourse->recourseSend, "d/m/Y H:i"),
         $situation,
-        $recourse->replyResult
+        $recourse->recourseReply,
+        $recourse->recourseDateReply ? date_format($recourse->recourseDateReply, "d/m/Y H:i") : '',
+        $recourse->replyAgent ? $recourse->replyAgent->name : '',
+        $recourse->replyResult,
     ];
 
     $rows[] = $row;

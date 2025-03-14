@@ -3,6 +3,8 @@
 namespace Recourse\Utils;
 
 use MapasCulturais\App;
+use PhpAmqpLib\Connection\AMQPStreamConnection;
+use PhpAmqpLib\Message\AMQPMessage;
 use Recourse\Entities\Recourse;
 
 class Util
@@ -58,5 +60,28 @@ class Util
 
         if (!$unansweredRecourses && self::isRecourseResponsePeriod($opportunity)) return true;
         return false;
+    }
+
+    public static function addRecoursesToRabbitmqQueue($recourses, $queueName)
+    {
+        // Conectar ao RabbitMQ
+        $connection = new AMQPStreamConnection(env('RABBITMQ_HOST'), env('RABBITMQ_PORT'), env('RABBITMQ_USER'), env('RABBITMQ_PASSWORD'));
+        $channel = $connection->channel();
+
+        // Criar a fila de e-mails
+        $channel->queue_declare($queueName, false, true, false, false);
+
+        foreach ($recourses as $recourse) {
+            $data = [
+                'email' => $recourse->agent->user->email,
+                'opportunityName' => $recourse->opportunity->name,
+                'agentId' => $recourse->agent->id,
+            ];
+            $msg = new AMQPMessage(json_encode($data), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
+            $channel->basic_publish($msg, '', $queueName);
+        }
+
+        $channel->close();
+        $connection->close();
     }
 }

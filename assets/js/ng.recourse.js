@@ -147,8 +147,8 @@
                             $scope.isPublish = true;
                         }
 
-                        recourse.recourseSend = moment(recourse.recourseSend?.date).format('DD/MM/YYYY hh:mm');
-                        recourse.recourseDateReply = recourse.recourseDateReply?.date ? moment(recourse.recourseDateReply.date).format('DD/MM/YYYY hh:mm') : null;
+                        recourse.recourseSend = moment(recourse.recourseSend?.date).format('DD/MM/YYYY HH:mm');
+                        recourse.recourseDateReply = recourse.recourseDateReply?.date ? moment(recourse.recourseDateReply.date).format('DD/MM/YYYY HH:mm') : null;
                         recourse.recourseStatus = $scope.getSituation(recourse.recourseStatus);
 
                         if (recourse.recourseReply === null || recourse.recourseReply === '') {

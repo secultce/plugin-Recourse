@@ -69,6 +69,10 @@ $this->layout = 'panel';
                                         $delBtn = "<span delete-recourse-file-btn class='icon icon-close hltip delete-file-btn' data-file-id='%s' title='Excluir arquivo'></span>";
                                         $showDelBtn = Util::isRecoursePeriod($recourse->opportunity) ? $delBtn : "";
 
+                                        if (strlen($attachment->name) > 50) {
+                                            $attachment->name = substr($attachment->name, 0, 50) . '...';
+                                        }
+
                                         echo "<div style='margin-bottom: 2px;'>
                                                 <a
                                                     href='{$attachment->url}'
@@ -83,7 +87,7 @@ $this->layout = 'panel';
                             <?php endif ?>
                         </td>
                         <td>
-                            <?php echo $recourse->recourseSend->format('d/m/Y H:i:s'); ?>
+                            <?php echo $recourse->recourseSend->format('d/m/Y H:i'); ?>
                         </td>
                         <td>
                             <?php

@@ -1,4 +1,7 @@
 <?php
+
+use Recourse\Utils\Util;
+
 /**
  * @var \MapasCulturais\App $app
  * @var bool $isOwner
@@ -6,7 +9,9 @@
  */
 
 $this->layout = 'panel';
+
 ?>
+
 <div class="panel-list panel-main-content">
     <?php $this->applyTemplateHook('panel-header','before'); ?>
     <header class="panel-header clearfix">
@@ -27,6 +32,7 @@ $this->layout = 'panel';
                     <th>Enviado em</th>
                     <th>Situação</th>
                     <th style="width:25%;">Resposta</th>
+                    <th>Ações</th>
                 </tr>
                 <tbody id="bodyAllRecourse">
                 <?php foreach ($allRecoursesUser as $recourse): ?>
@@ -60,18 +66,28 @@ $this->layout = 'panel';
                             <div class="recourse-attachments">
                                 <?php
                                     foreach ($recourse->files as $attachment) {
-                                        echo "<a
-                                                  href='{$attachment->url}'
-                                                  target='_blank'
-                                                  class='recourse-attachment-item'
-                                              >{$attachment->name}</a>";
+                                        $delBtn = "<span delete-recourse-file-btn class='icon icon-close hltip delete-file-btn' data-file-id='%s' title='Excluir arquivo'></span>";
+                                        $showDelBtn = Util::isRecoursePeriod($recourse->opportunity) ? $delBtn : "";
+
+                                        if (strlen($attachment->name) > 50) {
+                                            $attachment->name = substr($attachment->name, 0, 50) . '...';
+                                        }
+
+                                        echo "<div style='margin-bottom: 2px;'>
+                                                <a
+                                                    href='{$attachment->url}'
+                                                    target='_blank'
+                                                    class='recourse-attachment-item'
+                                                >{$attachment->name}</a>"
+                                                . sprintf($showDelBtn, $attachment->id) .
+                                            "</div>";
                                     }
                                 ?>
                             </div>
                             <?php endif ?>
                         </td>
                         <td>
-                            <?php echo $recourse->recourseSend->format('d/m/Y H:i:s'); ?>
+                            <?php echo $recourse->recourseSend->format('d/m/Y H:i'); ?>
                         </td>
                         <td>
                             <?php
@@ -109,6 +125,18 @@ $this->layout = 'panel';
                                 echo '<div class="alert info">Recurso ainda não respondido ou não foi publicado.</div>';
                             }
                             ?>
+                        </td>
+                        <td>
+                            <a
+                                class="btn btn-recourse <?= Util::isRecoursePeriod($recourse->opportunity) ? '' : 'disabled' ?>"
+                                style="color: #0a766a"
+                                title="Editar recurso"
+                                edit-recourse-btn
+                                data-recourse-id="<?= $recourse->id ?>"
+                                data-recourse-text="<?= $recourse->recourseText ?>"
+                            >
+                                <i class="fas fa-edit"></i>
+                            </a>
                         </td>
                     </tr>
                 <?php endforeach; ?>

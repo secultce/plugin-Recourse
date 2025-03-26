@@ -1,4 +1,5 @@
-<?php 
+<?php
+
 namespace Recourse\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
@@ -15,10 +16,17 @@ use MapasCulturais\Entities\Registration;
 class Recourse extends \MapasCulturais\Entity {
     use \MapasCulturais\Traits\EntityRevision;
 
+    const STATUS_OPEN = self::STATUS_DRAFT; // 0 - self::STATUS_DRAFT para status inicial
     const STATUS_APPROVED = self::STATUS_ENABLED; // 1 - self:STATUS_ENABLED para deferido
     const STATUS_PARTIALLY_APPROVED = Registration::STATUS_WAITLIST; // 8 - Registration::STATUS_WAITLIST para deferido parcialmente
     const STATUS_REJECTED =  self::STATUS_DISABLED; // -9 - self:STATUS_DISABLED para indeferido
-    // const STATUS_DRAFT = 0; - self:STATUS_DRAFT para status inicial
+
+    const STATUS_DESCRIPTIONS = [
+        self::STATUS_OPEN => 'Aberto',
+        self::STATUS_APPROVED => 'Deferido',
+        self::STATUS_PARTIALLY_APPROVED => 'Deferido Parcialmente',
+        self::STATUS_REJECTED => 'Indeferido',
+    ];
 
     /**
      * @var integer

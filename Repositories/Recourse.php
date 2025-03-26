@@ -3,7 +3,9 @@
 namespace Recourse\Repositories;
 
 use MapasCulturais\App;
+use MapasCulturais\Entities\EntityRevision;
 use Recourse\Entities\Recourse as EntityRecourse;
+use Recourse\Utils\Util;
 
 class Recourse extends \MapasCulturais\Repository
 {
@@ -24,7 +26,19 @@ class Recourse extends \MapasCulturais\Repository
                     $query->getResult();
                 }
             }
+
+            // Gravando dados para log de atividades
+            $recourseData = [
+                'recourseStatus' => $recourse->status,
+                'nota' => $recourse->replyResult,
+            ];
+            $revision = new EntityRevision($recourseData, $recourse, EntityRevision::ACTION_PUBLISHED, 'Resposta do recurso publicada');
+            $revision->save();
         }
+
+        $queueName = 'published_recourses_queue';
+        Util::addRecoursesToRabbitmqQueue($recourses, $queueName);
+
         $app->em->commit();
         $app->em->flush();
     }

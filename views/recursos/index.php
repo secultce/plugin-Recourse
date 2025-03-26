@@ -1,5 +1,8 @@
 <?php
 
+use MapasCulturais\i;
+use Recourse\Utils\Util;
+
 /**
  * @var $app \MapasCulturais\App
  * @var $entity \MapasCulturais\Entities\Opportunity
@@ -30,7 +33,14 @@ $app->view->jsObject['entity'] = $entity;
         <p>
             Total de recursos: <small class="badge">{{data.recourses.length}}</small>
             Total rec. sem resposta: <small class="badge">{{countNotReply}}</small>
-            <!-- <a href="#" class="btn btn-default" style="float: right" title="Imprimir todos recursos">Imprimir Recursos</a> -->
+            <a
+                href="<?= $this->controller->createUrl('exportResponses', ['oportunityId' => $entity->id]) ?>"
+                class="btn btn-default download" 
+                style="float: right" 
+                title="<?= i::_e("Exportar todos recursos"); ?>"
+            >
+                <?= i::_e("Exportar Recursos"); ?>
+            </a>
         </p>
         <hr />
     </div>
@@ -60,15 +70,24 @@ $app->view->jsObject['entity'] = $entity;
                     </td>
                     <td>{{recourses.agent.name}}</td>
                     <td>
-                        {{recourses.recourseText.substring(0, 100)}}...
-                        <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)">Ler mais</a>
+                        {{
+                            recourses.recourseText.length > 100 ?
+                            recourses.recourseText.substring(0, 100) + '...' :
+                            recourses.recourseText;
+                        }}
+                        <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)" ng-if="recourses.recourseText.length > 100">
+                            Ler mais
+                        </a>
 
                         <div class="recourse-attachments">
                             <a
                                 ng-repeat="file in recourses.files"
                                 href="{{file.url}}"
                                 target="_blank"
-                                class="recourse-attachment-item">{{file.name}}</a>
+                                class="recourse-attachment-item"
+                            >
+                                {{ file.name.length > 50 ? file.name.substring(0, 50) + '...' : file.name }}
+                            </a>
                         </div>
                     </td>
 
@@ -90,7 +109,8 @@ $app->view->jsObject['entity'] = $entity;
                         <p ng-if="recourses.recourseReply.length < 100">
                             <small> {{recourses.recourseReply}}</small>
                         </p>
-                        <a class="btn btn-recourse" style="color: #0a766a" ng-if="!isPublish"
+                        <?php if (Util::isRecourseResponsePeriod($entity)): ?>
+                        <a class="btn btn-recourse" style="color: #0a766a; margin: 2px;" ng-if="!isPublish"
                             title="Responder ou editar o recurso do candidato"
                             ng-click="replyRecourse(
                                 recourses.id,
@@ -105,6 +125,7 @@ $app->view->jsObject['entity'] = $entity;
                             )">
                             <i class="fas fa-edit"></i>
                         </a>
+                        <?php endif; ?>
                         <a class="btn btn-recourse" title="Visualizar Resposta" ng-click="verifyView(recourses.recourseReply)">
                             <i class="fas fa-eye"></i>
                         </a>
@@ -205,7 +226,7 @@ $app->view->jsObject['entity'] = $entity;
             </tr>
         </table>
         <div>
-            <?php if ($entity->canUser('@control')): ?>
+            <?php if ($entity->canUser('@control') && Util::canPostResponses($entity)): ?>
                 <div ng-if="!isPublish">
                     <button
                         class="btn btn-primary"
@@ -213,7 +234,7 @@ $app->view->jsObject['entity'] = $entity;
                         ng-click="clickPublish(<?php echo $entity->id; ?>)"
                         ng-if="data.recourses.length > 0"
                         type="button">
-                        <?php \MapasCulturais\i::_e('Publicar Recursos'); ?>
+                        <?php \MapasCulturais\i::_e('Publicar Respostas'); ?>
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>

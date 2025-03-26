@@ -1,16 +1,16 @@
 <?php
+
 namespace Recourse\Controllers;
 
 use DateTime;
 use \MapasCulturais\App;
 use MapasCulturais\Entities\EntityRevision as Revision;
 use MapasCulturais\Entities\RegistrationEvaluation;
-use MapasCulturais\Exceptions\PermissionDenied;
-use MapasCulturais\Exceptions\WorkflowRequest;
+use MapasCulturais\i;
 use Recourse\Entities\Recourse as EntityRecourse;
 use Recourse\Entities\RecourseFile;
+use Recourse\Utils\Util;
 use Slim\Exception\Stop;
-
 
 class Recourse extends \MapasCulturais\Controller{
 
@@ -128,27 +128,17 @@ class Recourse extends \MapasCulturais\Controller{
 
     public function POST_responder(): void
     {
-        //Validações
-        if(!self::canReply($this->data['entityId'])) {
-            $this->json(['message' => 'O recurso já foi respondido'], 403);
-            return;
-        };
-        if($this->data['reply'] == ''){
-            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 400);
-            return;
-        }
-        if($this->data['status'] == '0' || $this->data['status'] == 'Aberto'){
-            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
-            return;
-        }
+        $app = App::i();
+        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
+
+        // Validações
+        $this->responseValidations($recourse, $this->data);
 
         //Formatando o status para gravar no banco
         $statusRecourse =  $this->data['status'];
         if (in_array($this->data['status'], ['Deferido', 'Deferido parcialmente', 'Indeferido'])) {
             $statusRecourse = self::getSituationToStatus($this->data['status']);
         }
-
-        $app = App::i();
 
         try {
             $app->em->beginTransaction();
@@ -159,19 +149,17 @@ class Recourse extends \MapasCulturais\Controller{
             $recourse->recourseDateReply = new DateTime;
             $recourse->status = $statusRecourse;
             $recourse->replyAgent = $app->getAuth()->getAuthenticatedUser()->profile;
-            $recourse->createTimestamp = new DateTime();
 
             $app->applyHookBoundTo($this, 'recourse.reply', [&$recourse]);
 
             $recourseData = [
                 'status' => $statusRecourse,
                 'Resposta' => $this->data['reply'],
-                'Respondido por: ' => $app->getAuth()->getAuthenticatedUser()->profile->id,
-                'Alterado em: ' => $recourse->recourseDateReply,
             ];
             ($recourse->replyResult) && ($recourseData['Nota'] = $recourse->replyResult);
             //Gravando dados para log de atividades
             $revision = new Revision($recourseData, $recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
+            $revision->save(true);
 
             $app->em->commit();
             $app->em->flush();
@@ -182,6 +170,30 @@ class Recourse extends \MapasCulturais\Controller{
                 'message' => 'Ocorreu um erro inesperado!',
                 'errorMessage' => $e->getMessage(),
             ], 500);
+        }
+    }
+
+    private function responseValidations($recourse, $responseData)
+    {
+        if (!Util::isRecourseResponsePeriod($recourse->opportunity)) {
+            $this->json(['message' => 'Resposta não enviada. A inscrição ainda está no período de recurso'], 403);
+            return;
+        }
+        if (!self::canReply($recourse)) {
+            $this->json(['message' => 'Este recurso já foi respondido por outro parecerista.'], 403);
+            return;
+        }
+        if ($recourse->replyPublish) {
+            $this->json(['message' => 'Não foi possível enviar a resposta, pois as respostas dos recursos já foram publicadas'], 403);
+            return;
+        }
+        if ($responseData['reply'] == '') {
+            $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 400);
+            return;
+        }
+        if ($responseData['status'] == '0' || $responseData['status'] == 'Aberto') {
+            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
+            return;
         }
     }
 
@@ -334,17 +346,99 @@ class Recourse extends \MapasCulturais\Controller{
         }
     }
 
+    public function POST_updateRecourse(): void
+    {
+        $this->requireAuthentication();
+
+        $app = App::i();
+        $recourse = $app->repo(EntityRecourse::class)->findOneBy(['id' => $this->data['recourseId']]);
+
+        if (!$recourse->registration->canUser('@control')) {
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            return;
+        }
+
+        if (!Util::isRecoursePeriod($recourse->opportunity)) {
+            $this->json(['message' => 'O período do recurso está encerrado'], 403);
+            return;
+        }
+
+        try {
+            foreach ($_FILES as $file) {
+                $app->disableAccessControl();
+
+                $newFile = new RecourseFile($file);
+                $newFile->setGroup('recourse-attachment');
+                $newFile->owner = $recourse;
+                $newFile->makePrivate();
+                $newFile->save();
+
+                $app->enableAccessControl();
+            }
+
+            $recourse->recourseText = $this->data['recourseText'];
+            $recourse->recourseSend = new \DateTime();
+            $recourse->save(true);
+
+            $app->em->flush();
+
+            $this->json(['message' => 'Recurso atualizado com sucesso'], 201);
+        } catch (\PDOException $e) {
+            $this->json([
+                'message' => 'Erro inesperado, tente novamente',
+                'errorMessage' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function POST_deleteFile(): void
+    {
+        $this->requireAuthentication();
+
+        $app = App::i();
+        $conn = $app->em->getConnection();
+
+        $query = "SELECT * FROM file WHERE id = :id";
+        $params = [
+            "id" => $this->data['fileId'],
+        ];
+        $file = $conn->fetchAssociative($query, $params);
+
+        $recourse = $app->repo(EntityRecourse::class)->findOneBy(['id' => $file['object_id']]);
+        if (!$recourse->registration->canUser('@control')) {
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            return;
+        }
+
+        if (!Util::isRecoursePeriod($recourse->opportunity)) {
+            $this->json(['message' => 'Você não pode mais remover este arquivo, pois o período do recurso está encerrado'], 403);
+            return;
+        }
+
+        try {
+            $stmt = $conn->prepare('DELETE FROM file WHERE id = :id');
+            $stmt->bindParam('id', $file["id"]);
+            $stmt->executeStatement();
+
+            unlink(PRIVATE_FILES_PATH . $file["path"]);
+
+            $this->json(['message' => 'O arquivo foi removido do recurso com sucesso'], 201);
+        } catch (\PDOException $e) {
+            $this->json([
+                'message' => 'Erro inesperado, tente novamente',
+                'errorMessage' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     /*
      * Função para verificar se já tem resposta de um recurso
      * */
-    public static function canReply($recourse): bool
+    public static function canReply(EntityRecourse $recourse): bool
     {
         $app = App::i();
-        $rec = $app->repo('Recourse\Entities\Recourse')->find($recourse);
-        if($rec->replyPublish) {
-            return false;
-        }
-        if($rec->replyAgent && $rec->replyAgent->id !== $app->getAuth()->getAuthenticatedUser()->profile->id) {
+
+        if ($recourse->replyAgent && $recourse->replyAgent->id !== $app->getAuth()->getAuthenticatedUser()->profile->id) {
             return false;
         }
 
@@ -369,8 +463,14 @@ class Recourse extends \MapasCulturais\Controller{
             return;
         }
 
+        if (!Util::canPostResponses($opportunity)) {
+            $this->json(['message' => 'Respostas não publicadas. Há recursos não respondidos ou o período do recurso está aberto'], 403);
+            return;
+        }
+
         try {
             $app->repo('Recourse\Entities\Recourse')->publish($this->postData['opportunity']);
+
             $this->json([
                 'title' => 'Sucesso',
                 'message' => 'Publicação realizada com sucesso',
@@ -386,6 +486,56 @@ class Recourse extends \MapasCulturais\Controller{
             ], 500);
             return;
         }
+    }
+
+    public function GET_exportResponses(): void
+    {
+        $this->requireAuthentication();
+
+        $app = App::i();
+        $opportunity = $app->repo('Opportunity')->find($this->data["oportunityId"]);
+
+        $opportunity->evaluationMethodConfiguration->checkPermission('@control');
+
+        $date = date('Y-m-d');
+        $filename = sprintf(i::__("oportunidade-%s--recursos--%s"), $opportunity->id, $date);
+
+        $this->exportResponsesOutput('export-responses-csv', ['opportunity' => $opportunity], $filename);
+    }
+
+    private function exportResponsesOutput($view, $opportunity, $filename)
+    {
+        ini_set('max_execution_time', 0);
+        ini_set('memory_limit', '-1');
+
+        $app = App::i();
+
+        $response = $app->response();
+        $response['Content-Encoding'] = 'UTF-8';
+        $response['Content-Type'] = 'application/force-download';
+        $response['Content-Disposition'] = 'attachment; filename=' . $filename . '.csv';
+        $response['Pragma'] = 'no-cache';
+
+        $app->contentType('text/csv; charset=UTF-8');
+
+        ob_start();
+
+        $this->partial($view, $opportunity);
+
+        $output = ob_get_clean();
+
+        $viewPath = PLUGINS_PATH . 'Recourse/views/recursos/export-responses-csv.php';
+        $stringHooks = [
+            "<!-- {$viewPath} # BEGIN -->",
+            "<!-- {$viewPath} # END -->",
+        ];
+
+        // Remove as strings para que não saiam no arquivo de saída
+        foreach ($stringHooks as $stringHook) {
+            $output = str_replace($stringHook, '', $output);
+        }
+
+        echo $output;
     }
 
     protected function _publishAssets()

@@ -57,7 +57,7 @@
                         if(status === 403) {
                             Swal.fire({
                                 title: "Ops!",
-                                text: 'Este recurso já foi respondido por outro parecerista.',
+                                text: data.message,
                             });
                             return false;
                         }
@@ -94,15 +94,19 @@
                     console.log({data});
                     console.log({status});
                 }).error(function (err, status) {
-                    // console.log({err});
-                    console.log({status});
-                    if(status !== 200){
+                    if (status === 403) {
                         Swal.fire({
                             title: "Ops!",
-                            icon: 'error',
-                            text: 'Ocorreu um erro inesperado'
+                            text: err.message,
                         });
+                        return false;
                     }
+                    
+                    Swal.fire({
+                        title: "Ops!",
+                        icon: 'error',
+                        text: 'Ocorreu um erro inesperado'
+                    });
                 });
             }
         };
@@ -143,8 +147,8 @@
                             $scope.isPublish = true;
                         }
 
-                        recourse.recourseSend = moment(recourse.recourseSend?.date).format('DD/MM/YYYY hh:mm');
-                        recourse.recourseDateReply = recourse.recourseDateReply?.date ? moment(recourse.recourseDateReply.date).format('DD/MM/YYYY hh:mm') : null;
+                        recourse.recourseSend = moment(recourse.recourseSend?.date).format('DD/MM/YYYY HH:mm');
+                        recourse.recourseDateReply = recourse.recourseDateReply?.date ? moment(recourse.recourseDateReply.date).format('DD/MM/YYYY HH:mm') : null;
                         recourse.recourseStatus = $scope.getSituation(recourse.recourseStatus);
 
                         if (recourse.recourseReply === null || recourse.recourseReply === '') {

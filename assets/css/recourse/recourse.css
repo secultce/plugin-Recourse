@@ -362,3 +362,14 @@ div:where(.swal2-icon) .swal2-icon-content {
 .response-table td {
     text-align: left;
 }
+
+.delete-file-btn {
+    background-color: gainsboro;
+    border-radius: 20%;
+    display: inline-block;
+    height: 12px;
+    width: 12px;
+    font-size: 10px;
+    margin-left: 5px;
+    cursor: pointer;
+}

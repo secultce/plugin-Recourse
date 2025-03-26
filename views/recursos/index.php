@@ -70,15 +70,24 @@ $app->view->jsObject['entity'] = $entity;
                     </td>
                     <td>{{recourses.agent.name}}</td>
                     <td>
-                        {{recourses.recourseText.substring(0, 100)}}...
-                        <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)">Ler mais</a>
+                        {{
+                            recourses.recourseText.length > 100 ?
+                            recourses.recourseText.substring(0, 100) + '...' :
+                            recourses.recourseText;
+                        }}
+                        <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)" ng-if="recourses.recourseText.length > 100">
+                            Ler mais
+                        </a>
 
                         <div class="recourse-attachments">
                             <a
                                 ng-repeat="file in recourses.files"
                                 href="{{file.url}}"
                                 target="_blank"
-                                class="recourse-attachment-item">{{file.name}}</a>
+                                class="recourse-attachment-item"
+                            >
+                                {{ file.name.length > 50 ? file.name.substring(0, 50) + '...' : file.name }}
+                            </a>
                         </div>
                     </td>
 

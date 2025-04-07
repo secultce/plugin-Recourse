@@ -55,9 +55,11 @@ $this->layout = 'panel';
                             <span>
                                 <?php
                                 echo substr($recourse->recourseText, 0,100);
+
+                                $recourseText = htmlspecialchars(addslashes($recourse->recourseText), ENT_QUOTES);
                                 if(strlen($recourse->recourseText) > 100):
                                     echo "...<br/>
-                                          <a href='#' ng-click='infoUserRecourse(\"{$recourse->recourseText}\")'>Ler Recurso</a>";
+                                          <a href='#' ng-click='infoUserRecourse(\"{$recourseText}\")'>Ler Recurso</a>";
                                 endif;
                                 ?>
                             </span>
@@ -115,8 +117,9 @@ $this->layout = 'panel';
                             <?php
                             if($recourse->replyPublish){
                                 if(strlen($recourse->recourseReply) > 30){
-                                    echo substr($recourse->recourseReply, 0,100).'...<br/>';?>
-                                    <a href="#" ng-click="infoUserRecourse('<?php echo $recourse->recourseReply; ?>')">Ler Resposta</a>
+                                    echo substr($recourse->recourseReply, 0,100).'...<br/>';
+                                    $recourseReply = htmlspecialchars(addslashes($recourse->recourseReply), ENT_QUOTES);?>
+                                    <a href="#" ng-click="infoUserRecourse('<?php echo $recourseReply; ?>')">Ler Resposta</a>
                                     <?php
                                 }else{
                                     echo $recourse->recourseReply;
@@ -133,7 +136,7 @@ $this->layout = 'panel';
                                 title="Editar recurso"
                                 edit-recourse-btn
                                 data-recourse-id="<?= $recourse->id ?>"
-                                data-recourse-text="<?= $recourse->recourseText ?>"
+                                data-recourse-text="<?= htmlspecialchars($recourse->recourseText, ENT_QUOTES, 'UTF-8') ?>"
                             >
                                 <i class="fas fa-edit"></i>
                             </a>

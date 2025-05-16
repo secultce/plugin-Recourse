@@ -1,6 +1,7 @@
 <?php
 
 use MapasCulturais\i;
+use MapasCulturais\Utils;
 use Recourse\Utils\Util;
 
 /**
@@ -11,6 +12,8 @@ use Recourse\Utils\Util;
 
 $this->layout = 'panel';
 $app->view->jsObject['entity'] = $entity;
+
+$hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
 
 ?>
 
@@ -56,9 +59,9 @@ $app->view->jsObject['entity'] = $entity;
                     <th>Recurso</th>
                     <th>Enviado em </th>
                     <th>Situação</th>
-                    <th>Pareceres</th>
                     <th>Resposta</th>
                     <th>Respondido em </th>
+                    <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -94,15 +97,6 @@ $app->view->jsObject['entity'] = $entity;
                     <td>{{recourses.recourseSend}}</td>
                     <td>{{getSituation(recourses.status)}}</td>
                     <td>
-                        <a
-                            class="btn btn-recourse"
-                            title="Visualizar pareceres"
-                            data-id="<?= '{{ recourses.registration.id }}' ?>"
-                            onclick="showOpinions(this.getAttribute('data-id'))">
-                            <i class="fas fa-eye"></i>
-                        </a>
-                    </td>
-                    <td>
                         <p ng-if="recourses.recourseReply.length > 100">
                             <small> {{recourses.recourseReply.substr(0, 100)}}...</small>
                         </p>
@@ -110,7 +104,7 @@ $app->view->jsObject['entity'] = $entity;
                             <small> {{recourses.recourseReply}}</small>
                         </p>
                         <?php if (Util::isRecourseResponsePeriod($entity)): ?>
-                        <a class="btn btn-recourse" style="color: #0a766a; margin: 2px;" ng-if="!isPublish"
+                        <a class="btn btn-recourse" style="color: #0a766a" ng-if="!isPublish"
                             title="Responder ou editar o recurso do candidato"
                             ng-click="replyRecourse(
                                 recourses.id,
@@ -134,6 +128,26 @@ $app->view->jsObject['entity'] = $entity;
                         {{recourses.recourseDateReply}}
                         <br>
                         {{recourses.replyAgent.name}}
+                    </td>
+                    <td>
+                        <a
+                            class="btn btn-recourse"
+                            title="Visualizar pareceres"
+                            data-id="<?= '{{ recourses.registration.id }}' ?>"
+                            onclick="showOpinions(this.getAttribute('data-id'))"
+                        >
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <?php if ($entity->canUser('@control') && $hasSecultSeal): ?>
+                            <a 
+                                href="<?= $app->createUrl('recursos', 'printRecourse', ['recourseId' => '{{recourses.id}}']) ?>"
+                                class="btn btn-recourse"
+                                title="Imprimir recurso"
+                                target="_blank"
+                            >
+                                <i class="fas fa-print"></i>
+                            </a>
+                        <?php endif; ?>
                     </td>
                 </tr>
             </tbody>

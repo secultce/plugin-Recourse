@@ -6,7 +6,11 @@ use DateTime;
 use \MapasCulturais\App;
 use MapasCulturais\Entities\EntityRevision as Revision;
 use MapasCulturais\Entities\RegistrationEvaluation;
+use MapasCulturais\Exceptions\PermissionDenied;
 use MapasCulturais\i;
+use MapasCulturais\Utils;
+use Mpdf\HTMLParserMode;
+use Mpdf\Mpdf;
 use Recourse\Entities\Recourse as EntityRecourse;
 use Recourse\Entities\RecourseFile;
 use Recourse\Utils\Util;
@@ -536,6 +540,38 @@ class Recourse extends \MapasCulturais\Controller{
         }
 
         echo $output;
+    }
+
+    public function GET_printRecourse(): void
+    {
+        $this->requireAuthentication();
+
+        $recourse = App::i()->repo(EntityRecourse::class)->find($this->data['recourseId']);
+        $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
+
+        $recourse->opportunity->checkPermission('@control');
+
+        if (!$hasSecultSeal) throw new PermissionDenied(App::i()->user, $recourse, 'printRecourse');
+
+        $mpdf = new Mpdf([
+            'tempDir' => '/tmp',
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'pagenumPrefix' => 'Página ',
+            'pagenumSuffix' => '  ',
+            'nbpgPrefix' => ' de ',
+            'nbpgSuffix' => '',
+            'margin_top' => 45,
+            'margin_bottom' => 30,
+        ]);
+
+        $content = App::i()->view->fetch('recursos/print-recourse');
+        $stylesheet = file_get_contents(PLUGINS_PATH . 'Recourse/assets/css/recourse/print.css');
+
+        $mpdf->WriteHTML($stylesheet, HTMLParserMode::HEADER_CSS);
+        $mpdf->WriteHTML($content);
+        $mpdf->WriteHTML(ob_get_clean());
+        $mpdf->Output();
     }
 
     protected function _publishAssets()

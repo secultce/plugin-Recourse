@@ -571,7 +571,37 @@ class Recourse extends \MapasCulturais\Controller{
         $mpdf->WriteHTML($stylesheet, HTMLParserMode::HEADER_CSS);
         $mpdf->WriteHTML($content);
         $mpdf->WriteHTML(ob_get_clean());
+        $this->addAttachmentsToRecoursePDF($mpdf, $recourse->files);
         $mpdf->Output();
+    }
+
+    private function addAttachmentsToRecoursePDF($mpdf, $files)
+    {
+        // Resetar diretivas CSS de @page
+        $mpdf->WriteHTML('@page { odd-header-name: none; odd-footer-name: none; }', HTMLParserMode::HEADER_CSS);
+
+        foreach ($files as $file) {
+            try {
+                $pageCount = $mpdf->SetSourceFile($file->getPath());
+
+                for ($i = 1; $i <= $pageCount; $i++) {
+                    $templateId = $mpdf->ImportPage($i);
+                    $size = $mpdf->GetTemplateSize($templateId);
+                    $orientation = $size['width'] > $size['height'] ? 'L' : 'P';
+
+                    $mpdf->AddPageByArray([
+                        'orientation' => $orientation,
+                        'newformat' => [$size['width'], $size['height']],
+                    ]);
+                    $mpdf->UseTemplate($templateId);
+                }
+            } catch (\Throwable $e) {
+                error_log("Erro ao renderizar anexo: " . $file->getPath() . " - " . $e->getMessage());
+
+                $mpdf->AddPage();
+                $mpdf->WriteHTML('<p style="color:red; text-align: center;">Erro ao renderizar anexo: ' . htmlspecialchars($file->name) . '</p>');
+            }
+        }
     }
 
     protected function _publishAssets()

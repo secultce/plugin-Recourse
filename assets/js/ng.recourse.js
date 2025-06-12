@@ -113,7 +113,7 @@
     }]);
 
     // Controlador da interface
-    module.controller('RecourseController', ['$scope', 'RecourseService', function ($scope, RecourseService) {
+    module.controller('RecourseController', ['$scope', 'RecourseService', '$sce', function ($scope, RecourseService, $sce) {
         $scope.data = {
             recourses: []
         };
@@ -155,6 +155,8 @@
                             $scope.countNotReply++;
                         }
 
+                        recourse.recourseText = $sce.trustAsHtml(recourse.recourseText);
+
                         $scope.data.recourses.push(recourse);
                     });
 
@@ -176,6 +178,22 @@
                 });
         }
 
+        // Cria um DOM temporário para remover tags, contar caracteres e cortar com HTML limpo
+        $scope.trustHtmlPreview = function(html) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            const text = tempDiv.textContent || tempDiv.innerText || '';
+
+            const shortText = text.length > 100 ? text.substring(0, 100) + '...' : text;
+            return $sce.trustAsHtml(shortText);
+        };
+        // Verifica se tem mais de 100 caracteres
+        $scope.hasMoreThan100 = function(html) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            const text = tempDiv.textContent || tempDiv.innerText || '';
+            return text.length > 100;
+        };
 
         $scope.getSituation = function (situation) {
             let statusSituation = '';
@@ -246,8 +264,7 @@
         };
 
         $scope.sendReplyRecourse = function (id, status, reply, replyResult) {
-            const response = RecourseService.sendReply(id, status, reply, replyResult);
-            console.log(response);
+            RecourseService.sendReply(id, status, reply, replyResult);
         };
 
         $scope.backRecourse = function () {
@@ -338,7 +355,7 @@
         $scope.dialogSecult = function (id, title, text, icon = '', footer = '') {
             Swal.fire({
                 title: title,
-                text: text,
+                html: text,
                 icon: icon,
                 width: 850,
                 footer: footer,

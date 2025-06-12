@@ -72,13 +72,10 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
                         </a>
                     </td>
                     <td>{{recourses.agent.name}}</td>
-                    <td>
-                        {{
-                            recourses.recourseText.length > 100 ?
-                            recourses.recourseText.substring(0, 100) + '...' :
-                            recourses.recourseText;
-                        }}
-                        <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)" ng-if="recourses.recourseText.length > 100">
+                    <td >
+                        <div ng-bind-html="trustHtmlPreview(recourses.recourseText)"></div>
+                        <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)"
+                           ng-if="hasMoreThan100(recourses.recourseText)">
                             Ler mais
                         </a>
 

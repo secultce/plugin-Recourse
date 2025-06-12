@@ -2,15 +2,16 @@ const recourse = {
     getConfigSwalSend: (recourseTextareaId, recourseAttachmentsId, recourseText = '') => {
         return {
             title: "Escrever o Recurso",
-            html: `<div style="display: grid">
+            html: `<div style="display: grid" id="contextRecourse">
                 <label to="${recourseTextareaId}">Envie todos os destaques do seu recurso por escrito uma vez em um único campo</label>
                 <textarea
-                    id=${recourseTextareaId}
+                    id="${recourseTextareaId}"
                     placeholder="Mensagem para a banca avaliadora"
-                    class="swal2-textarea"
-                    style="margin: 5px">${recourseText}</textarea>
+                    class="swal2-textarea froala-editor" 
+                    style="margin: 5px; display: none;">${recourseText}</textarea>
+                <div id="froala-container"></div> 
                 <input
-                    id=${recourseAttachmentsId}
+                    id="${recourseAttachmentsId}"
                     type="file"
                     multiple
                     max="2"
@@ -20,9 +21,42 @@ const recourse = {
             confirmButtonText: 'Enviar recurso',
             cancelButtonText: 'Sair',
             showLoaderOnConfirm: true,
+            width: 800,
+            padding: "5em",
             customClass: {
                 confirmButton: "btn-success-rec",
                 cancelButton: "btn-warning-rec"
+            },
+            didOpen: () => {
+                // Inicializa o Froala quando o modal é aberto
+                const textarea = document.getElementById(recourseTextareaId);
+                const initialContent = textarea.value;
+
+                // Inicializa o Froala Editor
+                new FroalaEditor('#froala-container', {
+                    // Configurações básicas do Froala
+                    heightMin: 200,
+                    toolbarButtons: [
+                        'bold', 'italic', 'underline', 'paragraphFormat',
+                        'align', 'formatOL', 'formatUL', 'insertLink', 'textColor'
+                    ],
+                    colorsText: [
+                        '#61BD6D',
+                        '#1ABC9C',
+                        '#54ACD2',
+                        '#ec5353',
+                        'REMOVE'
+                    ],
+                    events: {
+                        initialized: function() {
+                            this.html.set(initialContent);
+                        },
+                        contentChanged: function() {
+                            // Atualiza o textarea oculto com o conteúdo do Froala
+                            textarea.value = this.html.get();
+                        }
+                    }
+                });
             },
             preConfirm: async () => {
                 const recourseText = document.getElementById(recourseTextareaId).value;
@@ -49,6 +83,7 @@ const recourse = {
 
 // A $( document ).ready() block.
 $(function () {
+
     $('.opportunity-claim-box').remove();//Removendo o botão existente no modulo de oportunidades
 
     $("#recourseOptions").change(function () {
@@ -63,6 +98,10 @@ $(function () {
             $('#insertData').hide();
         }
     });
+
+    var editor = new FroalaEditor('#contextRecourse');
+    console.log({editor})
+
 
     $('[edit-recourse-btn]').on('click', event => {
         if ($(event.currentTarget).hasClass('disabled')) {
@@ -102,7 +141,7 @@ $(function () {
                 showSimpleSwal('Erro inesperado, tente novamente')
             }
         });
-    })
+    });
 
     $('[delete-recourse-file-btn]').on('click', event => {
         Swal.fire({
@@ -140,6 +179,33 @@ $(function () {
         });
     })
 });
+
+function showEditor() {
+    Swal.fire({
+        title: 'Editar recurso',
+        html: '<textarea id="froala-editor"></textarea>',
+        showCancelButton: true,
+        confirmButtonText: 'Enviar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            return $('#froala-editor').froalaEditor('html.get');
+        },
+        didOpen: () => {
+            // Inicializa o Froala quando o SweetAlert é aberto
+            $('#froala-editor').froalaEditor({
+                // Configurações do Froala
+                toolbarButtons: ['bold', 'italic', 'underline', 'paragraphFormat', 'align', 'formatOL', 'formatUL', 'insertLink'],
+                heightMin: 200
+            });
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const content = result.value;
+            // Faça algo com o conteúdo
+            console.log(content);
+        }
+    });
+}
 
 function showSimpleSwal(message) {
     Swal.fire({
@@ -217,3 +283,4 @@ function sendRecourse(registration, opportunity, agentId) {
         }
     });
 }
+

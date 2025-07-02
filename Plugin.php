@@ -136,8 +136,10 @@ class Plugin extends \MapasCulturais\Plugin {
         $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
         $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
+        $app->view->enqueueStyle('app', 'froalacss', 'css/recourse/froala_editor.pkgd.min.css');
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
         $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
+        $app->view->enqueueScript('app','froalajs','js/recourse/froala_editor.pkgd.min.js',[]);
     }
 
     function register (): void

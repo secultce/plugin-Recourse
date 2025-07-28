@@ -16,18 +16,12 @@ use Recourse\Entities\RecourseFile;
 use Recourse\Utils\Util;
 use Slim\Exception\Stop;
 
-class Recourse extends \MapasCulturais\Controller{
-
-    public function GET_index()
-    {
-
-        $app = App::i();        
-    }
-
+class Recourse extends \MapasCulturais\Controller
+{
     public function GET_agent()
     {
         $app = App::i();
-        if($app->user->is('guest')){
+        if ($app->user->is('guest')) {
             $app->redirect('/autenticacao');
         }
 
@@ -38,13 +32,13 @@ class Recourse extends \MapasCulturais\Controller{
         $isOwner = $agent->canUser('@control');
 
         $allRecoursesUser = [];
-        foreach($app->user->agents as $agent) {
+        foreach ($app->user->agents as $agent) {
             $agentRecourses = $app->repo('Recourse\Entities\Recourse')->findBy([
                 'agent' => $agent,
             ]);
             $allRecoursesUser = array_merge($allRecoursesUser, $agentRecourses);
         }
-        $this->render('recourses-user',[
+        $this->render('recourses-user', [
             'isOwner' => $isOwner,
             'allRecoursesUser' => $allRecoursesUser,
         ]);
@@ -58,7 +52,7 @@ class Recourse extends \MapasCulturais\Controller{
 
         $file = $app->repo('\Recourse\Entities\RecourseFile')->find($this->data['id']);
 
-        $file_path = file_exists($file->getPath()) ? $file->getPath() : (string)str_replace('recourse-entities-recourse/'. $file->owner->id, 'recourse-entities-recourse', $file->getPath());
+        $file_path = file_exists($file->getPath()) ? $file->getPath() : (string)str_replace('recourse-entities-recourse/' . $file->owner->id, 'recourse-entities-recourse', $file->getPath());
 
         if (file_exists($file_path)) {
             $headers = [
@@ -72,7 +66,7 @@ class Recourse extends \MapasCulturais\Controller{
                 'Content-Length' => filesize($file_path)
             ];
 
-            foreach($headers as $name => $value){
+            foreach ($headers as $name => $value) {
                 header("{$name}: {$value}");
             }
 
@@ -90,9 +84,11 @@ class Recourse extends \MapasCulturais\Controller{
         $this->requireAuthentication();
         $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-        $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
-        $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
-        $app->view->enqueueStyle('app', 'opinionManagement','OpinionManagement/css/opinionManagement.css');
+        $app->view->enqueueScript('app', 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
+        $app->view->enqueueStyle('app', 'ckeditor-diligence', 'plugins/froala/css/froala_editor.pkgd.min.css');
+        $app->view->enqueueScript('app', 'ckeditor-diligence', 'plugins/froala/js/froala_editor.pkgd.min.js');
+        $app->view->enqueueScript('app', 'ng-recourse', 'js/ng.recourse.js', []);
+        $app->view->enqueueStyle('app', 'opinionManagement', 'OpinionManagement/css/opinionManagement.css');
         $app->view->enqueueScript('app', 'opinion-management', 'OpinionManagement/js/opinionManagement.js');
 
         $entity = $app->repo('Opportunity')->find($this->data['id']);
@@ -102,10 +98,10 @@ class Recourse extends \MapasCulturais\Controller{
         });
 
         //Se for administrador
-        if($entity->canUser('@control') || $isEvaluator){
+        if ($entity->canUser('@control') || $isEvaluator) {
             $urlOpp = $app->createUrl('oportunidade', $entity->id);
             $this->render('index', ['entity' => $entity, 'app' => $app, 'urlOpp' => $urlOpp]);
-        }else{
+        } else {
             $app->redirect($app->createUrl('panel', 'index'), 401);
         }
     }
@@ -162,14 +158,14 @@ class Recourse extends \MapasCulturais\Controller{
             ];
             ($recourse->replyResult) && ($recourseData['Nota'] = $recourse->replyResult);
             //Gravando dados para log de atividades
-            $revision = new Revision($recourseData, $recourse,Revision::ACTION_MODIFIED, 'Recurso respondido');
+            $revision = new Revision($recourseData, $recourse, Revision::ACTION_MODIFIED, 'Recurso respondido');
             $revision->save(true);
 
             $app->em->commit();
             $app->em->flush();
 
             $this->json(['message' => 'Recurso respondido com sucesso!'], 202);
-        }catch (\PDOException $e) {
+        } catch (\PDOException $e) {
             $this->json([
                 'message' => 'Ocorreu um erro inesperado!',
                 'errorMessage' => $e->getMessage(),
@@ -193,10 +189,6 @@ class Recourse extends \MapasCulturais\Controller{
         }
         if ($responseData['reply'] == '') {
             $this->json(['message' => 'Você não poderá enviar com o campo de resposta vazio'], 400);
-            return;
-        }
-        if ($responseData['status'] == '0' || $responseData['status'] == 'Aberto') {
-            $this->json(['message' => 'Informe a situação da resposta ao recurso'], 400);
             return;
         }
     }
@@ -259,13 +251,13 @@ class Recourse extends \MapasCulturais\Controller{
         $app = App::i();
         $entity->claimDisabled = $claimDisabled;
         $entity->save(true);
-        if($claimDisabled == '1'){
+        if ($claimDisabled == '1') {
             self::verifyClaim($entity);
         }
     }
 
     /**
-    * Faz Verificação para qndo for desabilitado o recurso, excluir do metadata da conf. de recurso
+     * Faz Verificação para qndo for desabilitado o recurso, excluir do metadata da conf. de recurso
      */
     public static function verifyClaim($entity)
     {
@@ -274,9 +266,8 @@ class Recourse extends \MapasCulturais\Controller{
             'owner' => $entity->id
         ]);
         //Excluindo meta data
-        foreach ($metas as $meta){
-            if($meta->key == 'recourse_date_initial' || $meta->key == 'recourse_time_initial' || $meta->key == 'recourse_date_end' || $meta->key == 'recourse_time_end' )
-            {
+        foreach ($metas as $meta) {
+            if ($meta->key == 'recourse_date_initial' || $meta->key == 'recourse_time_initial' || $meta->key == 'recourse_date_end' || $meta->key == 'recourse_time_end') {
                 $meta->delete();
                 $app->em->flush();
             }
@@ -287,7 +278,7 @@ class Recourse extends \MapasCulturais\Controller{
     {
         $app = App::i();
 
-        if(is_null($this->data['recourse'])) {
+        if (is_null($this->data['recourse'])) {
             $this->json(['message' => 'Informe o recurso'], 400);
             return;
         }
@@ -295,14 +286,14 @@ class Recourse extends \MapasCulturais\Controller{
         /** @var \MapasCulturais\Entities\Registration $registration */
         $registration = $app->repo('Registration')->find($this->data['registration']);
         $recourse = $app->repo('Recourse\Entities\Recourse')->findBy(['registration' => $registration]);
-        if(count($recourse) > 0) {
+        if (count($recourse) > 0) {
             $this->json(['message' => 'Você já enviou um recurso para esta inscrição'], 400);
             return;
         }
 
         $agent = $registration->owner;
 
-        if(!$agent->canUser('@control')) {
+        if (!$agent->canUser('@control')) {
             $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
             return;
         }
@@ -325,7 +316,7 @@ class Recourse extends \MapasCulturais\Controller{
             $app->applyHookBoundTo($this, 'recourse.send', [&$recourse]);
             $recourse->save(true);
 
-            foreach($_FILES as $file) {
+            foreach ($_FILES as $file) {
                 $app->disableAccessControl();
 
                 $newFile = new RecourseFile($file);
@@ -609,11 +600,11 @@ class Recourse extends \MapasCulturais\Controller{
         $app = App::i();
         $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-        $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
+        $app->view->enqueueScript('app', 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
 
         $app->view->enqueueStyle('app', 'ckeditor-diligence', 'plugins/froala/css/froala_editor.pkgd.min.css');
         $app->view->enqueueScript('app', 'ckeditor-diligence', 'plugins/froala/js/froala_editor.pkgd.min.js');
-        $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
-        $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
+        $app->view->enqueueScript('app', 'ng-recourse', 'js/ng.recourse.js', []);
+        $app->view->enqueueScript('app', 'recourse', 'js/recourse/recourse.js', []);
     }
 }

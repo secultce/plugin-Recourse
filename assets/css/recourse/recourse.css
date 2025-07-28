@@ -125,6 +125,11 @@
     border-radius: 10px;
 }
 
+.badge-info {
+    color: #fff;
+    background-color: #17a2b8;
+}
+
 .badge:empty {
     display: none;
 }
@@ -193,10 +198,6 @@ textarea.form-control {
     padding-left: 15px;
     padding-right: 15px;
     padding-top: 10px;
-}
-
-.label-reply-form {
-    display: block;
 }
 
 .btn-reply-recourse {
@@ -373,4 +374,17 @@ div:where(.swal2-icon) .swal2-icon-content {
     font-size: 10px;
     margin-left: 5px;
     cursor: pointer;
+}
+
+.modal-read-recourse {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.d-none {
+    display: none;
+}
+
+.current-grade {
+    font-size: 18px;
 }

@@ -38,10 +38,9 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
             Total rec. sem resposta: <small class="badge">{{countNotReply}}</small>
             <a
                 href="<?= $this->controller->createUrl('exportResponses', ['oportunityId' => $entity->id]) ?>"
-                class="btn btn-default download" 
-                style="float: right" 
-                title="<?= i::_e("Exportar todos recursos"); ?>"
-            >
+                class="btn btn-default download"
+                style="float: right"
+                title="<?= i::_e("Exportar todos recursos"); ?>">
                 <?= i::_e("Exportar Recursos"); ?>
             </a>
         </p>
@@ -51,7 +50,7 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
         <div style="width: 100%;" ng-if="veriftRecourses">
             <label for="">{{textVerifyRecourses}}</label>
         </div>
-        <table class="table table-bordered table-hover" ng-show="tableRecourse">
+        <table class="table table-bordered table-hover">
             <thead>
                 <tr class="tr-active">
                     <th>Inscrição</th>
@@ -72,10 +71,9 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
                         </a>
                     </td>
                     <td>{{recourses.agent.name}}</td>
-                    <td >
-                        <div ng-bind-html="trustHtmlPreview(recourses.recourseText)"></div>
-                        <a ng-click="dialogSecult(1, 'Recurso', recourses.recourseText)"
-                           ng-if="hasMoreThan100(recourses.recourseText)">
+                    <td>
+                        <small ng-bind-html="trustHtmlPreview(recourses.recourseText)"></small>
+                        <a ng-click="dialogSecult('Recurso', recourses.recourseText)" ng-if="hasMoreThan100(recourses.recourseText)">
                             Ler mais
                         </a>
 
@@ -84,8 +82,7 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
                                 ng-repeat="file in recourses.files"
                                 href="{{file.url}}"
                                 target="_blank"
-                                class="recourse-attachment-item"
-                            >
+                                class="recourse-attachment-item">
                                 {{ file.name.length > 50 ? file.name.substring(0, 50) + '...' : file.name }}
                             </a>
                         </div>
@@ -94,28 +91,21 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
                     <td>{{recourses.recourseSend}}</td>
                     <td>{{getSituation(recourses.status)}}</td>
                     <td>
-                        <p ng-if="recourses.recourseReply.length > 100">
-                            <small> {{recourses.recourseReply.substr(0, 100)}}...</small>
-                        </p>
-                        <p ng-if="recourses.recourseReply.length < 100">
-                            <small> {{recourses.recourseReply}}</small>
-                        </p>
+                        <span ng-if="recourses.recourseReply.length > 100">
+                            <small ng-bind-html="recourses.recourseReply.substr(0, 100) + '...'"></small>
+                        </span>
+                        <span ng-if="recourses.recourseReply.length < 100">
+                            <small ng-bind-html="recourses.recourseReply"></small>
+                        </span>
                         <?php if (Util::isRecourseResponsePeriod($entity)): ?>
-                        <a class="btn btn-recourse" style="color: #0a766a" ng-if="!isPublish"
-                            title="Responder ou editar o recurso do candidato"
-                            ng-click="replyRecourse(
-                                recourses.id,
-                                recourses.registration.id,
-                                recourses.agent,
-                                recourses.recourseText,
-                                recourses.recourseSend,
-                                recourses.status,
-                                recourses.replyAgent,
-                                recourses.recourseReply,
-                                recourses.replyResult
-                            )">
-                            <i class="fas fa-edit"></i>
-                        </a>
+                            <a
+                                class="btn btn-recourse"
+                                style="color: #0a766a"
+                                ng-if="!isPublish"
+                                ng-click="replyRecourse(recourses)"
+                                title="Responder ou editar o recurso do candidato">
+                                <i class="fas fa-edit"></i>
+                            </a>
                         <?php endif; ?>
                         <a class="btn btn-recourse" title="Visualizar Resposta" ng-click="verifyView(recourses.recourseReply)">
                             <i class="fas fa-eye"></i>
@@ -131,110 +121,21 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
                             class="btn btn-recourse"
                             title="Visualizar pareceres"
                             data-id="<?= '{{ recourses.registration.id }}' ?>"
-                            onclick="showOpinions(this.getAttribute('data-id'))"
-                        >
+                            onclick="showOpinions(this.getAttribute('data-id'))">
                             <i class="fas fa-eye"></i>
                         </a>
                         <?php if ($entity->canUser('@control') && $hasSecultSeal): ?>
-                            <a 
+                            <a
                                 href="<?= $app->createUrl('recursos', 'printRecourse', ['recourseId' => '{{recourses.id}}']) ?>"
                                 class="btn btn-recourse"
                                 title="Imprimir recurso"
-                                target="_blank"
-                            >
+                                target="_blank">
                                 <i class="fas fa-print"></i>
                             </a>
                         <?php endif; ?>
                     </td>
                 </tr>
             </tbody>
-
-        </table>
-
-        <div style="width: 100%;" ng-show="divReplyRecourse">
-            <button class="btn btn-default" ng-click="backRecourse()" title="Voltar para lista que tem todos os recursos">
-                <i class="fas fa-arrow-left"></i>
-                Voltar para lista
-            </button>
-        </div>
-
-        <table class="table table-bordered response-table" width='100%' ng-show="divReplyRecourse">
-            <tr>
-                <td width="50%">
-                    <table width="100%">
-                        <tr>
-                            <td> <strong>Inscrição:</strong>
-                                <a href="{{redirectRegistration(recourseAdmin.registration)}}" target="_blank">
-                                    {{recourseAdmin.registration}}
-                                </a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <strong>Recurso: </strong>
-                                {{recourseAdmin.recourseText}}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <strong>Aberto por: </strong>
-                                {{recourseAdmin.agent.name}}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <strong>Enviado em: </strong>
-                                {{recourseAdmin.recourseSend}}
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <strong>Situação: </strong>
-                                {{getSituation(recourseAdmin.status)}}
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-                <td width="50%">
-                    <div class="reply-shadow">
-                        <div class="form-group">
-                            <label for="label-reply-form"><b>Responder ao recurso:</b></label>
-                            <textarea name="reply" class="form-control resource-response__textarea" rows="10" ng-model="recourseAdmin.reply">{{recourseAdmin.reply}}</textarea>
-                            <label for="label-reply-form"><b>Alterar a situação:</b></label>
-                            <select name="situation" ng-change="changeSituation()" ng-model="recourseAdmin.status" id="" class="form-control">
-                                <option value="" disabled selected>--Selecione--</option>
-                                <option value="1">Deferido</option>
-                                <option value="8">Deferido parcialmente</option>
-                                <option value="-9">Indeferido</option>
-                            </select>
-                            <div class="form-group" ng-if="<?= $entity->evaluationMethodConfiguration->type == 'technical' ?> && (recourseAdmin.status == '1' || recourseAdmin.status == '8')">
-                                <label for="">Nota Atual: {{currentGrade}}</label>
-                                <p class="textcenter">
-                                    <small>--</small>
-                                </p>
-                                <p>
-                                    <label for="label-reply-form">
-                                        <strong>Nova nota:</strong>
-                                    </label>
-                                    <input type="text" class="form-control" ng-model="recourseAdmin.replyResult">
-                                </p>
-                            </div>
-                            <button
-                                class="btn btn-primary btn-reply-recourse"
-                                type="submit"
-                                ng-click="sendReplyRecourse(
-                                    recourseAdmin.idRecourse,
-                                    recourseAdmin.status,
-                                    recourseAdmin.reply,
-                                    recourseAdmin.replyResult
-                                )">
-                                Enviar resposta
-                                <i class="fas fa-paper-plane"></i>
-                            </button>
-                        </div>
-                    </div>
-                </td>
-            </tr>
         </table>
         <div>
             <?php if ($entity->canUser('@control') && Util::canPostResponses($entity)): ?>
@@ -256,12 +157,5 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
                 </label>
             </div>
         </div>
-
     </div>
 </div>
-
-<script>
-
-
-
-</script>

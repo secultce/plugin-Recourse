@@ -119,17 +119,6 @@
         };
         $scope.veriftRecourses = true;
         $scope.textVerifyRecourses = 'Verificando recursos . . . ';
-        $scope.tableRecourse = true;
-        $scope.divReplyRecourse = false
-        $scope.recourseAdmin = {
-            idRecourse: '',
-            registration: '',
-            agent: '',
-            recourseText: '',
-            recourseSend: '',
-            status: ''
-        };
-        $scope.currentGrade =  '';
         $scope.newGrade = '';
         $scope.reply = '';
         $scope.countNotReply = 0;
@@ -162,7 +151,6 @@
 
 
                     if($scope.data.recourses.length > 0 ) {
-                        $scope.tableRecourse = true;
                         $scope.veriftRecourses = false;
                         $scope.textVerifyRecourses = '';
                     }
@@ -216,61 +204,101 @@
             return statusSituation;
         };
 
-        $scope.replyRecourse = function (id, registration, agent, text, send, status, replyAgent, reply, replyResult) {
-            //Caso o agente que clicou não foi o mesmo que respondeu ao recurso, então é bloqueado para responder
+        const froalaEditor = {
+            instance: null,
+            getSettings(recourseReply) {
+                return {
+                    heightMin: 200,
+                    toolbarButtons: ['bold', 'italic', 'underline', 'paragraphFormat', 'align', 'formatOL', 'formatUL', 'insertLink', 'textColor'],
+                    colorsText: ['#61BD6D', '#1ABC9C', '#54ACD2', '#ec5353', 'REMOVE'],
+                    events: {
+                        initialized: function () {
+                            this.html.set(recourseReply || '')
+                        },
+                    },
+                }
+            },
+        }
+
+        $scope.replyRecourse = function (recourse) {
+            // Caso o agente que clicou não foi o mesmo que respondeu ao recurso, então é bloqueado para responder
+            const replyAgent = recourse.replyAgent
             if ((replyAgent !== null) && replyAgent.id !== MapasCulturais.userProfile.id) {
                 Swal.fire({
                     title: "Ops!",
                     text: `Este recurso já foi respondido pelo parecerista ${replyAgent.name}`,
-                });
-                return false;
-            }
-            $scope.tableRecourse = false
-            $scope.divReplyRecourse = true
-            $scope.recourseAdmin = {
-                idRecourse: id,
-                registration,
-                agent,
-                recourseText: text,
-                recourseSend: send,
-                status,
-                replyAgent,
-                reply,
-                replyResult,
+                })
+                return false
             }
 
-            registration = RecourseService.getRegistration(registration)
-            registration
-                .then(res => {
-                    $scope.currentGrade = res.data.resultConsolidate
-                })
-                .catch(err => {
-                    console.error(err)
-                });
+            Swal.fire({
+                title: "Responder Recurso",
+                html: htmlReplyRecourse(),
+                width: 800,
+                padding: "1em 5em",
+                showCancelButton: true,
+                confirmButtonText: 'Salvar resposta',
+                cancelButtonText: 'Cancelar',
+                customClass: {
+                    confirmButton: "btn-success-rec",
+                    cancelButton: "btn-warning-rec",
+                },
+                didOpen: () => {
+                    froalaEditor.instance = new FroalaEditor("#reply-textarea", froalaEditor.getSettings(recourse.recourseReply))
+
+                    const status = recourse.status
+                    const currentGrade = recourse.registration.consolidatedResult
+
+                    $('[status-recourse]').val(status)
+
+                    $('[status-recourse]').on('change', function () {
+                        const selectedValue = $(this).val()
+                        // Status 1 e 8 são 'deferido' e 'deferido parcialmente', respectivamente
+                        if (MapasCulturais.entity.evaluationMethodConfiguration.type === 'technical' && (selectedValue == '1' || selectedValue == '8')) {
+                            $('[grade-wrapper]').removeClass('d-none')
+                            $('[current-grade]').text(currentGrade)
+                            $('[new-grade]').val(recourse.replyResult)
+                        } else {
+                            $('[grade-wrapper]').addClass('d-none')
+                        }
+                    })
+
+                    $('[status-recourse]').trigger('change')
+                },
+            }).then((res) => {
+                if (res.isConfirmed) {
+                    $scope.sendReplyRecourse(
+                        recourse.id,
+                        $('[status-recourse]').val() || '0',
+                        froalaEditor.instance.html.get(),
+                        $('[new-grade]').val()
+                    );
+                }
+            })
         }
 
-        $scope.changeSituation = function () {
-            var registration = '';
-            if($scope.recourseAdmin.status == '1' || $scope.recourseAdmin.status == '8'){
-                registration =  RecourseService.getRegistration($scope.recourseAdmin.registration)
-                registration
-                    .then(res => {
-                        $scope.currentGrade = res.data.resultConsolidate
-                    })
-                    .catch(err => {
-                        console.error(err)
-                    });
-            }
-        };
+        function htmlReplyRecourse() {
+            return `
+                <p style="margin-bottom: 1em;">Digite a resposta do recurso e selecione a situação</p>
+                <textarea id="reply-textarea"></textarea>
+                <label style="float: left;">Situação:</label>
+                <select status-recourse class="form-control">
+                    <option value="0" disabled selected>-- Selecione a situação --</option>
+                    <option value="1">Deferido</option>
+                    <option value="8">Deferido parcialmente</option>
+                    <option value="-9">Indeferido</option>
+                </select>
+                <div class="form-group d-none" grade-wrapper>
+                    <label style="float: left;">Nova nota:</label>
+                    <input type="text" new-grade class="form-control" placeholder="Digite a nova nota">
+                    <p class="badge badge-info current-grade">A nota atual é: <span current-grade></span></p>
+                </div>
+            `
+        }
 
         $scope.sendReplyRecourse = function (id, status, reply, replyResult) {
             RecourseService.sendReply(id, status, reply, replyResult);
         };
-
-        $scope.backRecourse = function () {
-            $scope.tableRecourse = true
-            $scope.divReplyRecourse = false
-        }
 
         $scope.redirectRegistration = function (registration) {
            return MapasCulturais.createUrl('inscricao', registration);
@@ -289,9 +317,9 @@
                 .then(res => {
                     console.log({res})
                     if(res) {
-                        $scope.dialogSecult(0, 'Resposta', reply);
+                        $scope.dialogSecult('Resposta', reply);
                     }else{
-                        $scope.dialogSecult(0, 'Ops!', 'Você não tem permissão para visualizar a resposta');
+                        $scope.dialogSecult('Ops!', 'Você não tem permissão para visualizar a resposta');
                     }
                 })
                 .catch(function(err) {
@@ -347,28 +375,29 @@
             });
         };
 
-        $scope.infoUserRecourse = function(text) {
+        $scope.infoUserRecourse = function (text) {
             Swal.fire({
-                html:text,
+                html: text,
+                customClass: {
+                    htmlContainer: 'modal-read-recourse'
+                },
             });
         };
-        $scope.dialogSecult = function (id, title, text, icon = '', footer = '') {
+
+        $scope.dialogSecult = function (title, text, icon = '', footer = '') {
             Swal.fire({
                 title: title,
                 html: text,
                 icon: icon,
                 width: 850,
                 footer: footer,
-                // showDenyButton: true,
                 showCancelButton: false,
-                // denyButtonText: `Sair`,
-                // confirmButtonText: "Responder",
                 allowOutsideClick: false,
                 allowEscapeKey: false,
+                customClass: {
+                    htmlContainer: 'modal-read-recourse'
+                },
             });
         };
-
-
-
     }]);
 })(angular);

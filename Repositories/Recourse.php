@@ -36,8 +36,8 @@ class Recourse extends \MapasCulturais\Repository
             $revision->save();
         }
 
-        $queueName = 'published_recourses_queue';
-        Util::addRecoursesToRabbitmqQueue($recourses, $queueName);
+        
+        Util::addRecoursesToRabbitmqQueue($recourses);
 
         $app->em->commit();
         $app->em->flush();

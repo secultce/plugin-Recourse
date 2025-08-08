@@ -4,6 +4,7 @@ namespace Recourse\Utils;
 
 use MapasCulturais\App;
 use MapasCulturais\Entities\Notification;
+use PhpAmqpLib\Exchange\AMQPExchangeType;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Recourse\Entities\Recourse;
@@ -63,17 +64,31 @@ class Util
         return false;
     }
 
-    public static function addRecoursesToRabbitmqQueue($recourses, $queueName): void
+    public static function addRecoursesToRabbitmqQueue($recourses): void
     {
         $app = App::i();
         $count = count($recourses);
 
         // Conectar ao RabbitMQ
-        $connection = new AMQPStreamConnection(env('RABBITMQ_HOST'), env('RABBITMQ_PORT'), env('RABBITMQ_USER'), env('RABBITMQ_PASSWORD'));
+        $connection = new AMQPStreamConnection(
+            $app->config['rabbitmq']['host'], 
+            $app->config['rabbitmq']['port'], 
+            $app->config['rabbitmq']['user'], 
+            $app->config['rabbitmq']['password']);
+
+            
+            $exchange  = $app->config['rabbitmq']['exchange_default']; // Exchange padrão
+            
+            $queueName = $app->config['rabbitmq']['queues']['queue_published_recourses']; // Nome da fila de recursos publicados
+            
         $channel = $connection->channel();
 
-        // Criar a fila de e-mails
-        $channel->queue_declare($queueName, false, true, false, false);
+        // Declarando a exchange que irá usar
+        $channel->exchange_declare($exchange, AMQPExchangeType::DIRECT, false, true, false);
+   
+        // Ligando a fila à exchange
+        $channel->queue_bind($queueName, $exchange, 'plugin_published_recourses');
+
 
         foreach ($recourses as $i => $recourse) {
             $data = [
@@ -83,7 +98,7 @@ class Util
             ];
             $msg = new AMQPMessage(json_encode($data), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
 
-            $channel->basic_publish($msg, '', $queueName);
+            $channel->basic_publish($msg, $exchange, 'plugin_published_recourses');
             self::notificationPublishedRecourse($recourse);
             $app->log->debug("Notificação " . ($i + 1) . "/$count enviada para o usuário {$recourse->agent->user->id} ({$recourse->agent->name})");
         }

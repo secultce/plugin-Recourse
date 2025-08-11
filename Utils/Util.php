@@ -87,7 +87,7 @@ class Util
         $channel->exchange_declare($exchange, AMQPExchangeType::DIRECT, false, true, false);
    
         // Ligando a fila à exchange
-        $channel->queue_bind($queueName, $exchange, 'plugin_published_recourses');
+        $channel->queue_bind($queueName, $exchange, $app->config['rabbitmq']['routing']['plugin_published_recourses']);
 
 
         foreach ($recourses as $i => $recourse) {
@@ -98,7 +98,7 @@ class Util
             ];
             $msg = new AMQPMessage(json_encode($data), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
 
-            $channel->basic_publish($msg, $exchange, 'plugin_published_recourses');
+            $channel->basic_publish($msg, $exchange, $app->config['rabbitmq']['routing']['plugin_published_recourses']);
             self::notificationPublishedRecourse($recourse);
             $app->log->debug("Notificação " . ($i + 1) . "/$count enviada para o usuário {$recourse->agent->user->id} ({$recourse->agent->name})");
         }

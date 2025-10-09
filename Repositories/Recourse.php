@@ -14,8 +14,11 @@ class Recourse extends \MapasCulturais\Repository
         $app = App::i();
 
         $recourses = $this->findBy(['opportunity' => $opportunityId]);
-
+        $opportunity = $app->repo('Opportunity')->find($opportunityId);
+        $owner = $opportunity->owner;
+        $sealIds = $owner->getRelatedSealIds();
         $app->em->beginTransaction();
+
         foreach ($recourses as $recourse) {
             $recourse->replyPublish = true;
             if(in_array($recourse->status, [EntityRecourse::STATUS_APPROVED, EntityRecourse::STATUS_PARTIALLY_APPROVED])) {
@@ -36,9 +39,10 @@ class Recourse extends \MapasCulturais\Repository
             $revision->save();
         }
 
-        
-        Util::addRecoursesToRabbitmqQueue($recourses);
-
+       if (in_array(2, $sealIds)) {
+                Util::addRecoursesToRabbitmqQueue($recourses);
+            }
+            
         $app->em->commit();
         $app->em->flush();
     }

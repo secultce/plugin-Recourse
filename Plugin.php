@@ -24,7 +24,7 @@ class Plugin extends \MapasCulturais\Plugin {
             }
         });
 
-        $app->hook('view.partial(claim-configuration):after', function($__template, &$__html) use ($app,$plugin){
+        $app->hook('view.partial(singles/opportunity-registrations--export):after', function($__template, &$__html) use ($app,$plugin){
             //add assests
             $plugin->_publishAssets();
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);

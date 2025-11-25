@@ -22,20 +22,20 @@ $this->layout = 'panel';
     <?php $this->applyTemplateHook('panel-header','after'); ?>
     <div id="table-recourse" ng-app="ng.recourse">
         <?php if($isOwner): ?>
-        <div class="table-responsive"  ng-controller="RecourseController">
+        <div class="table-responsive" ng-controller="RecourseController">
             <table class="table table-bordered" id="tableAllRecourse" style="width:100%;">
                 <thead>
-                <tr>
-                    <th>Oportunidade</th>
-                    <th>Inscrição/Agente</th>
-                    <th style="width:25%;">Recurso Solicitado</th>
-                    <th>Enviado em</th>
-                    <th>Situação</th>
-                    <th style="width:25%;">Resposta</th>
-                    <th>Ações</th>
-                </tr>
+                    <tr>
+                        <th>Oportunidade</th>
+                        <th>Inscrição/Agente</th>
+                        <th style="width:25%;">Recurso Solicitado</th>
+                        <th>Enviado em</th>
+                        <th>Situação</th>
+                        <th style="width:25%;">Resposta</th>
+                        <th>Ações</th>
+                    </tr>
                 <tbody id="bodyAllRecourse">
-                <?php foreach ($allRecoursesUser as $recourse): ?>
+                    <?php foreach ($allRecoursesUser as $recourse): ?>
                     <tr>
                         <td>
                             <a href="<?= $app->createUrl('oportunidade', $recourse->opportunity->id ) ?>">
@@ -54,12 +54,12 @@ $this->layout = 'panel';
                         <td>
                             <span>
                                 <?php
-                                echo substr($recourse->recourseText, 0,100);
+                                // echo substr($recourse->recourseText, 0,100);
 
                                 $recourseText = htmlspecialchars(addslashes($recourse->recourseText), ENT_QUOTES);
                                 if(strlen($recourse->recourseText) > 100):
-                                    echo "...<br/>
-                                          <a href='#' ng-click='infoUserRecourse(\"{$recourseText}\")'>Ler Recurso</a>";
+                                    echo "<br/>
+                                          <a href='#' class='btn btn-recourse' ng-click='infoUserRecourse(\"{$recourseText}\")' title='Ler recurso'><i class='fas fa-eye'></i></a>";
                                 endif;
                                 ?>
                             </span>
@@ -119,8 +119,8 @@ $this->layout = 'panel';
                                 if(strlen($recourse->recourseReply) > 30){
                                     echo substr($recourse->recourseReply, 0,100).'...<br/>';
                                     $recourseReply = htmlspecialchars(addslashes($recourse->recourseReply), ENT_QUOTES);?>
-                                    <a href="#" ng-click="infoUserRecourse('<?php echo $recourseReply; ?>')">Ler Resposta</a>
-                                    <?php
+                            <a href="#" ng-click="infoUserRecourse('<?php echo $recourseReply; ?>')">Ler Resposta</a>
+                            <?php
                                 }else{
                                     echo $recourse->recourseReply;
                                 }
@@ -130,30 +130,36 @@ $this->layout = 'panel';
                             ?>
                         </td>
                         <td>
-                            <a
-                                class="btn btn-recourse <?= Util::isRecoursePeriod($recourse->opportunity) ? '' : 'disabled' ?>"
-                                style="color: #0a766a"
-                                title="Editar recurso"
-                                edit-recourse-btn
-                                data-recourse-id="<?= $recourse->id ?>"
-                                data-recourse-text="<?= htmlspecialchars($recourse->recourseText, ENT_QUOTES, 'UTF-8') ?>"
-                            >
+                            <a class="btn btn-recourse openRecourse <?= Util::isRecoursePeriod($recourse->opportunity) ? '' : 'disabled' ?>"
+                                title="Editar recurso" href="javascript:void(0)"
+                                data-entity-id-cr="<?= $recourse->id; ?>" data-opp="<?= $recourse->opportunity->id ?>"
+                                data-agent="<?= $recourse->agent->id ?>"
+                                data-entity-context-cr="<?= htmlspecialchars($recourse->recourseText ?? '', ENT_QUOTES); ?>"
+                                id="btn-recourse-edits-<?php echo $recourse->id; ?>" data-acion="update"
+                                data-url="recursos/updateRecourse">
                                 <i class="fas fa-edit"></i>
                             </a>
+                            <!-- <a class="btn btn-recourse 
+                            <?= Util::isRecoursePeriod($recourse->opportunity) ? '' : 'disabled' ?>"
+                                style="color: #0a766a" edit-recourse-btn data-recourse-id="<?= $recourse->id ?>"
+                                data-recourse-text="<?= htmlspecialchars($recourse->recourseText, ENT_QUOTES, 'UTF-8') ?>"
+                               >
+                                <i class="fas fa-edit"></i>
+                            </a> -->
                         </td>
                     </tr>
-                <?php endforeach; ?>
+                    <?php endforeach; ?>
                 </tbody>
                 </thead>
             </table>
         </div>
-<!--        <form>-->
-<!--            <button class="btn btn-primary" onClick="window.print()">-->
-<!--                <i class="fa fa-print" aria-hidden="true"></i> Imprimir Recursos</button>-->
-<!--        </form>-->
+        <!--        <form>-->
+        <!--            <button class="btn btn-primary" onClick="window.print()">-->
+        <!--                <i class="fa fa-print" aria-hidden="true"></i> Imprimir Recursos</button>-->
+        <!--        </form>-->
         <?php else: ?>
         <div class="alert danger">
-            Ops! <br/>
+            Ops! <br />
             Você não tem permissão para visualizar os recursos que não são seus.
         </div>
         <?php endif; ?>

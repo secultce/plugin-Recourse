@@ -98,46 +98,6 @@ $(() => {
 
     var editor = new FroalaEditor('#contextRecourse');
 
-    $('[edit-recourse-btn]').on('click', event => {
-        if ($(event.currentTarget).hasClass('disabled')) {
-            showSimpleSwal('O período do recurso está encerrado')
-            return
-        }
-
-        const recourseId = event.currentTarget.dataset.recourseId
-        const recourseText = event.currentTarget.dataset.recourseText
-        const recourseTextareaId = 'edit-recourse-textarea-' + recourseId
-        const recourseAttachmentsId = 'edit-recourse-file-' + recourseId
-
-        Swal.fire(recourse.getConfigSwalSend(recourseTextareaId, recourseAttachmentsId, recourseText)).then(async content => {
-            const [recourseText, files] = content.value;
-
-            const formData = new FormData();
-            formData.append('recourseId', recourseId)
-            formData.append('recourseText', recourseText)
-            Array.from(files).forEach((file, index) => {
-                formData.append(index, file)
-            })
-
-            const response = await fetch(MapasCulturais.baseURL + 'recursos/updateRecourse', {
-                method: 'POST',
-                body: formData,
-            })
-
-            if (response.ok) {
-                const data = await response.json()
-
-                showConfirmationSwal(data.message)
-            } else if (response.status === 403) {
-                const data = await response.json()
-
-                showConfirmationSwal(data.message)
-            } else {
-                showSimpleSwal('Erro inesperado, tente novamente')
-            }
-        });
-    });
-
     $('[delete-recourse-file-btn]').on('click', event => {
         Swal.fire({
             title: "Remover arquivo",
@@ -173,6 +133,9 @@ $(() => {
             }
         });
     })
+    // SETUP ÚNICO: registra o botão para o componente Quill
+    EventDelegator.setup('openRecourse', openRecourse, 'quill-editor');
+
 })
 
 function showEditor() {
@@ -233,28 +196,29 @@ function claimDisabled(opt) {
     });
 }
 
-function sendRecourse(registration, opportunity, agentId) {
-    const recourseTextareaId = 'context-recourse-user-' + registration;
-    const recourseAttachmentsId = 'attachment-recourse-user-' + registration;
+async function openRecourse(entityId, buttonElement, selectId, extraData) {
+    // Passe para QuillEditor via options
+    const result = await QuillEditor.open({
+        title: extraData.customTitle || 'Recurso Padrão',  // Usa data-custom-title ou fallback
+        placeholder: extraData.customPlaceholder || 'Escreva seu recurso...',
+        entityId: entityId,
+        selectId: selectId,
+        triggerButton: buttonElement
+    });
 
-    Swal.fire(recourse.getConfigSwalSend(recourseTextareaId, recourseAttachmentsId)).then(async content => {
-        const [recourseText, files] = content.value;
-
-        const formData = new FormData();
-        formData.append('registration', registration)
-        formData.append('opportunity', opportunity)
-        formData.append('recourse', recourseText)
-        Array.from(files).forEach((file, index) => {
-            formData.append(index, file)
-        })
-
+    const opportunity = extraData.opp;
+    const agentId = extraData.agent;
+    const files = $("#edit-recourse-file-" + entityId)[0].files
+    if (result.isConfirmed) {
+        const content = result?.value?.conteudo;
+        const dataForm = createBodyRequest(extraData.action, content, entityId, opportunity); // forma do corpo da requisição
+        const formData = createFormData(dataForm, files); // cria a requisicao com arquivos
         const panelRecourse = MapasCulturais.createUrl('recursos/agent/' + agentId);
-        const response = await fetch(MapasCulturais.baseURL + 'recursos/sendRecourse', {
+        const response = await fetch(MapasCulturais.baseURL + extraData.url, {
             method: 'POST',
             body: formData,
         })
-        const data = await response.json()
-
+        const data = await response.json();
         // @todo: Entender como fazer para saber se deu erro
         if (data) {
             Swal.fire({
@@ -264,8 +228,8 @@ function sendRecourse(registration, opportunity, agentId) {
                     "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
                 showConfirmButton: false,
             });
-            //Ocutando botão para não ter mais de um envio
-            $("#btn-recourse-" + registration).hide();
+            // //Ocutando botão para não ter mais de um envio
+            // $("#btn-recourse-" + registration).hide();
         }
         if (!data) {
             Swal.fire({
@@ -276,5 +240,29 @@ function sendRecourse(registration, opportunity, agentId) {
                 showConfirmButton: false,
             })
         }
+    }
+}
+
+function createFormData(data, files = []) {
+    const formData = new FormData();
+
+    // Dados simples
+    Object.entries(data).forEach(([key, value]) => {
+        formData.append(key, value);
     });
+
+    // Arquivos: nomeados por índice (0, 1, 2…)
+    Array.from(files).forEach((file, index) => {
+        formData.append(index.toString(), file);
+    });
+
+    return formData;
+}
+
+function createBodyRequest(action, content, entityId = null, opportunity = null) {
+    return action === 'create'
+        ? { registration: entityId, opportunity, recourse: content }
+        : action === 'update'
+            ? { recourseId: entityId, recourseText: content }
+            : {};
 }

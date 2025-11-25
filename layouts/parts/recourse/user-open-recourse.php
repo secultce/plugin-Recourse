@@ -7,18 +7,19 @@
 ?>
 
 <style>
-    .swal2-input-label{
-        padding: 10px !important;
-        margin: 10px !important;
-        text-align: center !important;
-    }
+.swal2-input-label {
+    padding: 10px !important;
+    margin: 10px !important;
+    text-align: center !important;
+}
 </style>
 
 <div class="opportunity-claim-button">
     <?php if(!$isRecourseSent && $isActivePeriod): ?>
-    <a class="btn btn-primary"
-            onclick="sendRecourse(<?php echo $registration->id .', '. $registration->opportunity->id .', '. $registration->owner->id ?>)"
-            id="btn-recourse-<?php echo $registration->id; ?>">
+    <a class="btn btn-primary openRecourse" data-entity-id-cr="<?= $registration->id; ?>" href="javascript:void(0)"
+        data-opp="<?= $registration->opportunity->id ?>" data-agent="<?= $registration->owner->id ?>"
+        data-entity-context-cr="<?= htmlspecialchars($cr->text ?? '', ENT_QUOTES); ?>"
+        id="btn-recourse-<?php echo $registration->id; ?>" data-url="recursos/sendRecourse" data-action="create">
         Abrir Recurso
     </a>
     <?php endif; ?>

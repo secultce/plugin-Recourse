@@ -2,21 +2,17 @@ const recourse = {
     getConfigSwalSend: (recourseTextareaId, recourseAttachmentsId, recourseText = '') => {
         return {
             title: "Escrever o Recurso",
-            html: `<div style="display: grid" id="contextRecourse">
-                <label to="${recourseTextareaId}">Envie todos os destaques do seu recurso por escrito uma vez em um único campo</label>
-                <textarea
-                    id="${recourseTextareaId}"
-                    placeholder="Mensagem para a banca avaliadora"
-                    class="swal2-textarea froala-editor" 
-                    style="margin: 5px; display: none;">${recourseText}</textarea>
-                <div id="froala-container"></div> 
-                <input
-                    id="${recourseAttachmentsId}"
-                    type="file"
-                    multiple
-                    max="2"
-                    class="swal2-file">
-            </div>`,
+            html: `
+                <div style="display: grid" id="contextRecourse">
+                    <label to="${recourseTextareaId}">Envie todos os destaques do seu recurso por escrito uma vez em um único campo</label>
+                    <textarea
+                        id="${recourseTextareaId}"
+                        placeholder="Mensagem para a banca avaliadora"
+                        class="swal2-textarea froala-editor" 
+                        style="margin: 5px; display: none;">${recourseText}</textarea>
+                    <div id="froala-container"></div> 
+                    <input id="${recourseAttachmentsId}" type="file" multiple max="2" class="swal2-file">
+                </div>`,
             showCancelButton: true,
             confirmButtonText: 'Enviar recurso',
             cancelButtonText: 'Sair',
@@ -48,10 +44,10 @@ const recourse = {
                         'REMOVE'
                     ],
                     events: {
-                        initialized: function() {
+                        initialized: function () {
                             this.html.set(initialContent);
                         },
-                        contentChanged: function() {
+                        contentChanged: function () {
                             // Atualiza o textarea oculto com o conteúdo do Froala
                             textarea.value = this.html.get();
                         }
@@ -81,27 +77,21 @@ const recourse = {
     }
 }
 
-// A $( document ).ready() block.
-$(function () {
+$(() => {
+    $('.opportunity-claim-box').remove(); // Removendo o botão existente no módulo de oportunidades
 
-    $('.opportunity-claim-box').remove();//Removendo o botão existente no modulo de oportunidades
+    $('#disable-appeal-wrapper').on('change', event => {
+        const isDisabled = parseInt(event.target.value)
 
-    $("#recourseOptions").change(function () {
-        var opt = $("#recourseOptions").val();
-        if (opt == '0') {
-            $('#insertData').show();
-            //$('#resourceOptions option[value=0]').attr('selected','selected');
-            claimDisabled(opt);
-        } else {
-            $('#insertData').removeClass('visible');
-            claimDisabled(opt);
-            $('#insertData').hide();
+        if (!isDisabled) {
+            $('#appeal-period-wrapper').removeClass('d-none')
+            return
         }
-    });
+
+        $('#appeal-period-wrapper').addClass('d-none')
+    })
 
     var editor = new FroalaEditor('#contextRecourse');
-    console.log({editor})
-
 
     $('[edit-recourse-btn]').on('click', event => {
         if ($(event.currentTarget).hasClass('disabled')) {
@@ -178,7 +168,7 @@ $(function () {
             }
         });
     })
-});
+})
 
 function showEditor() {
     Swal.fire({
@@ -283,4 +273,3 @@ function sendRecourse(registration, opportunity, agentId) {
         }
     });
 }
-

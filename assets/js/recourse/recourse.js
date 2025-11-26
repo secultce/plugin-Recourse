@@ -78,12 +78,17 @@ const recourse = {
 }
 
 $(() => {
+    const opportunity = MapasCulturais.entity.object
+
+    if (opportunity.appealEnabled === 'Sim') $('#appeal-period-wrapper').removeClass('d-none')
+
     $('.opportunity-claim-box').remove(); // Removendo o botão existente no módulo de oportunidades
 
-    $('#disable-appeal-wrapper').on('change', event => {
-        const isDisabled = parseInt(event.target.value)
+    $('#enabled-appeal-wrapper').on('change', event => {
+        const opt = event.target.value
+        const appealEnabled = opt === 'Sim' ? true : false
 
-        if (!isDisabled) {
+        if (appealEnabled) {
             $('#appeal-period-wrapper').removeClass('d-none')
             return
         }

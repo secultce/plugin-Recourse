@@ -146,6 +146,15 @@ class Plugin extends \MapasCulturais\Plugin {
     {
         $app = App::i();
         $app->registerController('recursos', 'Recourse\Controllers\Recourse');
+
+        $this->registerOpportunityMetadata('appealEnabled', [
+            'label' =>  i::__('Habilitar Recurso'),
+            'description' => i::__('Configura se a oportunidade terá recurso'),
+            'type' => 'select',
+            'options' => ['Sim', 'Não'],
+            'default' => 'Não',
+            'required' => true,
+        ]);
         $this->registerOpportunityMetadata('recourse_date_initial', [
            'label' => i::__('Data Inicial'),
            'type' => 'date',

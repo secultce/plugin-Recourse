@@ -25,7 +25,7 @@
     <?php
     if($isRecourseSent): ?>
     <p>
-        <label class="info-btn-recourse">Recurso enviado</label>
+        <span class="badge badge-info">Recurso enviado</span>
     </p>
     <?php endif; ?>
 </div>

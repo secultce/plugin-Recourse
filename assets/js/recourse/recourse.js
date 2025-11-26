@@ -78,9 +78,9 @@ const recourse = {
 }
 
 $(() => {
-    const opportunity = MapasCulturais.entity.object
+    const opportunity = MapasCulturais.entity?.object
 
-    if (opportunity.appealEnabled === 'Sim') $('#appeal-period-wrapper').removeClass('d-none')
+    if (opportunity?.appealEnabled === 'Sim') $('#appeal-period-wrapper').removeClass('d-none')
 
     $('.opportunity-claim-box').remove(); // Removendo o botão existente no módulo de oportunidades
 

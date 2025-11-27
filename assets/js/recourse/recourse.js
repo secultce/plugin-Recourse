@@ -209,14 +209,17 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
     const opportunity = extraData.opp;
     const agentId = extraData.agent;
     const files = $("#edit-recourse-file-" + entityId)[0].files
+
     if (result.isConfirmed) {
         const content = result?.value?.conteudo;
         const dataForm = createBodyRequest(extraData.action, content, entityId, opportunity); // forma do corpo da requisição
-        const formData = createFormData(dataForm, files); // cria a requisicao com arquivos
+        const requestForm = createFormData(dataForm, files); // cria a requisicao com arquivos
+        console.log('createFormData', requestForm);
         const panelRecourse = MapasCulturais.createUrl('recursos/agent/' + agentId);
+
         const response = await fetch(MapasCulturais.baseURL + extraData.url, {
             method: 'POST',
-            body: formData,
+            body: requestForm,
         })
         const data = await response.json();
         // @todo: Entender como fazer para saber se deu erro
@@ -245,24 +248,34 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
 
 function createFormData(data, files = []) {
     const formData = new FormData();
+    // Verifica se data é um objeto válido
+    if (typeof data !== 'object' || data === null) {
+        console.warn('O parâmetro "data" deve ser um objeto. Ignorando adição de dados simples.');
+    } else {
+        // Adiciona dados simples, lidando com arrays para append múltiplo
+        for (const [key, value] of Object.entries(data)) {
+            if (Array.isArray(value)) {
+                // Se for array, append cada item individualmente (ex: campos multi-valor)
+                value.forEach(item => formData.append(key, item));
+            } else {
+                console.log(key, value)
+                formData.append(key, value);
+                console.log({ formData })
+            }
+        }
+    }
 
-    // Dados simples
-    Object.entries(data).forEach(([key, value]) => {
-        formData.append(key, value);
-    });
-
-    // Arquivos: nomeados por índice (0, 1, 2…)
+    // Adiciona arquivos, nomeados por índice (0, 1, 2…)
     Array.from(files).forEach((file, index) => {
         formData.append(index.toString(), file);
     });
-
     return formData;
 }
 
 function createBodyRequest(action, content, entityId = null, opportunity = null) {
     return action === 'create'
-        ? { registration: entityId, opportunity, recourse: content }
+        ? { 'registration': entityId, 'opportunity': opportunity, 'recourse': content }
         : action === 'update'
-            ? { recourseId: entityId, recourseText: content }
+            ? { 'recourseId': entityId, 'recourseText': content }
             : {};
 }

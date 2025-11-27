@@ -346,9 +346,7 @@ class Recourse extends \MapasCulturais\Controller
         $this->requireAuthentication();
        
         $app = App::i();
-        dump($this->data);
         $recourse = $app->repo(EntityRecourse::class)->findOneBy(['id' => $this->data['recourseId']]);
-        dd($recourse);
         if (!$recourse->registration->canUser('@control')) {
             $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
             return;

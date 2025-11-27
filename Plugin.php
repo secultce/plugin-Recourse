@@ -94,7 +94,7 @@ class Plugin extends \MapasCulturais\Plugin {
             //Inicia com verdadeiro e em condições iguais a 0 trona-se falso
             $isRecourseSent = true;
             count($rec) > 0 || ($isRecourseSent = false);
-
+            
             $this->part('recourse/user-open-recourse', [
                 'registration' => $registration,
                 'isRecourseSent' => $isRecourseSent,

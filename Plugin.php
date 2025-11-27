@@ -19,7 +19,7 @@ class Plugin extends \MapasCulturais\Plugin {
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $opportunity = $this->controller->requestedEntity;
 
-            if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && !$opportunity->claimDisabled) {
+            if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && $opportunity->appealEnabled === 'Sim') {
                 $this->part('singles/opportunity-recourses', ['entity' => $opportunity, 'app' => $app]);
             }
         });
@@ -30,13 +30,6 @@ class Plugin extends \MapasCulturais\Plugin {
             $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             //Entidade
             $opp = $this->controller->requestedEntity;
-
-            //0 Está habilitado - 1 Não está habilitado
-            $enableRecourse = $opp->getMetadata('claimDisabled');
-             //Se alterar a configuração para desabilitar o recurso, faz uma verificação de metadata
-            if($enableRecourse == '1'){
-                RecourseController::verifyClaim($opp);
-            }
 
             //Todo o metadata da oportunidade
             $metadt = $opp->getMetadata();
@@ -62,7 +55,6 @@ class Plugin extends \MapasCulturais\Plugin {
             }
 
             $this->part('recourse/opportunity-recourse-form', [
-                'enableRecourse' => $enableRecourse,
                 'confRecourse' => $confRecourse,
                 'template' => $__html
             ]);
@@ -80,7 +72,7 @@ class Plugin extends \MapasCulturais\Plugin {
             
             $baseUrl = $app->_config['base.url'];
             //So mostra o botão se o recurso tiver habilitado
-            if($entity->opportunity->getMetadata('claimDisabled') == '0')
+            if($entity->opportunity->getMetadata('appealEnabled') === 'Sim')
             {
                 $this->part('recourse/recourse-user-registration-status', [
                     'entity' => $entity,
@@ -146,6 +138,15 @@ class Plugin extends \MapasCulturais\Plugin {
     {
         $app = App::i();
         $app->registerController('recursos', 'Recourse\Controllers\Recourse');
+
+        $this->registerOpportunityMetadata('appealEnabled', [
+            'label' =>  i::__('Habilitar Recurso'),
+            'description' => i::__('Configura se a oportunidade terá recurso'),
+            'type' => 'select',
+            'options' => ['Sim', 'Não'],
+            'default' => 'Não',
+            'required' => true,
+        ]);
         $this->registerOpportunityMetadata('recourse_date_initial', [
            'label' => i::__('Data Inicial'),
            'type' => 'date',

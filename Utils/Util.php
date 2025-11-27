@@ -25,7 +25,7 @@ class Util
         $initialPeriodFormatted = \DateTime::createFromFormat('Y-m-d H:i', $initialPeriod); // Converte para formato Datetime
         $now = new \DateTime();
 
-        if ($opportunity->getMetadata('claimDisabled') == '0' && $finalPeriodFormatted >= $now && $now >= $initialPeriodFormatted) return true;
+        if ($opportunity->getMetadata('appealEnabled') === 'Sim' && $finalPeriodFormatted >= $now && $now >= $initialPeriodFormatted) return true;
         return false;
     }
 

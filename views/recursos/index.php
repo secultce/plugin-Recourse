@@ -16,7 +16,7 @@ $app->view->jsObject['entity'] = $entity;
 $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
 
 ?>
-
+<?php $this->applyTemplateHook('recourse-index','begin'); ?>
 <div ng-app="ng.recourse" class="panel-list panel-main-content">
     <div class="alert info">
         Lembramos que ao clicar em <strong>Responder <i class="fa fa-edit"></i></strong>, o recurso tem privilégio
@@ -65,6 +65,7 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
             </thead>
             <tbody>
                 <tr ng-repeat="recourses in data.recourses">
+
                     <td>
                         <a href="{{redirectRegistration(recourses.registration.id)}}" target="_blank">
                             {{recourses.registration.number}}
@@ -99,11 +100,14 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
                         </span>
                         <?php if (Util::isRecourseResponsePeriod($entity)): ?>
                             <a
-                                class="btn btn-recourse"
-                                style="color: #0a766a"
-                                ng-if="!isPublish"
-                                ng-click="replyRecourse(recourses)"
-                                title="Responder ou editar o recurso do candidato">
+                                class="btn btn-recourse sendReply"
+                                data-entity-id-cr="{{recourses.id}}"
+                                data-entity-context-cr=""
+                                data-status="{{recourses.status}}"
+                                data-note="{{recourses.replyResult}}"
+                                data-url="recursos/responder"
+                                title="Responder recurso"
+                            >
                                 <i class="fas fa-edit"></i>
                             </a>
                         <?php endif; ?>
@@ -159,3 +163,4 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
         </div>
     </div>
 </div>
+<?php $this->applyTemplateHook('recourse-index','end'); ?>

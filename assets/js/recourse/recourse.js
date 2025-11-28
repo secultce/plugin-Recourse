@@ -135,6 +135,7 @@ $(() => {
     })
     // SETUP ÚNICO: registra o botão para o componente Quill
     EventDelegator.setup('openRecourse', openRecourse, 'quill-editor');
+    EventDelegator.setup('sendReply', sendReply, 'quill-editor');
 
 })
 
@@ -278,4 +279,125 @@ function createBodyRequest(action, content, entityId = null, opportunity = null)
         : action === 'update'
             ? { 'recourseId': entityId, 'recourseText': content }
             : {};
+}
+
+/**
+ * Controla a visibilidade da div de nota baseado no status do recurso
+ * @param {string} statusValue - Valor do select de status
+ */
+function handleRecourseStatusChange(statusValue) {
+    const noteDiv = document.getElementById('valueNoteRecourse');
+
+    if (!noteDiv) {
+        console.warn('Elemento valueNoteRecourse não encontrado');
+        return;
+    }
+
+    // Oculta a div quando o valor for -9 (Indeferido)
+    // Mostra a div para outros valores (1 = Deferido, 8 = Deferido parcialmente)
+    if (statusValue === '-9') {
+        noteDiv.style.display = 'none';
+    } else if (statusValue === '1' || statusValue === '8') {
+        noteDiv.style.display = 'block';
+    } else {
+        // Para o valor 0 (-- Selecione a situação --), mantém oculto
+        noteDiv.style.display = 'none';
+    }
+}
+
+/**
+ * Inicializa os event listeners para o select de status do recurso
+ */
+function initRecourseStatusListener() {
+    const selectElement = document.querySelector('.selectRecourseSituacion');
+
+    if (!selectElement) {
+        console.warn('Select de status do recurso não encontrado');
+        return;
+    }
+
+    // Remove listener anterior se existir para evitar duplicação
+    selectElement.removeEventListener('change', onStatusChange);
+
+    // Adiciona o listener
+    selectElement.addEventListener('change', onStatusChange);
+
+    // Garante que a div esteja oculta inicialmente
+    handleRecourseStatusChange('0');
+}
+
+/**
+ * Handler do evento de mudança do select
+ */
+function onStatusChange(event) {
+    handleRecourseStatusChange(event.target.value);
+}
+
+async function sendReply(entityId, buttonElement, selectId, extraData)
+{
+    const resultReply = extraData.note == '' ? 0.0 : extraData.note; // recebendo o valor da tabela
+    console.log(resultReply)
+    const htmlSelect = `<label style="float: left;">Situação:</label>
+                <select status-recourse="" class="form-control selectRecourseSituacion">
+                    <option value="0" disabled="" selected="">-- Selecione a situação --</option>
+                    <option value="1">Deferido</option>
+                    <option value="8">Deferido parcialmente</option>
+                    <option value="-9">Indeferido</option>
+                </select>
+                <div class="form-group" id="valueNoteRecourse" grade-wrapper="" style="display: none;">
+                    <label style="float: left;">Nova nota:</label>
+                    <input type="text" new-grade="" class="form-control" placeholder="Digite a nova nota">
+                    <p class="badge badge-info current-grade">A nota atual é: <span current-grade="">${resultReply}</span></p>
+                </div>`
+
+    const result = await QuillEditor.open({
+        title: extraData.customTitle || 'Responder recurso',
+        placeholder: extraData.customPlaceholder || 'Escreva sua resposta para o recurso',
+        entityId: entityId,
+        selectId: selectId,
+        triggerButton: buttonElement,
+        html: htmlSelect,
+        showFile: false,
+        onOpen: () => {
+            // Inicializa o listener do select após o modal abrir
+            initRecourseStatusListener();
+        }
+    });
+    if (result.isConfirmed) {
+        const content = result?.value?.conteudo;
+
+        const dataForm = createBodyRequest(extraData.action, content, entityId, opportunity); // forma do corpo da requisição
+        console.log(dataForm)
+        // const requestForm = createFormData(dataForm, files); // cria a requisicao com arquivos
+        // console.log('createFormData', requestForm);
+        // const panelRecourse = MapasCulturais.createUrl('recursos/agent/' + agentId);
+        //
+        // const response = await fetch(MapasCulturais.baseURL + extraData.url, {
+        //     method: 'POST',
+        //     body: requestForm,
+        // })
+        // const data = await response.json();
+        // // @todo: Entender como fazer para saber se deu erro
+        // if (data) {
+        //     Swal.fire({
+        //         position: "top-center",
+        //         title: data.message,
+        //         html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
+        //             "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
+        //         showConfirmButton: false,
+        //     });
+        //     // //Ocutando botão para não ter mais de um envio
+        //     // $("#btn-recourse-" + registration).hide();
+        // }
+        // if (!data) {
+        //     Swal.fire({
+        //         position: "top-center",
+        //         title: 'Ops! Ocorreu um erro inesperado',
+        //         html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
+        //             "<a href='#' class='btn btn-default'>Ir p/ painel</a> <a href='#' class='btn btn-info'>Sair</a> ",
+        //         showConfirmButton: false,
+        //     })
+        // }
+    }
+    console.log(result);
 }

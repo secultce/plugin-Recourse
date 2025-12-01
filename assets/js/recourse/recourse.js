@@ -213,9 +213,8 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
 
     if (result.isConfirmed) {
         const content = result?.value?.conteudo;
-        const dataForm = createBodyRequest(extraData.action, content, entityId, opportunity); // forma do corpo da requisição
+        const dataForm = createBodyRequest(extraData.action, content, entityId, opportunity, 'recourse'); // forma do corpo da requisição
         const requestForm = createFormData(dataForm, files); // cria a requisicao com arquivos
-        console.log('createFormData', requestForm);
         const panelRecourse = MapasCulturais.createUrl('recursos/agent/' + agentId);
 
         const response = await fetch(MapasCulturais.baseURL + extraData.url, {
@@ -254,18 +253,8 @@ function createFormData(data, files = []) {
         console.warn('O parâmetro "data" deve ser um objeto. Ignorando adição de dados simples.');
     } else {
         // Adiciona dados simples, lidando com arrays para append múltiplo
-        for (const [key, value] of Object.entries(data)) {
-            if (Array.isArray(value)) {
-                // Se for array, append cada item individualmente (ex: campos multi-valor)
-                value.forEach(item => formData.append(key, item));
-            } else {
-                console.log(key, value)
-                formData.append(key, value);
-                console.log({ formData })
-            }
-        }
+        setobject(data, formData);
     }
-
     // Adiciona arquivos, nomeados por índice (0, 1, 2…)
     Array.from(files).forEach((file, index) => {
         formData.append(index.toString(), file);
@@ -273,12 +262,24 @@ function createFormData(data, files = []) {
     return formData;
 }
 
-function createBodyRequest(action, content, entityId = null, opportunity = null) {
-    return action === 'create'
-        ? { 'registration': entityId, 'opportunity': opportunity, 'recourse': content }
-        : action === 'update'
-            ? { 'recourseId': entityId, 'recourseText': content }
-            : {};
+function createBodyRequest(action, content, entityId = null, opportunity = null, entity) {
+
+    if(entity == 'recourse'){
+        return action === 'create'
+            ? { 'registration': entityId, 'opportunity': opportunity, 'recourse': content }
+            : action === 'update'
+                ? { 'recourseId': entityId, 'recourseText': content }
+                : {};
+    }
+
+    if(entity == 'replyRecourse'){
+        return action === 'create'
+            ? { 'entityId': entityId, 'reply': content }
+            : action === 'update'
+                ? { 'entityId': entityId, 'reply': content }
+                : {};
+    }
+
 }
 
 /**
@@ -322,8 +323,9 @@ function initRecourseStatusListener() {
     // Adiciona o listener
     selectElement.addEventListener('change', onStatusChange);
 
-    // Garante que a div esteja oculta inicialmente
-    handleRecourseStatusChange('0');
+    // Inicializa a visibilidade com base no valor ATUAL do select (pré-selecionado)
+    // Isso garante que, se extraData.status for 1 ou 8, a div #valueNoteRecourse seja exibida imediatamente
+    handleRecourseStatusChange(selectElement.value);
 }
 
 /**
@@ -336,17 +338,17 @@ function onStatusChange(event) {
 async function sendReply(entityId, buttonElement, selectId, extraData)
 {
     const resultReply = extraData.note == '' ? 0.0 : extraData.note; // recebendo o valor da tabela
-    console.log(resultReply)
+
     const htmlSelect = `<label style="float: left;">Situação:</label>
-                <select status-recourse="" class="form-control selectRecourseSituacion">
-                    <option value="0" disabled="" selected="">-- Selecione a situação --</option>
-                    <option value="1">Deferido</option>
-                    <option value="8">Deferido parcialmente</option>
-                    <option value="-9">Indeferido</option>
+                <select status-recourse="" name="status" class="form-control selectRecourseSituacion">
+                    <option value="0" disabled="" >-- Selecione a situação --</option>
+                    <option value="1" ${extraData.status == 1 ? 'selected' : ''}>Deferido</option>
+                    <option value="8" ${extraData.status == 8 ? 'selected' : ''}>Deferido parcialmente</option>
+                    <option value="-9" ${extraData.status == -9 ? 'selected' : ''}>Indeferido</option>
                 </select>
                 <div class="form-group" id="valueNoteRecourse" grade-wrapper="" style="display: none;">
                     <label style="float: left;">Nova nota:</label>
-                    <input type="text" new-grade="" class="form-control" placeholder="Digite a nova nota">
+                    <input type="number" name="replyResult" value="${resultReply}" class="form-control" placeholder="Digite a nova nota">
                     <p class="badge badge-info current-grade">A nota atual é: <span current-grade="">${resultReply}</span></p>
                 </div>`
 
@@ -366,38 +368,35 @@ async function sendReply(entityId, buttonElement, selectId, extraData)
     if (result.isConfirmed) {
         const content = result?.value?.conteudo;
 
-        const dataForm = createBodyRequest(extraData.action, content, entityId, opportunity); // forma do corpo da requisição
-        console.log(dataForm)
-        // const requestForm = createFormData(dataForm, files); // cria a requisicao com arquivos
-        // console.log('createFormData', requestForm);
-        // const panelRecourse = MapasCulturais.createUrl('recursos/agent/' + agentId);
-        //
-        // const response = await fetch(MapasCulturais.baseURL + extraData.url, {
-        //     method: 'POST',
-        //     body: requestForm,
-        // })
-        // const data = await response.json();
-        // // @todo: Entender como fazer para saber se deu erro
-        // if (data) {
-        //     Swal.fire({
-        //         position: "top-center",
-        //         title: data.message,
-        //         html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-        //             "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
-        //         showConfirmButton: false,
-        //     });
-        //     // //Ocutando botão para não ter mais de um envio
-        //     // $("#btn-recourse-" + registration).hide();
-        // }
-        // if (!data) {
-        //     Swal.fire({
-        //         position: "top-center",
-        //         title: 'Ops! Ocorreu um erro inesperado',
-        //         html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-        //             "<a href='#' class='btn btn-default'>Ir p/ painel</a> <a href='#' class='btn btn-info'>Sair</a> ",
-        //         showConfirmButton: false,
-        //     })
-        // }
+        const dataForm = createBodyRequest(extraData.action, content, entityId, null, 'replyRecourse'); // forma do corpo da requisição
+        const requestForm = createFormData(dataForm, []); // cria a requisicao com arquivos
+        // Complementando requestForm
+        const request = setobject(result.value.customFields, requestForm);
+        const response = await fetch(MapasCulturais.createUrl(extraData.url), {
+            method: 'POST',
+            body: request,
+        })
+        const data = await response.json();
+        // @todo: Entender como fazer para saber se deu erro
+        if (data.message) {
+            McMessages.success('Sucesso' ,data.message);
+            setTimeout(()=>{
+                window.location.reload()
+            },1000)
+        }
     }
-    console.log(result);
+}
+
+function setobject(objectVal, request)
+{
+    // Adiciona dados simples, lidando com arrays para append múltiplo
+    for (const [key, value] of Object.entries(objectVal)) {
+        if (Array.isArray(value)) {
+            // Se for array, append cada item individualmente (ex: campos multi-valor)
+            value.forEach(item => request.append(key, item));
+        } else {
+            request.append(key, value);
+        }
+    }
+    return request;
 }

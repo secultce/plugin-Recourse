@@ -92,21 +92,16 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
                     <td>{{recourses.recourseSend}}</td>
                     <td>{{getSituation(recourses.status)}}</td>
                     <td>
-                        <span ng-if="recourses.recourseReply.length > 100">
-                            <small ng-bind-html="recourses.recourseReply.substr(0, 100) + '...'"></small>
-                        </span>
-                        <span ng-if="recourses.recourseReply.length < 100">
-                            <small ng-bind-html="recourses.recourseReply"></small>
-                        </span>
                         <?php if (Util::isRecourseResponsePeriod($entity)): ?>
                             <a
                                 class="btn btn-recourse sendReply"
                                 data-entity-id-cr="{{recourses.id}}"
-                                data-entity-context-cr=""
+                                data-entity-context-cr="{{recourses.recourseReply}}"
                                 data-status="{{recourses.status}}"
                                 data-note="{{recourses.replyResult}}"
                                 data-url="recursos/responder"
                                 title="Responder recurso"
+                                data-action="{{ recourses.recourseReply ? 'update' : 'create' }}"
                             >
                                 <i class="fas fa-edit"></i>
                             </a>

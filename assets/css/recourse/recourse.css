@@ -388,3 +388,7 @@ div:where(.swal2-icon) .swal2-icon-content {
 .current-grade {
     font-size: 18px;
 }
+/* QUILL.JS  */
+.ql-container {
+    height: auto !important;
+}

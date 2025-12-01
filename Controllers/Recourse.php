@@ -120,8 +120,8 @@ class Recourse extends \MapasCulturais\Controller
     public function POST_responder(): void
     {
         $app = App::i();
-        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
 
+        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         // Validações
         $this->responseValidations($recourse, $this->data);
 

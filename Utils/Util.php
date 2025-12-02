@@ -80,7 +80,6 @@ class Util
                 $app->config['rabbitmq']['user'],
                 $app->config['rabbitmq']['password']
             );
-
             $exchange = $app->config['rabbitmq']['exchange_default']; // Exchange padrão
             $queueName = $app->config['rabbitmq']['queues']['queue_published_recourses']; // Nome da fila de recursos publicados
 
@@ -104,7 +103,7 @@ class Util
                     $channel->basic_publish($msg, $exchange, $app->config['rabbitmq']['routing']['plugin_published_recourses']);
 
                     $app->log->debug("Notificação " . ($i + 1) . "/$count enviada para o usuário {$recourse->agent->user->id} ({$recourse->agent->name})");
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     // Logar erro individual por mensagem, mas continuar o loop
                     $app->log->error("Falha ao publicar mensagem para o recurso {$recourse->id} no RabbitMQ: " . $e->getMessage());
                 }
@@ -112,7 +111,7 @@ class Util
                 // Chamar notificação independentemente do sucesso do RabbitMQ
                 self::notificationPublishedRecourse($recourse);
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // Logar erro geral (ex.: falha de conexão) e continuar fluxo
             SentryService::captureExceptions($e);
             $app->log->error("Falha ao conectar ou operar com RabbitMQ: " . $e->getMessage());

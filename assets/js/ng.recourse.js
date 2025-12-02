@@ -244,7 +244,7 @@
                     cancelButton: "btn-warning-rec",
                 },
                 didOpen: () => {
-                    froalaEditor.instance = new FroalaEditor("#reply-textarea", froalaEditor.getSettings(recourse.recourseReply))
+                    // froalaEditor.instance = new FroalaEditor("#reply-textarea", froalaEditor.getSettings(recourse.recourseReply))
 
                     const status = recourse.status
                     const currentGrade = recourse.registration.consolidatedResult
@@ -270,7 +270,7 @@
                     $scope.sendReplyRecourse(
                         recourse.id,
                         $('[status-recourse]').val() || '0',
-                        froalaEditor.instance.html.get(),
+                        // froalaEditor.instance.html.get(),
                         $('[new-grade]').val()
                     );
                 }

@@ -96,7 +96,7 @@ $(() => {
         $('#appeal-period-wrapper').addClass('d-none')
     })
 
-    var editor = new FroalaEditor('#contextRecourse');
+    // var editor = new FroalaEditor('#contextRecourse');
 
     $('[delete-recourse-file-btn]').on('click', event => {
         Swal.fire({

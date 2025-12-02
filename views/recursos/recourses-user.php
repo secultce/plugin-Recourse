@@ -113,9 +113,13 @@ $this->layout = 'panel';
                             <?php
                             if($recourse->replyPublish){
                                 if(strlen($recourse->recourseReply) > 30){
-                                    echo substr($recourse->recourseReply, 0,100).'...<br/>';
                                     $recourseReply = htmlspecialchars(addslashes($recourse->recourseReply), ENT_QUOTES);?>
-                            <a href="#" ng-click="infoUserRecourse('<?php echo $recourseReply; ?>')">Ler Resposta</a>
+                                    <a href="#"
+                                       class="btn btn-recourse"
+                                       title="Visualizar Resposta"
+                                       ng-click="infoUserRecourse('<?php echo $recourseReply; ?>')">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
                             <?php
                                 }else{
                                     echo $recourse->recourseReply;

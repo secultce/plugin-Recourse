@@ -1,82 +1,3 @@
-const recourse = {
-    getConfigSwalSend: (recourseTextareaId, recourseAttachmentsId, recourseText = '') => {
-        return {
-            title: "Escrever o Recurso",
-            html: `
-                <div style="display: grid" id="contextRecourse">
-                    <label to="${recourseTextareaId}">Envie todos os destaques do seu recurso por escrito uma vez em um único campo</label>
-                    <textarea
-                        id="${recourseTextareaId}"
-                        placeholder="Mensagem para a banca avaliadora"
-                        class="swal2-textarea froala-editor" 
-                        style="margin: 5px; display: none;">${recourseText}</textarea>
-                    <div id="froala-container"></div> 
-                    <input id="${recourseAttachmentsId}" type="file" multiple max="2" class="swal2-file">
-                </div>`,
-            showCancelButton: true,
-            confirmButtonText: 'Enviar recurso',
-            cancelButtonText: 'Sair',
-            showLoaderOnConfirm: true,
-            width: 800,
-            padding: "5em",
-            customClass: {
-                confirmButton: "btn-success-rec",
-                cancelButton: "btn-warning-rec"
-            },
-            didOpen: () => {
-                // Inicializa o Froala quando o modal é aberto
-                const textarea = document.getElementById(recourseTextareaId);
-                const initialContent = textarea.value;
-
-                // Inicializa o Froala Editor
-                new FroalaEditor('#froala-container', {
-                    // Configurações básicas do Froala
-                    heightMin: 200,
-                    toolbarButtons: [
-                        'bold', 'italic', 'underline', 'paragraphFormat',
-                        'align', 'formatOL', 'formatUL', 'insertLink', 'textColor'
-                    ],
-                    colorsText: [
-                        '#61BD6D',
-                        '#1ABC9C',
-                        '#54ACD2',
-                        '#ec5353',
-                        'REMOVE'
-                    ],
-                    events: {
-                        initialized: function () {
-                            this.html.set(initialContent);
-                        },
-                        contentChanged: function () {
-                            // Atualiza o textarea oculto com o conteúdo do Froala
-                            textarea.value = this.html.get();
-                        }
-                    }
-                });
-            },
-            preConfirm: async () => {
-                const recourseText = document.getElementById(recourseTextareaId).value;
-
-                if (recourseText === '') {
-                    Swal.fire({
-                        position: "top-center",
-                        title: "Precisa preencher o campo de recurso",
-                        showConfirmButton: true,
-                        timer: 2000
-                    });
-                    return false;
-                }
-
-                return [
-                    recourseText,
-                    document.getElementById(recourseAttachmentsId).files,
-                ];
-            },
-            allowOutsideClick: false
-        }
-    }
-}
-
 $(() => {
     const opportunity = MapasCulturais.entity?.object
 
@@ -95,8 +16,6 @@ $(() => {
 
         $('#appeal-period-wrapper').addClass('d-none')
     })
-
-    // var editor = new FroalaEditor('#contextRecourse');
 
     $('[delete-recourse-file-btn]').on('click', event => {
         Swal.fire({

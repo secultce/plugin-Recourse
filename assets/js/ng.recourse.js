@@ -244,8 +244,6 @@
                     cancelButton: "btn-warning-rec",
                 },
                 didOpen: () => {
-                    // froalaEditor.instance = new FroalaEditor("#reply-textarea", froalaEditor.getSettings(recourse.recourseReply))
-
                     const status = recourse.status
                     const currentGrade = recourse.registration.consolidatedResult
 

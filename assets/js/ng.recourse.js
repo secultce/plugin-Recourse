@@ -268,7 +268,6 @@
                     $scope.sendReplyRecourse(
                         recourse.id,
                         $('[status-recourse]').val() || '0',
-                        // froalaEditor.instance.html.get(),
                         $('[new-grade]').val()
                     );
                 }

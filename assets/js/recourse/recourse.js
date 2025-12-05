@@ -1,82 +1,3 @@
-const recourse = {
-    getConfigSwalSend: (recourseTextareaId, recourseAttachmentsId, recourseText = '') => {
-        return {
-            title: "Escrever o Recurso",
-            html: `
-                <div style="display: grid" id="contextRecourse">
-                    <label to="${recourseTextareaId}">Envie todos os destaques do seu recurso por escrito uma vez em um único campo</label>
-                    <textarea
-                        id="${recourseTextareaId}"
-                        placeholder="Mensagem para a banca avaliadora"
-                        class="swal2-textarea froala-editor" 
-                        style="margin: 5px; display: none;">${recourseText}</textarea>
-                    <div id="froala-container"></div> 
-                    <input id="${recourseAttachmentsId}" type="file" multiple max="2" class="swal2-file">
-                </div>`,
-            showCancelButton: true,
-            confirmButtonText: 'Enviar recurso',
-            cancelButtonText: 'Sair',
-            showLoaderOnConfirm: true,
-            width: 800,
-            padding: "5em",
-            customClass: {
-                confirmButton: "btn-success-rec",
-                cancelButton: "btn-warning-rec"
-            },
-            didOpen: () => {
-                // Inicializa o Froala quando o modal é aberto
-                const textarea = document.getElementById(recourseTextareaId);
-                const initialContent = textarea.value;
-
-                // Inicializa o Froala Editor
-                new FroalaEditor('#froala-container', {
-                    // Configurações básicas do Froala
-                    heightMin: 200,
-                    toolbarButtons: [
-                        'bold', 'italic', 'underline', 'paragraphFormat',
-                        'align', 'formatOL', 'formatUL', 'insertLink', 'textColor'
-                    ],
-                    colorsText: [
-                        '#61BD6D',
-                        '#1ABC9C',
-                        '#54ACD2',
-                        '#ec5353',
-                        'REMOVE'
-                    ],
-                    events: {
-                        initialized: function () {
-                            this.html.set(initialContent);
-                        },
-                        contentChanged: function () {
-                            // Atualiza o textarea oculto com o conteúdo do Froala
-                            textarea.value = this.html.get();
-                        }
-                    }
-                });
-            },
-            preConfirm: async () => {
-                const recourseText = document.getElementById(recourseTextareaId).value;
-
-                if (recourseText === '') {
-                    Swal.fire({
-                        position: "top-center",
-                        title: "Precisa preencher o campo de recurso",
-                        showConfirmButton: true,
-                        timer: 2000
-                    });
-                    return false;
-                }
-
-                return [
-                    recourseText,
-                    document.getElementById(recourseAttachmentsId).files,
-                ];
-            },
-            allowOutsideClick: false
-        }
-    }
-}
-
 $(() => {
     const opportunity = MapasCulturais.entity?.object
 
@@ -95,8 +16,6 @@ $(() => {
 
         $('#appeal-period-wrapper').addClass('d-none')
     })
-
-    var editor = new FroalaEditor('#contextRecourse');
 
     $('[delete-recourse-file-btn]').on('click', event => {
         Swal.fire({
@@ -135,6 +54,7 @@ $(() => {
     })
     // SETUP ÚNICO: registra o botão para o componente Quill
     EventDelegator.setup('openRecourse', openRecourse, 'quill-editor');
+    EventDelegator.setup('sendReply', sendReply, 'quill-editor');
 
 })
 
@@ -209,14 +129,16 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
     const opportunity = extraData.opp;
     const agentId = extraData.agent;
     const files = $("#edit-recourse-file-" + entityId)[0].files
+
     if (result.isConfirmed) {
         const content = result?.value?.conteudo;
-        const dataForm = createBodyRequest(extraData.action, content, entityId, opportunity); // forma do corpo da requisição
-        const formData = createFormData(dataForm, files); // cria a requisicao com arquivos
+        const dataForm = createBodyRequest(extraData.action, content, entityId, opportunity, 'recourse'); // forma do corpo da requisição
+        const requestForm = createFormData(dataForm, files); // cria a requisicao com arquivos
         const panelRecourse = MapasCulturais.createUrl('recursos/agent/' + agentId);
+
         const response = await fetch(MapasCulturais.baseURL + extraData.url, {
             method: 'POST',
-            body: formData,
+            body: requestForm,
         })
         const data = await response.json();
         // @todo: Entender como fazer para saber se deu erro
@@ -245,24 +167,155 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
 
 function createFormData(data, files = []) {
     const formData = new FormData();
-
-    // Dados simples
-    Object.entries(data).forEach(([key, value]) => {
-        formData.append(key, value);
-    });
-
-    // Arquivos: nomeados por índice (0, 1, 2…)
+    // Verifica se data é um objeto válido
+    if (typeof data !== 'object' || data === null) {
+        console.warn('O parâmetro "data" deve ser um objeto. Ignorando adição de dados simples.');
+    } else {
+        // Adiciona dados simples, lidando com arrays para append múltiplo
+        setobject(data, formData);
+    }
+    // Adiciona arquivos, nomeados por índice (0, 1, 2…)
     Array.from(files).forEach((file, index) => {
         formData.append(index.toString(), file);
     });
-
     return formData;
 }
 
-function createBodyRequest(action, content, entityId = null, opportunity = null) {
-    return action === 'create'
-        ? { registration: entityId, opportunity, recourse: content }
-        : action === 'update'
-            ? { recourseId: entityId, recourseText: content }
-            : {};
+function createBodyRequest(action, content, entityId = null, opportunity = null, entity) {
+
+    if(entity == 'recourse'){
+        return action === 'create'
+            ? { 'registration': entityId, 'opportunity': opportunity, 'recourse': content }
+            : action === 'update'
+                ? { 'recourseId': entityId, 'recourseText': content }
+                : {};
+    }
+
+    if(entity == 'replyRecourse'){
+        return action === 'create'
+            ? { 'entityId': entityId, 'reply': content }
+            : action === 'update'
+                ? { 'entityId': entityId, 'reply': content }
+                : {};
+    }
+
+}
+
+/**
+ * Controla a visibilidade da div de nota baseado no status do recurso
+ * @param {string} statusValue - Valor do select de status
+ */
+function handleRecourseStatusChange(statusValue) {
+    const noteDiv = document.getElementById('valueNoteRecourse');
+
+    if (!noteDiv) {
+        console.warn('Elemento valueNoteRecourse não encontrado');
+        return;
+    }
+
+    // Oculta a div quando o valor for -9 (Indeferido)
+    // Mostra a div para outros valores (1 = Deferido, 8 = Deferido parcialmente)
+    if (statusValue === '-9') {
+        noteDiv.style.display = 'none';
+    } else if (statusValue === '1' || statusValue === '8') {
+        noteDiv.style.display = 'block';
+    } else {
+        // Para o valor 0 (-- Selecione a situação --), mantém oculto
+        noteDiv.style.display = 'none';
+    }
+}
+
+/**
+ * Inicializa os event listeners para o select de status do recurso
+ */
+function initRecourseStatusListener() {
+    const selectElement = document.querySelector('.selectRecourseSituacion');
+
+    if (!selectElement) {
+        console.warn('Select de status do recurso não encontrado');
+        return;
+    }
+
+    // Remove listener anterior se existir para evitar duplicação
+    selectElement.removeEventListener('change', onStatusChange);
+
+    // Adiciona o listener
+    selectElement.addEventListener('change', onStatusChange);
+
+    // Inicializa a visibilidade com base no valor ATUAL do select (pré-selecionado)
+    // Isso garante que, se extraData.status for 1 ou 8, a div #valueNoteRecourse seja exibida imediatamente
+    handleRecourseStatusChange(selectElement.value);
+}
+
+/**
+ * Handler do evento de mudança do select
+ */
+function onStatusChange(event) {
+    handleRecourseStatusChange(event.target.value);
+}
+
+async function sendReply(entityId, buttonElement, selectId, extraData)
+{
+    const resultReply = extraData.note == '' ? 0.0 : extraData.note; // recebendo o valor da tabela
+
+    const htmlSelect = `<label style="float: left;">Situação:</label>
+                <select status-recourse="" name="status" class="form-control selectRecourseSituacion">
+                    <option value="0" disabled="" >-- Selecione a situação --</option>
+                    <option value="1" ${extraData.status == 1 ? 'selected' : ''}>Deferido</option>
+                    <option value="8" ${extraData.status == 8 ? 'selected' : ''}>Deferido parcialmente</option>
+                    <option value="-9" ${extraData.status == -9 ? 'selected' : ''}>Indeferido</option>
+                </select>
+                <div class="form-group" id="valueNoteRecourse" grade-wrapper="" style="display: none;">
+                    <label style="float: left;">Nova nota:</label>
+                    <input type="number" name="replyResult" value="${resultReply}" class="form-control" placeholder="Digite a nova nota">
+                    <p class="badge badge-info current-grade">A nota atual é: <span current-grade="">${resultReply}</span></p>
+                </div>`
+
+    const result = await QuillEditor.open({
+        title: extraData.customTitle || 'Responder recurso',
+        placeholder: extraData.customPlaceholder || 'Escreva sua resposta para o recurso',
+        entityId: entityId,
+        selectId: selectId,
+        triggerButton: buttonElement,
+        html: htmlSelect,
+        showFile: false,
+        onOpen: () => {
+            // Inicializa o listener do select após o modal abrir
+            initRecourseStatusListener();
+        }
+    });
+    if (result.isConfirmed) {
+        const content = result?.value?.conteudo;
+
+        const dataForm = createBodyRequest(extraData.action, content, entityId, null, 'replyRecourse'); // forma do corpo da requisição
+        const requestForm = createFormData(dataForm, []); // cria a requisicao com arquivos
+        // Complementando requestForm
+        const request = setobject(result.value.customFields, requestForm);
+        const response = await fetch(MapasCulturais.createUrl(extraData.url), {
+            method: 'POST',
+            body: request,
+        })
+        const data = await response.json();
+        // @todo: Entender como fazer para saber se deu erro
+        if (data.message) {
+            McMessages.success('Sucesso' ,data.message);
+            setTimeout(()=>{
+                window.location.reload()
+            },1000)
+        }
+    }
+}
+
+function setobject(objectVal, request)
+{
+    // Adiciona dados simples, lidando com arrays para append múltiplo
+    for (const [key, value] of Object.entries(objectVal)) {
+        if (Array.isArray(value)) {
+            // Se for array, append cada item individualmente (ex: campos multi-valor)
+            value.forEach(item => request.append(key, item));
+        } else {
+            request.append(key, value);
+        }
+    }
+    return request;
 }

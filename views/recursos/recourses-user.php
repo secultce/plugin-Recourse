@@ -10,14 +10,13 @@ use Recourse\Utils\Util;
 
 $this->layout = 'panel';
 
+
 ?>
 
 <div class="panel-list panel-main-content">
     <?php $this->applyTemplateHook('panel-header','before'); ?>
     <header class="panel-header clearfix">
-
         <h2><?php \MapasCulturais\i::_e("Meus Recursos");?></h2>
-
     </header>
     <?php $this->applyTemplateHook('panel-header','after'); ?>
     <div id="table-recourse" ng-app="ng.recourse">
@@ -54,8 +53,6 @@ $this->layout = 'panel';
                         <td>
                             <span>
                                 <?php
-                                // echo substr($recourse->recourseText, 0,100);
-
                                 $recourseText = htmlspecialchars(addslashes($recourse->recourseText), ENT_QUOTES);
                                 if(strlen($recourse->recourseText) > 100):
                                     echo "<br/>
@@ -63,7 +60,6 @@ $this->layout = 'panel';
                                 endif;
                                 ?>
                             </span>
-
                             <?php if(count($recourse->files) > 0): ?>
                             <div class="recourse-attachments">
                                 <?php
@@ -93,7 +89,7 @@ $this->layout = 'panel';
                         </td>
                         <td>
                             <?php
-                           
+
                             if($recourse->replyPublish){
                                 switch ($recourse->status) {
                                     case '0':
@@ -117,9 +113,13 @@ $this->layout = 'panel';
                             <?php
                             if($recourse->replyPublish){
                                 if(strlen($recourse->recourseReply) > 30){
-                                    echo substr($recourse->recourseReply, 0,100).'...<br/>';
                                     $recourseReply = htmlspecialchars(addslashes($recourse->recourseReply), ENT_QUOTES);?>
-                            <a href="#" ng-click="infoUserRecourse('<?php echo $recourseReply; ?>')">Ler Resposta</a>
+                                    <a href="#"
+                                       class="btn btn-recourse"
+                                       title="Visualizar Resposta"
+                                       ng-click="infoUserRecourse('<?php echo $recourseReply; ?>')">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
                             <?php
                                 }else{
                                     echo $recourse->recourseReply;
@@ -130,22 +130,15 @@ $this->layout = 'panel';
                             ?>
                         </td>
                         <td>
-                            <a class="btn btn-recourse openRecourse <?= Util::isRecoursePeriod($recourse->opportunity) ? '' : 'disabled' ?>"
-                                title="Editar recurso" href="javascript:void(0)"
-                                data-entity-id-cr="<?= $recourse->id; ?>" data-opp="<?= $recourse->opportunity->id ?>"
-                                data-agent="<?= $recourse->agent->id ?>"
-                                data-entity-context-cr="<?= htmlspecialchars($recourse->recourseText ?? '', ENT_QUOTES); ?>"
-                                id="btn-recourse-edits-<?php echo $recourse->id; ?>" data-acion="update"
-                                data-url="recursos/updateRecourse">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            <!-- <a class="btn btn-recourse 
-                            <?= Util::isRecoursePeriod($recourse->opportunity) ? '' : 'disabled' ?>"
-                                style="color: #0a766a" edit-recourse-btn data-recourse-id="<?= $recourse->id ?>"
-                                data-recourse-text="<?= htmlspecialchars($recourse->recourseText, ENT_QUOTES, 'UTF-8') ?>"
-                               >
-                                <i class="fas fa-edit"></i>
-                            </a> -->
+                            <?php
+                            if (Util::isRecoursePeriod($recourse->opportunity)):
+                                $this->part('recourse/link-recourse', ['recourse' => $recourse]);
+                            else:
+                                echo '<a class="btn btn-recourse openRecourse disabled" style="background-color: #c7c7c7"
+                                   title="Fim de submissão" href="javascript:void(0)" >
+                                    <i class="fas fa-edit"></i>
+                                </a>';
+                             endif; ?>
                         </td>
                     </tr>
                     <?php endforeach; ?>
@@ -153,10 +146,6 @@ $this->layout = 'panel';
                 </thead>
             </table>
         </div>
-        <!--        <form>-->
-        <!--            <button class="btn btn-primary" onClick="window.print()">-->
-        <!--                <i class="fa fa-print" aria-hidden="true"></i> Imprimir Recursos</button>-->
-        <!--        </form>-->
         <?php else: ?>
         <div class="alert danger">
             Ops! <br />

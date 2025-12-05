@@ -15,8 +15,6 @@ class Plugin extends \MapasCulturais\Plugin {
         $app->hook('template(opportunity.single.tabs):end', function () use ($app,$plugin) {
             //Assets mais usados nas rotas
             $plugin->_publishAssets();
-            //Arquivo Css do plugin
-            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $opportunity = $this->controller->requestedEntity;
 
             if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && $opportunity->appealEnabled === 'Sim') {
@@ -27,7 +25,6 @@ class Plugin extends \MapasCulturais\Plugin {
         $app->hook('view.partial(singles/opportunity-registrations--export):after', function($__template, &$__html) use ($app,$plugin){
             //add assests
             $plugin->_publishAssets();
-            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             //Entidade
             $opp = $this->controller->requestedEntity;
 
@@ -69,7 +66,7 @@ class Plugin extends \MapasCulturais\Plugin {
             $endOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
             $strToInitial = $entity->opportunity->getMetadata('recourse_date_initial').' '.$entity->opportunity->getMetadata('recourse_time_initial');
             $initialOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToInitial);//Convertendo para formato Datetime
-            
+
             $baseUrl = $app->_config['base.url'];
             //So mostra o botão se o recurso tiver habilitado
             if($entity->opportunity->getMetadata('appealEnabled') === 'Sim')
@@ -84,7 +81,6 @@ class Plugin extends \MapasCulturais\Plugin {
         });
 
         $app->hook('template(panel.<<registrations|index>>.panel-registration-meta):after', function($registration) use ($app, $plugin){
-            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $plugin->_publishAssets();
             //Verificando se já houve envio de recurso
             $rec = $app->repo('Recourse\Entities\Recourse')->findBy([
@@ -116,6 +112,11 @@ class Plugin extends \MapasCulturais\Plugin {
             $result["Recourse"] = 'Recourse\Entities\Recourse';
 
         });
+
+        $app->hook('template(recursos.oportunidade.recourse-index):begin', function() use ($app,$plugin){
+            $plugin->_publishAssets();
+        });
+
    }//fim _init
 
     /**
@@ -125,13 +126,14 @@ class Plugin extends \MapasCulturais\Plugin {
     protected function _publishAssets(): void
     {
         $app = App::i();
+        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
         $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
         $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
-        $app->view->enqueueStyle('app', 'froalacss', 'css/recourse/froala_editor.pkgd.min.css');
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
         $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
-        $app->view->enqueueScript('app','froalajs','js/recourse/froala_editor.pkgd.min.js',[]);
+        $app->view->enqueueStyle('app', 'opinionManagement', 'OpinionManagement/css/opinionManagement.css');
+        $app->view->enqueueScript('app', 'opinion-management', 'OpinionManagement/js/opinionManagement.js');
     }
 
     function register (): void
@@ -156,7 +158,7 @@ class Plugin extends \MapasCulturais\Plugin {
            'type' => 'time',
         ]);
         $this->registerOpportunityMetadata('recourse_date_end', [
-           'label' => i::__('Hora Inicial'),
+           'label' => i::__('Data Final'),
            'type' => 'date',
         ]);
         $this->registerOpportunityMetadata('recourse_time_end', [

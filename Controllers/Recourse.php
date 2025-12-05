@@ -82,15 +82,6 @@ class Recourse extends \MapasCulturais\Controller
     {
         $app = App::i();
         $this->requireAuthentication();
-        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
-        $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-        $app->view->enqueueScript('app', 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
-        $app->view->enqueueStyle('app', 'ckeditor-diligence', 'plugins/froala/css/froala_editor.pkgd.min.css');
-        $app->view->enqueueScript('app', 'ckeditor-diligence', 'plugins/froala/js/froala_editor.pkgd.min.js');
-        $app->view->enqueueScript('app', 'ng-recourse', 'js/ng.recourse.js', []);
-        $app->view->enqueueStyle('app', 'opinionManagement', 'OpinionManagement/css/opinionManagement.css');
-        $app->view->enqueueScript('app', 'opinion-management', 'OpinionManagement/js/opinionManagement.js');
-
         $entity = $app->repo('Opportunity')->find($this->data['id']);
         $evaluators = $entity->getEvaluationCommittee(false);
         $isEvaluator = array_filter($evaluators, function ($evaluator) use ($app) {
@@ -129,8 +120,8 @@ class Recourse extends \MapasCulturais\Controller
     public function POST_responder(): void
     {
         $app = App::i();
-        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
 
+        $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
         // Validações
         $this->responseValidations($recourse, $this->data);
 
@@ -344,11 +335,9 @@ class Recourse extends \MapasCulturais\Controller
     public function POST_updateRecourse(): void
     {
         $this->requireAuthentication();
-       
+
         $app = App::i();
-        dump($this->data);
         $recourse = $app->repo(EntityRecourse::class)->findOneBy(['id' => $this->data['recourseId']]);
-        dd($recourse);
         if (!$recourse->registration->canUser('@control')) {
             $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
             return;
@@ -602,9 +591,6 @@ class Recourse extends \MapasCulturais\Controller
         $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
         $app->view->enqueueScript('app', 'sweetalert2', 'https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
-
-        $app->view->enqueueStyle('app', 'ckeditor-diligence', 'plugins/froala/css/froala_editor.pkgd.min.css');
-        $app->view->enqueueScript('app', 'ckeditor-diligence', 'plugins/froala/js/froala_editor.pkgd.min.js');
         $app->view->enqueueScript('app', 'ng-recourse', 'js/ng.recourse.js', []);
         $app->view->enqueueScript('app', 'recourse', 'js/recourse/recourse.js', []);
     }

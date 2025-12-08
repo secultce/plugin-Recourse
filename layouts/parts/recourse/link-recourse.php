@@ -8,9 +8,3 @@
     <i class="fas fa-edit"></i>
 </a>
 
-<a class="btn btn-recourse printRecourse"
-   title="Imprimir recurso" href="javascript:void(0)"
-   data-text="<?= htmlspecialchars($recourse->recourseText ?? '', ENT_QUOTES); ?>"
-   id="btn-recourse-print-<?= $recourse->id; ?>">
-    <i class="fas fa-print"></i>
-</a>

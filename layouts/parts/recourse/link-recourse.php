@@ -7,4 +7,3 @@
    data-url="recursos/updateRecourse">
     <i class="fas fa-edit"></i>
 </a>
-

@@ -275,6 +275,7 @@ async function sendReply(entityId, buttonElement, selectId, extraData)
             initRecourseStatusListener();
         }
     });
+    
     if (result.isConfirmed) {
         const content = result?.value?.conteudo;
         const dataForm = createBodyRequest(extraData.action, content, entityId, null, 'replyRecourse'); // forma do corpo da requisição

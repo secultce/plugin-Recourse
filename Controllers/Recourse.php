@@ -3,7 +3,7 @@
 namespace Recourse\Controllers;
 
 use DateTime;
-use \MapasCulturais\App;
+use MapasCulturais\App;
 use MapasCulturais\Entities\EntityRevision as Revision;
 use MapasCulturais\Entities\RegistrationEvaluation;
 use MapasCulturais\Exceptions\PermissionDenied;
@@ -103,7 +103,9 @@ class Recourse extends \MapasCulturais\Controller
         $recources = $app->repo(EntityRecourse::class)->findBy(['opportunity' => $this->data['id']]);
         $opportunity = $app->repo('Opportunity')->find($this->data['id']);
 
-        if ($opportunity->canUser('@control')) $this->json($recources, 200);
+        if ($opportunity->canUser('@control')) {
+            $this->json($recources, 200);
+        }
 
         $recources = array_filter($recources, function ($recource) use ($app) {
             $registrationEvaluation = $app->repo(RegistrationEvaluation::class)->findBy([
@@ -137,7 +139,7 @@ class Recourse extends \MapasCulturais\Controller
             $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
             $recourse->recourseReply = $this->data['reply'];
             $recourse->replyResult = $this->data['replyResult'] ?: null;
-            $recourse->recourseDateReply = new DateTime;
+            $recourse->recourseDateReply = new DateTime();
             $recourse->status = $statusRecourse;
             $recourse->replyAgent = $app->getAuth()->getAuthenticatedUser()->profile;
 
@@ -224,7 +226,7 @@ class Recourse extends \MapasCulturais\Controller
     }
 
 
-    function POST_disabledRecourse(): void
+    public function POST_disabledRecourse(): void
     {
         $app = App::i();
         //Alterando o claimDisabled no metadata
@@ -237,7 +239,7 @@ class Recourse extends \MapasCulturais\Controller
 
 
     //Salva a alteração da habilitação de recurso
-    function saveClaimDisabled($entity, $claimDisabled)
+    public function saveClaimDisabled($entity, $claimDisabled)
     {
         $app = App::i();
         $entity->claimDisabled = $claimDisabled;
@@ -274,16 +276,16 @@ class Recourse extends \MapasCulturais\Controller
             $this->json(['message' => 'O texto não pode estar vazio.'], 400);
             return;
         }
-        
+
         if (is_null($this->data['recourse'])) {
             $this->json(['message' => 'Informe o recurso.'], 400);
             return;
         }
-        
-        
+
         /** @var \MapasCulturais\Entities\Registration $registration */
         $registration = $app->repo('Registration')->find($this->data['registration']);
         $recourse = $app->repo('Recourse\Entities\Recourse')->findBy(['registration' => $registration]);
+
         if (count($recourse) > 0) {
             $this->json(['message' => 'Você já enviou um recurso para esta inscrição.'], 400);
             return;
@@ -298,7 +300,7 @@ class Recourse extends \MapasCulturais\Controller
 
         $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
 
-        $recourse = new EntityRecourse;
+        $recourse = new EntityRecourse();
 
         try {
             $app->em->beginTransaction();
@@ -344,7 +346,7 @@ class Recourse extends \MapasCulturais\Controller
         $this->requireAuthentication();
 
         $app = App::i();
-        
+
         //valida se o texto não veio vazio
         if (!trim(strip_tags(html_entity_decode($this->data['recourseText'] ?? '')))) {
             $this->json(['message' => 'O texto não pode estar vazio.'], 400);
@@ -546,7 +548,9 @@ class Recourse extends \MapasCulturais\Controller
 
         $recourse->opportunity->checkPermission('@control');
 
-        if (!$hasSecultSeal) throw new PermissionDenied(App::i()->user, $recourse, 'printRecourse');
+        if (!$hasSecultSeal) {
+            throw new PermissionDenied(App::i()->user, $recourse, 'printRecourse');
+        }
 
         $mpdf = new Mpdf([
             'tempDir' => '/tmp',

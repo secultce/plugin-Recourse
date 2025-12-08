@@ -293,7 +293,7 @@ async function sendReply(entityId, buttonElement, selectId, extraData)
         // Complementando requestForm
         const request = setobject(result.value.customFields, requestForm);
         const response = await fetch(MapasCulturais.createUrl(extraData.url), {
-            method: 'GET',
+            method: 'POST',
             body: request,
         })
 

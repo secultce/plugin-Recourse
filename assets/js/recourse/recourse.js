@@ -143,54 +143,18 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
         const data = await response.json();
      
         if (!response.ok) {
-                Swal.fire({
-                icon: "error",
-                position: "top-center",
-                title: 'Ops! Ocorreu um erro inesperado',
-                html: data && data.message? data.message : "Tente novamente mais tarde.",
-                showCloseButton:'Continuar',
-                showConfirmButton: true
-            }).then(() => {
-                location.reload();
-            });
+            McMessages.error(
+                'Ops! Ocorreu um erro inesperado', data && data.message? data.message : "Tente novamente mais tarde.",
+            )
             return;
         }
-
-        Swal.fire({
-            icon: "success",
-            position: "top-center",
-            title: data && data.message? data.message : "Recurso enviado com sucesso.",
-            html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
+        McMessages.custom(
+            data && data.message? data.message : "Recurso enviado com sucesso.", 'success', "Acompanhe o andamento do recurso no seu Painel. <br /> " +
                 "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
-            showConfirmButton: false,
-        });
+        )
     }
 }
 
-function printRecourse(htmlContent, title = 'Imprimir Recurso') {
-    const printWindow = window.open('', '_blank');
-
-    printWindow.document.write(`
-        <html>
-        <head>
-            <title>${title}</title>
-            <style>
-                body {
-                    font-family: Arial, sans-serif;
-                    padding: 40px;
-                }
-            </style>
-        </head>
-        <body>
-            ${htmlContent}
-        </body>
-        </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.focus();
-    printWindow.print();
-}
 
 function createFormData(data, files = []) {
     const formData = new FormData();
@@ -324,25 +288,18 @@ async function sendReply(entityId, buttonElement, selectId, extraData)
 
         const data = await response.json();
         if (!response.ok) {
-                Swal.fire({
-                icon: "error",
-                position: "top-center",
-                title: "Ops! Ocorreu um erro inesperado",
-                html: data && data.message? data.message : "Tente novamente mais tarde.",
-                showConfirmButton: true
-            }).then(() => {
-                location.reload();
-            });
+            McMessages.error(
+                'Ops! Ocorreu um erro inesperado', data && data.message? data.message : "Tente novamente mais tarde.",
+            )
             return;
         }
-
-        Swal.fire({
-            icon: "success",
-            position: "top-center",
-            title: "Sucesso!",
-            html:  data && data.message? data.message : "Acompanhe o andamento do recurso no seu Painel. <br /> ",
-            showConfirmButton: true,
-        });
+        McMessages.success(
+            "Sucesso!",
+            data && data.message? data.message : "Acompanhe o andamento do recurso no seu Painel. <br /> "
+        )
+        setTimeout(()=>{
+            window.location.reload()
+        },2000)
     }
 }
 
@@ -359,12 +316,3 @@ function setobject(objectVal, request)
     }
     return request;
 }
-
-//eventListener para imprimir o recurso
-document.addEventListener('click', function (e) {
-    const btn = e.target.closest('.printRecourse');
-    if (!btn) return;
-
-    const content = btn.dataset.text || '';
-    printRecourse(content);
-});

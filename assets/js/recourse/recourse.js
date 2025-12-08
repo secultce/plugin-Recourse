@@ -167,6 +167,31 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
     }
 }
 
+function printRecourse(htmlContent, title = 'Imprimir Recurso') {
+    const printWindow = window.open('', '_blank');
+
+    printWindow.document.write(`
+        <html>
+        <head>
+            <title>${title}</title>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                    padding: 40px;
+                }
+            </style>
+        </head>
+        <body>
+            ${htmlContent}
+        </body>
+        </html>
+    `);
+
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+}
+
 function createFormData(data, files = []) {
     const formData = new FormData();
     // Verifica se data é um objeto válido
@@ -334,3 +359,12 @@ function setobject(objectVal, request)
     }
     return request;
 }
+
+//eventListener para imprimir o recurso
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.printRecourse');
+    if (!btn) return;
+
+    const content = btn.dataset.text || '';
+    printRecourse(content);
+});

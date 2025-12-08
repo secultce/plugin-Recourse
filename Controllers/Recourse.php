@@ -270,7 +270,7 @@ class Recourse extends \MapasCulturais\Controller
         $app = App::i();
 
         //valida se o texto não veio vazio
-        if (!trim(strip_tags(html_entity_decode($this->data['recourseText'] ?? '')))) {
+        if (!trim(strip_tags(html_entity_decode($this->data['recourse'] ?? '')))) {
             $this->json(['message' => 'O texto não pode estar vazio.'], 400);
             return;
         }

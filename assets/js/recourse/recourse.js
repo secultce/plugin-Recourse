@@ -159,7 +159,7 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
         Swal.fire({
             icon: "success",
             position: "top-center",
-            title: data && data.message? data.message : "Recurso atualizado com sucesso.",
+            title: data && data.message? data.message : "Recurso enviado com sucesso.",
             html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
                 "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
             showConfirmButton: false,

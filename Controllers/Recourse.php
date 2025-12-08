@@ -269,23 +269,30 @@ class Recourse extends \MapasCulturais\Controller
     {
         $app = App::i();
 
-        if (is_null($this->data['recourse'])) {
-            $this->json(['message' => 'Informe o recurso'], 400);
+        //valida se o texto não veio vazio
+        if (!trim(strip_tags(html_entity_decode($this->data['recourseText'] ?? '')))) {
+            $this->json(['message' => 'O texto não pode estar vazio.'], 400);
             return;
         }
-
+        
+        if (is_null($this->data['recourse'])) {
+            $this->json(['message' => 'Informe o recurso.'], 400);
+            return;
+        }
+        
+        
         /** @var \MapasCulturais\Entities\Registration $registration */
         $registration = $app->repo('Registration')->find($this->data['registration']);
         $recourse = $app->repo('Recourse\Entities\Recourse')->findBy(['registration' => $registration]);
         if (count($recourse) > 0) {
-            $this->json(['message' => 'Você já enviou um recurso para esta inscrição'], 400);
+            $this->json(['message' => 'Você já enviou um recurso para esta inscrição.'], 400);
             return;
         }
 
         $agent = $registration->owner;
 
         if (!$agent->canUser('@control')) {
-            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação.'], 401);
             return;
         }
 
@@ -322,11 +329,11 @@ class Recourse extends \MapasCulturais\Controller
 
             $app->em->commit(true);
 
-            $this->json(['message' => 'Recurso enviado com sucesso'], 201);
+            $this->json(['message' => 'Recurso enviado com sucesso.'], 201);
         } catch (\PDOException $e) {
             $recourse && $recourse->delete();
             $this->json([
-                'message' => 'Erro inesperado, tente novamente',
+                'message' => 'Erro interno, tente novamente',
                 'errorMessage' => $e->getMessage(),
             ], 500);
         }
@@ -337,14 +344,21 @@ class Recourse extends \MapasCulturais\Controller
         $this->requireAuthentication();
 
         $app = App::i();
+        
+        //valida se o texto não veio vazio
+        if (!trim(strip_tags(html_entity_decode($this->data['recourseText'] ?? '')))) {
+            $this->json(['message' => 'O texto não pode estar vazio.'], 400);
+            return;
+        }
+
         $recourse = $app->repo(EntityRecourse::class)->findOneBy(['id' => $this->data['recourseId']]);
         if (!$recourse->registration->canUser('@control')) {
-            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação.'], 401);
             return;
         }
 
         if (!Util::isRecoursePeriod($recourse->opportunity)) {
-            $this->json(['message' => 'O período do recurso está encerrado'], 403);
+            $this->json(['message' => 'O período do recurso está encerrado.'], 403);
             return;
         }
 
@@ -367,10 +381,10 @@ class Recourse extends \MapasCulturais\Controller
 
             $app->em->flush();
 
-            $this->json(['message' => 'Recurso atualizado com sucesso'], 201);
+            $this->json(['message' => 'Recurso atualizado com sucesso.'], 201);
         } catch (\PDOException $e) {
             $this->json([
-                'message' => 'Erro inesperado, tente novamente',
+                'message' => 'Erro interno, tente novamente',
                 'errorMessage' => $e->getMessage(),
             ], 500);
         }

@@ -141,27 +141,29 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
             body: requestForm,
         })
         const data = await response.json();
-        // @todo: Entender como fazer para saber se deu erro
-        if (data) {
-            Swal.fire({
-                position: "top-center",
-                title: data.message,
-                html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-                    "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
-                showConfirmButton: false,
-            });
-            // //Ocutando botão para não ter mais de um envio
-            // $("#btn-recourse-" + registration).hide();
-        }
-        if (!data) {
-            Swal.fire({
+     
+        if (!response.ok) {
+                Swal.fire({
+                icon: "error",
                 position: "top-center",
                 title: 'Ops! Ocorreu um erro inesperado',
-                html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-                    "<a href='#' class='btn btn-default'>Ir p/ painel</a> <a href='#' class='btn btn-info'>Sair</a> ",
-                showConfirmButton: false,
-            })
+                html: data && data.message? data.message : "Tente novamente mais tarde.",
+                showCloseButton:'Continuar',
+                showConfirmButton: true
+            }).then(() => {
+                location.reload();
+            });
+            return;
         }
+
+        Swal.fire({
+            icon: "success",
+            position: "top-center",
+            title: data.message,
+            html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
+                "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
+            showConfirmButton: false,
+        });
     }
 }
 
@@ -286,23 +288,36 @@ async function sendReply(entityId, buttonElement, selectId, extraData)
     });
     if (result.isConfirmed) {
         const content = result?.value?.conteudo;
-
         const dataForm = createBodyRequest(extraData.action, content, entityId, null, 'replyRecourse'); // forma do corpo da requisição
         const requestForm = createFormData(dataForm, []); // cria a requisicao com arquivos
         // Complementando requestForm
         const request = setobject(result.value.customFields, requestForm);
         const response = await fetch(MapasCulturais.createUrl(extraData.url), {
-            method: 'POST',
+            method: 'GET',
             body: request,
         })
+
         const data = await response.json();
-        // @todo: Entender como fazer para saber se deu erro
-        if (data.message) {
-            McMessages.success('Sucesso' ,data.message);
-            setTimeout(()=>{
-                window.location.reload()
-            },1000)
+        if (!response.ok) {
+                Swal.fire({
+                icon: "error",
+                position: "top-center",
+                title: "Ops! Ocorreu um erro inesperado",
+                html: data && data.message? data.message : "Tente novamente mais tarde.",
+                showConfirmButton: true
+            }).then(() => {
+                location.reload();
+            });
+            return;
         }
+
+        Swal.fire({
+            icon: "success",
+            position: "top-center",
+            title: "Sucesso!",
+            html:  data && data.message? data.message : "Acompanhe o andamento do recurso no seu Painel. <br /> ",
+            showConfirmButton: true,
+        });
     }
 }
 

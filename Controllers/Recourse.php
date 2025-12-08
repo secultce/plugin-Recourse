@@ -333,7 +333,7 @@ class Recourse extends \MapasCulturais\Controller
         } catch (\PDOException $e) {
             $recourse && $recourse->delete();
             $this->json([
-                'message' => 'Erro interno, tente novamente',
+                'message' => 'Erro interno, tente novamente.',
                 'errorMessage' => $e->getMessage(),
             ], 500);
         }
@@ -384,7 +384,7 @@ class Recourse extends \MapasCulturais\Controller
             $this->json(['message' => 'Recurso atualizado com sucesso.'], 201);
         } catch (\PDOException $e) {
             $this->json([
-                'message' => 'Erro interno, tente novamente',
+                'message' => 'Erro interno, tente novamente.',
                 'errorMessage' => $e->getMessage(),
             ], 500);
         }

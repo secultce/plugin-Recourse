@@ -269,6 +269,8 @@ class Recourse extends \MapasCulturais\Controller
 
     public function POST_sendRecourse(): void
     {
+        $this->requireAuthentication();
+
         $app = App::i();
 
         if (Utils::isEmptyHtmlContent($this->data['recourse'] ?? null)) {

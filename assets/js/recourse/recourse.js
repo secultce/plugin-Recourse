@@ -141,29 +141,20 @@ async function openRecourse(entityId, buttonElement, selectId, extraData) {
             body: requestForm,
         })
         const data = await response.json();
-        // @todo: Entender como fazer para saber se deu erro
-        if (data) {
-            Swal.fire({
-                position: "top-center",
-                title: data.message,
-                html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-                    "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
-                showConfirmButton: false,
-            });
-            // //Ocutando botão para não ter mais de um envio
-            // $("#btn-recourse-" + registration).hide();
+     
+        if (!response.ok) {
+            McMessages.error(
+                'Ops! Ocorreu um erro inesperado', data && data.message? data.message : "Tente novamente mais tarde.",
+            )
+            return;
         }
-        if (!data) {
-            Swal.fire({
-                position: "top-center",
-                title: 'Ops! Ocorreu um erro inesperado',
-                html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-                    "<a href='#' class='btn btn-default'>Ir p/ painel</a> <a href='#' class='btn btn-info'>Sair</a> ",
-                showConfirmButton: false,
-            })
-        }
+        McMessages.custom(
+            data && data.message? data.message : "Recurso enviado com sucesso.", 'success', "Acompanhe o andamento do recurso no seu Painel. <br /> " +
+                "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
+        )
     }
 }
+
 
 function createFormData(data, files = []) {
     const formData = new FormData();
@@ -284,9 +275,9 @@ async function sendReply(entityId, buttonElement, selectId, extraData)
             initRecourseStatusListener();
         }
     });
+    
     if (result.isConfirmed) {
         const content = result?.value?.conteudo;
-
         const dataForm = createBodyRequest(extraData.action, content, entityId, null, 'replyRecourse'); // forma do corpo da requisição
         const requestForm = createFormData(dataForm, []); // cria a requisicao com arquivos
         // Complementando requestForm
@@ -295,14 +286,21 @@ async function sendReply(entityId, buttonElement, selectId, extraData)
             method: 'POST',
             body: request,
         })
+
         const data = await response.json();
-        // @todo: Entender como fazer para saber se deu erro
-        if (data.message) {
-            McMessages.success('Sucesso' ,data.message);
-            setTimeout(()=>{
-                window.location.reload()
-            },1000)
+        if (!response.ok) {
+            McMessages.error(
+                'Ops! Ocorreu um erro inesperado', data && data.message? data.message : "Tente novamente mais tarde.",
+            )
+            return;
         }
+        McMessages.success(
+            "Sucesso!",
+            data && data.message? data.message : "Acompanhe o andamento do recurso no seu Painel. <br /> "
+        )
+        setTimeout(()=>{
+            window.location.reload()
+        },2000)
     }
 }
 

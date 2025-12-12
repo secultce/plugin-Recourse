@@ -3,7 +3,7 @@
 namespace Recourse\Controllers;
 
 use DateTime;
-use \MapasCulturais\App;
+use MapasCulturais\App;
 use MapasCulturais\Entities\EntityRevision as Revision;
 use MapasCulturais\Entities\RegistrationEvaluation;
 use MapasCulturais\Exceptions\PermissionDenied;
@@ -103,7 +103,9 @@ class Recourse extends \MapasCulturais\Controller
         $recources = $app->repo(EntityRecourse::class)->findBy(['opportunity' => $this->data['id']]);
         $opportunity = $app->repo('Opportunity')->find($this->data['id']);
 
-        if ($opportunity->canUser('@control')) $this->json($recources, 200);
+        if ($opportunity->canUser('@control')) {
+            $this->json($recources, 200);
+        }
 
         $recources = array_filter($recources, function ($recource) use ($app) {
             $registrationEvaluation = $app->repo(RegistrationEvaluation::class)->findBy([
@@ -137,7 +139,7 @@ class Recourse extends \MapasCulturais\Controller
             $recourse = $app->repo(EntityRecourse::class)->find($this->data['entityId']);
             $recourse->recourseReply = $this->data['reply'];
             $recourse->replyResult = $this->data['replyResult'] ?: null;
-            $recourse->recourseDateReply = new DateTime;
+            $recourse->recourseDateReply = new DateTime();
             $recourse->status = $statusRecourse;
             $recourse->replyAgent = $app->getAuth()->getAuthenticatedUser()->profile;
 
@@ -224,7 +226,7 @@ class Recourse extends \MapasCulturais\Controller
     }
 
 
-    function POST_disabledRecourse(): void
+    public function POST_disabledRecourse(): void
     {
         $app = App::i();
         //Alterando o claimDisabled no metadata
@@ -237,7 +239,7 @@ class Recourse extends \MapasCulturais\Controller
 
 
     //Salva a alteração da habilitação de recurso
-    function saveClaimDisabled($entity, $claimDisabled)
+    public function saveClaimDisabled($entity, $claimDisabled)
     {
         $app = App::i();
         $entity->claimDisabled = $claimDisabled;
@@ -267,31 +269,34 @@ class Recourse extends \MapasCulturais\Controller
 
     public function POST_sendRecourse(): void
     {
+        $this->requireAuthentication();
+
         $app = App::i();
 
-        if (is_null($this->data['recourse'])) {
-            $this->json(['message' => 'Informe o recurso'], 400);
+        if (Utils::isEmptyHtmlContent($this->data['recourse'] ?? null)) {
+            $this->json(['message' => 'O texto não pode estar vazio.'], 400);
             return;
         }
 
         /** @var \MapasCulturais\Entities\Registration $registration */
         $registration = $app->repo('Registration')->find($this->data['registration']);
         $recourse = $app->repo('Recourse\Entities\Recourse')->findBy(['registration' => $registration]);
+
         if (count($recourse) > 0) {
-            $this->json(['message' => 'Você já enviou um recurso para esta inscrição'], 400);
+            $this->json(['message' => 'Você já enviou um recurso para esta inscrição.'], 400);
             return;
         }
 
         $agent = $registration->owner;
 
         if (!$agent->canUser('@control')) {
-            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação.'], 401);
             return;
         }
 
         $opportunity = $app->repo('Opportunity')->find($this->data['opportunity']);
 
-        $recourse = new EntityRecourse;
+        $recourse = new EntityRecourse();
 
         try {
             $app->em->beginTransaction();
@@ -322,11 +327,11 @@ class Recourse extends \MapasCulturais\Controller
 
             $app->em->commit(true);
 
-            $this->json(['message' => 'Recurso enviado com sucesso'], 201);
+            $this->json(['message' => 'Recurso enviado com sucesso.'], 201);
         } catch (\PDOException $e) {
             $recourse && $recourse->delete();
             $this->json([
-                'message' => 'Erro inesperado, tente novamente',
+                'message' => 'Erro interno, tente novamente.',
                 'errorMessage' => $e->getMessage(),
             ], 500);
         }
@@ -337,14 +342,20 @@ class Recourse extends \MapasCulturais\Controller
         $this->requireAuthentication();
 
         $app = App::i();
+
+        if (Utils::isEmptyHtmlContent($this->data['recourseText'] ?? null)) {
+            $this->json(['message' => 'O texto não pode estar vazio.'], 400);
+            return;
+        }
+
         $recourse = $app->repo(EntityRecourse::class)->findOneBy(['id' => $this->data['recourseId']]);
         if (!$recourse->registration->canUser('@control')) {
-            $this->json(['message' => 'Você não tem permissão para realizar esta ação'], 401);
+            $this->json(['message' => 'Você não tem permissão para realizar esta ação.'], 401);
             return;
         }
 
         if (!Util::isRecoursePeriod($recourse->opportunity)) {
-            $this->json(['message' => 'O período do recurso está encerrado'], 403);
+            $this->json(['message' => 'O período do recurso está encerrado.'], 403);
             return;
         }
 
@@ -367,10 +378,10 @@ class Recourse extends \MapasCulturais\Controller
 
             $app->em->flush();
 
-            $this->json(['message' => 'Recurso atualizado com sucesso'], 201);
+            $this->json(['message' => 'Recurso atualizado com sucesso.'], 201);
         } catch (\PDOException $e) {
             $this->json([
-                'message' => 'Erro inesperado, tente novamente',
+                'message' => 'Erro interno, tente novamente.',
                 'errorMessage' => $e->getMessage(),
             ], 500);
         }
@@ -532,7 +543,9 @@ class Recourse extends \MapasCulturais\Controller
 
         $recourse->opportunity->checkPermission('@control');
 
-        if (!$hasSecultSeal) throw new PermissionDenied(App::i()->user, $recourse, 'printRecourse');
+        if (!$hasSecultSeal) {
+            throw new PermissionDenied(App::i()->user, $recourse, 'printRecourse');
+        }
 
         $mpdf = new Mpdf([
             'tempDir' => '/tmp',

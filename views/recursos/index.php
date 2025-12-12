@@ -73,11 +73,9 @@ $hasSecultSeal = Utils::checkUserHasSeal(env('SECULT_SEAL_ID'));
                     </td>
                     <td>{{recourses.agent.name}}</td>
                     <td>
-                        <small ng-bind-html="trustHtmlPreview(recourses.recourseText)"></small>
-                        <a ng-click="dialogSecult('Recurso', recourses.recourseText)" ng-if="hasMoreThan100(recourses.recourseText)">
-                            Ler mais
-                        </a>
-
+                        <a href='#' class='btn btn-recourse' ng-click="dialogSecult('Recurso', recourses.recourseText)">
+                            <i class="fas fa-eye" ></i>
+                        </a>                       
                         <div class="recourse-attachments">
                             <a
                                 ng-repeat="file in recourses.files"

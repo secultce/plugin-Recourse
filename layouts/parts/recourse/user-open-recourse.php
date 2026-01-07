@@ -16,7 +16,7 @@
 
 <div class="opportunity-claim-button">
     <?php if(!$isRecourseSent && $isActivePeriod): ?>
-    <a class="btn btn-primary openRecourse" data-entity-id-cr="<?= $registration->id; ?>" href="javascript:void(0)"
+    <a class="btn btn-primary openRecourse registration-panel-button" data-entity-id-cr="<?= $registration->id; ?>" href="javascript:void(0)"
         data-opp="<?= $registration->opportunity->id ?>" data-agent="<?= $registration->owner->id ?>"
         data-entity-context-cr="<?= htmlspecialchars($cr->text ?? '', ENT_QUOTES); ?>"
         id="btn-recourse-<?php echo $registration->id; ?>" data-url="recursos/sendRecourse" data-action="create">
@@ -26,7 +26,7 @@
     <?php
     if($isRecourseSent): ?>
     <p>
-        <span class="badge badge-info">Recurso enviado</span>
+        <span class="badge badge-info registration-panel-badge">Recurso enviado</span>
     </p>
     <?php endif; ?>
 </div>

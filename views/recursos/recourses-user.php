@@ -53,11 +53,11 @@ $this->layout = 'panel';
                         <td>
                             <span>
                                 <?php
-                                $recourseText = htmlspecialchars(addslashes($recourse->recourseText), ENT_QUOTES);
-                                if(strlen($recourse->recourseText) > 100):
-                                    echo "<br/>
-                                          <a href='#' class='btn btn-recourse' ng-click='infoUserRecourse(\"{$recourseText}\")' title='Ler recurso'><i class='fas fa-eye'></i></a>";
-                                endif;
+                                    $recourseText = htmlspecialchars(addslashes($recourse->recourseText), ENT_QUOTES);
+                                    if(strlen($recourse->recourseText) > 0):
+                                        echo "<br/>
+                                              <a href='#' class='btn btn-recourse' ng-click='infoUserRecourse(\"{$recourseText}\")' title='Ler recurso'><i class='fas fa-eye'></i></a>";
+                                    endif;
                                 ?>
                             </span>
                             <?php if(count($recourse->files) > 0): ?>

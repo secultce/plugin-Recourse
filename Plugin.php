@@ -15,28 +15,18 @@ class Plugin extends \MapasCulturais\Plugin {
         $app->hook('template(opportunity.single.tabs):end', function () use ($app,$plugin) {
             //Assets mais usados nas rotas
             $plugin->_publishAssets();
-            //Arquivo Css do plugin
-            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $opportunity = $this->controller->requestedEntity;
 
-            if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && !$opportunity->claimDisabled) {
+            if (($opportunity->canUser('viewEvaluations') || $opportunity->canUser('@control')) && $opportunity->appealEnabled === 'Sim') {
                 $this->part('singles/opportunity-recourses', ['entity' => $opportunity, 'app' => $app]);
             }
         });
 
-        $app->hook('view.partial(claim-configuration):after', function($__template, &$__html) use ($app,$plugin){
+        $app->hook('view.partial(singles/opportunity-registrations--export):after', function($__template, &$__html) use ($app,$plugin){
             //add assests
             $plugin->_publishAssets();
-            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             //Entidade
             $opp = $this->controller->requestedEntity;
-
-            //0 Está habilitado - 1 Não está habilitado
-            $enableRecourse = $opp->getMetadata('claimDisabled');
-             //Se alterar a configuração para desabilitar o recurso, faz uma verificação de metadata
-            if($enableRecourse == '1'){
-                RecourseController::verifyClaim($opp);
-            }
 
             //Todo o metadata da oportunidade
             $metadt = $opp->getMetadata();
@@ -62,7 +52,6 @@ class Plugin extends \MapasCulturais\Plugin {
             }
 
             $this->part('recourse/opportunity-recourse-form', [
-                'enableRecourse' => $enableRecourse,
                 'confRecourse' => $confRecourse,
                 'template' => $__html
             ]);
@@ -77,10 +66,10 @@ class Plugin extends \MapasCulturais\Plugin {
             $endOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToEnd);//Convertendo para formato Datetime
             $strToInitial = $entity->opportunity->getMetadata('recourse_date_initial').' '.$entity->opportunity->getMetadata('recourse_time_initial');
             $initialOfPeriod = \DateTime::createFromFormat('Y-m-d H:i', $strToInitial);//Convertendo para formato Datetime
-            
+
             $baseUrl = $app->_config['base.url'];
             //So mostra o botão se o recurso tiver habilitado
-            if($entity->opportunity->getMetadata('claimDisabled') == '0')
+            if($entity->opportunity->getMetadata('appealEnabled') === 'Sim')
             {
                 $this->part('recourse/recourse-user-registration-status', [
                     'entity' => $entity,
@@ -92,7 +81,6 @@ class Plugin extends \MapasCulturais\Plugin {
         });
 
         $app->hook('template(panel.<<registrations|index>>.panel-registration-meta):after', function($registration) use ($app, $plugin){
-            $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
             $plugin->_publishAssets();
             //Verificando se já houve envio de recurso
             $rec = $app->repo('Recourse\Entities\Recourse')->findBy([
@@ -124,6 +112,11 @@ class Plugin extends \MapasCulturais\Plugin {
             $result["Recourse"] = 'Recourse\Entities\Recourse';
 
         });
+
+        $app->hook('template(recursos.oportunidade.recourse-index):begin', function() use ($app,$plugin){
+            $plugin->_publishAssets();
+        });
+
    }//fim _init
 
     /**
@@ -133,17 +126,29 @@ class Plugin extends \MapasCulturais\Plugin {
     protected function _publishAssets(): void
     {
         $app = App::i();
-        $app->view->enqueueStyle('app', 'fontawesome', 'https://use.fontawesome.com/releases/v5.8.2/css/all.css');
+        $app->view->enqueueStyle('app', 'recoursecss', 'css/recourse/recourse.css', ['main']);
+        $app->view->enqueueStyle('app', 'fontawesome', 'css/fontawesome/all.css');
         $app->view->enqueueStyle('app', 'secultalert', 'css/recourse/secultce/dist/secultce.min.css');
-        $app->view->enqueueScript('app','sweetalert2','https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js');
+        $app->view->enqueueScript('app','sweetalert2','js/sweetalert2.all.min.js');
         $app->view->enqueueScript('app','ng-recourse','js/ng.recourse.js',[] );
         $app->view->enqueueScript('app','recourse','js/recourse/recourse.js',[]);
+        $app->view->enqueueStyle('app', 'opinionManagement', 'OpinionManagement/css/opinionManagement.css');
+        $app->view->enqueueScript('app', 'opinion-management', 'OpinionManagement/js/opinionManagement.js');
     }
 
     function register (): void
     {
         $app = App::i();
         $app->registerController('recursos', 'Recourse\Controllers\Recourse');
+
+        $this->registerOpportunityMetadata('appealEnabled', [
+            'label' =>  i::__('Habilitar Recurso'),
+            'description' => i::__('Configura se a oportunidade terá recurso'),
+            'type' => 'select',
+            'options' => ['Sim', 'Não'],
+            'default' => 'Não',
+            'required' => true,
+        ]);
         $this->registerOpportunityMetadata('recourse_date_initial', [
            'label' => i::__('Data Inicial'),
            'type' => 'date',
@@ -153,7 +158,7 @@ class Plugin extends \MapasCulturais\Plugin {
            'type' => 'time',
         ]);
         $this->registerOpportunityMetadata('recourse_date_end', [
-           'label' => i::__('Hora Inicial'),
+           'label' => i::__('Data Final'),
            'type' => 'date',
         ]);
         $this->registerOpportunityMetadata('recourse_time_end', [

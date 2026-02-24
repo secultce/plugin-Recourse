@@ -1,107 +1,20 @@
-const recourse = {
-    getConfigSwalSend: (recourseTextareaId, recourseAttachmentsId, recourseText = '') => {
-        return {
-            title: "Escrever o Recurso",
-            html: `<div style="display: grid">
-                <label to="${recourseTextareaId}">Envie todos os destaques do seu recurso por escrito uma vez em um único campo</label>
-                <textarea
-                    id=${recourseTextareaId}
-                    placeholder="Mensagem para a banca avaliadora"
-                    class="swal2-textarea"
-                    style="margin: 5px">${recourseText}</textarea>
-                <input
-                    id=${recourseAttachmentsId}
-                    type="file"
-                    multiple
-                    max="2"
-                    class="swal2-file">
-            </div>`,
-            showCancelButton: true,
-            confirmButtonText: 'Enviar recurso',
-            cancelButtonText: 'Sair',
-            showLoaderOnConfirm: true,
-            customClass: {
-                confirmButton: "btn-success-rec",
-                cancelButton: "btn-warning-rec"
-            },
-            preConfirm: async () => {
-                const recourseText = document.getElementById(recourseTextareaId).value;
+$(() => {
+    const opportunity = MapasCulturais.entity?.object
 
-                if (recourseText === '') {
-                    Swal.fire({
-                        position: "top-center",
-                        title: "Precisa preencher o campo de recurso",
-                        showConfirmButton: true,
-                        timer: 2000
-                    });
-                    return false;
-                }
+    if (opportunity?.appealEnabled === 'Sim') $('#appeal-period-wrapper').removeClass('d-none')
 
-                return [
-                    recourseText,
-                    document.getElementById(recourseAttachmentsId).files,
-                ];
-            },
-            allowOutsideClick: false
-        }
-    }
-}
+    $('.opportunity-claim-box').remove(); // Removendo o botão existente no módulo de oportunidades
 
-// A $( document ).ready() block.
-$(function () {
-    $('.opportunity-claim-box').remove();//Removendo o botão existente no modulo de oportunidades
+    $('#enabled-appeal-wrapper').on('change', event => {
+        const opt = event.target.value
+        const appealEnabled = opt === 'Sim' ? true : false
 
-    $("#recourseOptions").change(function () {
-        var opt = $("#recourseOptions").val();
-        if (opt == '0') {
-            $('#insertData').show();
-            //$('#resourceOptions option[value=0]').attr('selected','selected');
-            claimDisabled(opt);
-        } else {
-            $('#insertData').removeClass('visible');
-            claimDisabled(opt);
-            $('#insertData').hide();
-        }
-    });
-
-    $('[edit-recourse-btn]').on('click', event => {
-        if ($(event.currentTarget).hasClass('disabled')) {
-            showSimpleSwal('O período do recurso está encerrado')
+        if (appealEnabled) {
+            $('#appeal-period-wrapper').removeClass('d-none')
             return
         }
 
-        const recourseId = event.currentTarget.dataset.recourseId
-        const recourseText = event.currentTarget.dataset.recourseText
-        const recourseTextareaId = 'edit-recourse-textarea-' + recourseId
-        const recourseAttachmentsId = 'edit-recourse-file-' + recourseId
-
-        Swal.fire(recourse.getConfigSwalSend(recourseTextareaId, recourseAttachmentsId, recourseText)).then(async content => {
-            const [recourseText, files] = content.value;
-
-            const formData = new FormData();
-            formData.append('recourseId', recourseId)
-            formData.append('recourseText', recourseText)
-            Array.from(files).forEach((file, index) => {
-                formData.append(index, file)
-            })
-
-            const response = await fetch(MapasCulturais.baseURL + 'recursos/updateRecourse', {
-                method: 'POST',
-                body: formData,
-            })
-
-            if (response.ok) {
-                const data = await response.json()
-
-                showConfirmationSwal(data.message)
-            } else if (response.status === 403) {
-                const data = await response.json()
-
-                showConfirmationSwal(data.message)
-            } else {
-                showSimpleSwal('Erro inesperado, tente novamente')
-            }
-        });
+        $('#appeal-period-wrapper').addClass('d-none')
     })
 
     $('[delete-recourse-file-btn]').on('click', event => {
@@ -139,7 +52,38 @@ $(function () {
             }
         });
     })
-});
+    // SETUP ÚNICO: registra o botão para o componente Quill
+    EventDelegator.setup('openRecourse', openRecourse, 'quill-editor');
+    EventDelegator.setup('sendReply', sendReply, 'quill-editor');
+
+})
+
+function showEditor() {
+    Swal.fire({
+        title: 'Editar recurso',
+        html: '<textarea id="froala-editor"></textarea>',
+        showCancelButton: true,
+        confirmButtonText: 'Enviar',
+        cancelButtonText: 'Cancelar',
+        preConfirm: () => {
+            return $('#froala-editor').froalaEditor('html.get');
+        },
+        didOpen: () => {
+            // Inicializa o Froala quando o SweetAlert é aberto
+            $('#froala-editor').froalaEditor({
+                // Configurações do Froala
+                toolbarButtons: ['bold', 'italic', 'underline', 'paragraphFormat', 'align', 'formatOL', 'formatUL', 'insertLink'],
+                heightMin: 200
+            });
+        }
+    }).then((result) => {
+        if (result.isConfirmed) {
+            const content = result.value;
+            // Faça algo com o conteúdo
+            console.log(content);
+        }
+    });
+}
 
 function showSimpleSwal(message) {
     Swal.fire({
@@ -172,48 +116,204 @@ function claimDisabled(opt) {
     });
 }
 
-function sendRecourse(registration, opportunity, agentId) {
-    const recourseTextareaId = 'context-recourse-user-' + registration;
-    const recourseAttachmentsId = 'attachment-recourse-user-' + registration;
+async function openRecourse(entityId, buttonElement, selectId, extraData) {
+    // Passe para QuillEditor via options
+    const result = await QuillEditor.open({
+        title: extraData.customTitle || 'Recurso Padrão',  // Usa data-custom-title ou fallback
+        placeholder: extraData.customPlaceholder || 'Escreva seu recurso...',
+        entityId: entityId,
+        selectId: selectId,
+        triggerButton: buttonElement
+    });
 
-    Swal.fire(recourse.getConfigSwalSend(recourseTextareaId, recourseAttachmentsId)).then(async content => {
-        const [recourseText, files] = content.value;
+    const opportunity = extraData.opp;
+    const agentId = extraData.agent;
+    const files = $("#edit-recourse-file-" + entityId)[0].files
 
-        const formData = new FormData();
-        formData.append('registration', registration)
-        formData.append('opportunity', opportunity)
-        formData.append('recourse', recourseText)
-        Array.from(files).forEach((file, index) => {
-            formData.append(index, file)
-        })
-
+    if (result.isConfirmed) {
+        const content = result?.value?.conteudo;
+        const dataForm = createBodyRequest(extraData.action, content, entityId, opportunity, 'recourse'); // forma do corpo da requisição
+        const requestForm = createFormData(dataForm, files); // cria a requisicao com arquivos
         const panelRecourse = MapasCulturais.createUrl('recursos/agent/' + agentId);
-        const response = await fetch(MapasCulturais.baseURL + 'recursos/sendRecourse', {
-            method: 'POST',
-            body: formData,
-        })
-        const data = await response.json()
 
-        // @todo: Entender como fazer para saber se deu erro
-        if (data) {
-            Swal.fire({
-                position: "top-center",
-                title: data.message,
-                html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-                    "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
-                showConfirmButton: false,
-            });
-            //Ocutando botão para não ter mais de um envio
-            $("#btn-recourse-" + registration).hide();
+        const response = await fetch(MapasCulturais.baseURL + extraData.url, {
+            method: 'POST',
+            body: requestForm,
+        })
+        const data = await response.json();
+     
+        if (!response.ok) {
+            McMessages.error(
+                'Ops! Ocorreu um erro inesperado', data && data.message? data.message : "Tente novamente mais tarde.",
+            )
+            return;
         }
-        if (!data) {
-            Swal.fire({
-                position: "top-center",
-                title: 'Ops! Ocorreu um erro inesperado',
-                html: "Acompanhe o andamento do recurso no seu Painel. <br /> " +
-                    "<a href='#' class='btn btn-default'>Ir p/ painel</a> <a href='#' class='btn btn-info'>Sair</a> ",
-                showConfirmButton: false,
-            })
+        McMessages.custom(
+            data && data.message? data.message : "Recurso enviado com sucesso.", 'success', "Acompanhe o andamento do recurso no seu Painel. <br /> " +
+                "<a href='" + panelRecourse + "' class='btn btn-default'>Ir p/ painel</a>",
+        )
+    }
+}
+
+
+function createFormData(data, files = []) {
+    const formData = new FormData();
+    // Verifica se data é um objeto válido
+    if (typeof data !== 'object' || data === null) {
+        console.warn('O parâmetro "data" deve ser um objeto. Ignorando adição de dados simples.');
+    } else {
+        // Adiciona dados simples, lidando com arrays para append múltiplo
+        setobject(data, formData);
+    }
+    // Adiciona arquivos, nomeados por índice (0, 1, 2…)
+    Array.from(files).forEach((file, index) => {
+        formData.append(index.toString(), file);
+    });
+    return formData;
+}
+
+function createBodyRequest(action, content, entityId = null, opportunity = null, entity) {
+
+    if(entity == 'recourse'){
+        return action === 'create'
+            ? { 'registration': entityId, 'opportunity': opportunity, 'recourse': content }
+            : action === 'update'
+                ? { 'recourseId': entityId, 'recourseText': content }
+                : {};
+    }
+
+    if(entity == 'replyRecourse'){
+        return action === 'create'
+            ? { 'entityId': entityId, 'reply': content }
+            : action === 'update'
+                ? { 'entityId': entityId, 'reply': content }
+                : {};
+    }
+
+}
+
+/**
+ * Controla a visibilidade da div de nota baseado no status do recurso
+ * @param {string} statusValue - Valor do select de status
+ */
+function handleRecourseStatusChange(statusValue) {
+    const noteDiv = document.getElementById('valueNoteRecourse');
+
+    if (!noteDiv) {
+        console.warn('Elemento valueNoteRecourse não encontrado');
+        return;
+    }
+
+    // Oculta a div quando o valor for -9 (Indeferido)
+    // Mostra a div para outros valores (1 = Deferido, 8 = Deferido parcialmente)
+    if (statusValue === '-9') {
+        noteDiv.style.display = 'none';
+    } else if (statusValue === '1' || statusValue === '8') {
+        noteDiv.style.display = 'block';
+    } else {
+        // Para o valor 0 (-- Selecione a situação --), mantém oculto
+        noteDiv.style.display = 'none';
+    }
+}
+
+/**
+ * Inicializa os event listeners para o select de status do recurso
+ */
+function initRecourseStatusListener() {
+    const selectElement = document.querySelector('.selectRecourseSituacion');
+
+    if (!selectElement) {
+        console.warn('Select de status do recurso não encontrado');
+        return;
+    }
+
+    // Remove listener anterior se existir para evitar duplicação
+    selectElement.removeEventListener('change', onStatusChange);
+
+    // Adiciona o listener
+    selectElement.addEventListener('change', onStatusChange);
+
+    // Inicializa a visibilidade com base no valor ATUAL do select (pré-selecionado)
+    // Isso garante que, se extraData.status for 1 ou 8, a div #valueNoteRecourse seja exibida imediatamente
+    handleRecourseStatusChange(selectElement.value);
+}
+
+/**
+ * Handler do evento de mudança do select
+ */
+function onStatusChange(event) {
+    handleRecourseStatusChange(event.target.value);
+}
+
+async function sendReply(entityId, buttonElement, selectId, extraData)
+{
+    const resultReply = extraData.note == '' ? 0.0 : extraData.note; // recebendo o valor da tabela
+
+    const htmlSelect = `<label style="float: left;">Situação:</label>
+                <select status-recourse="" name="status" class="form-control selectRecourseSituacion">
+                    <option value="0" disabled="" >-- Selecione a situação --</option>
+                    <option value="1" ${extraData.status == 1 ? 'selected' : ''}>Deferido</option>
+                    <option value="8" ${extraData.status == 8 ? 'selected' : ''}>Deferido parcialmente</option>
+                    <option value="-9" ${extraData.status == -9 ? 'selected' : ''}>Indeferido</option>
+                </select>
+                <div class="form-group" id="valueNoteRecourse" grade-wrapper="" style="display: none;">
+                    <label style="float: left;">Nova nota:</label>
+                    <input type="number" name="replyResult" value="${resultReply}" class="form-control" placeholder="Digite a nova nota">
+                    <p class="badge badge-info current-grade">A nota atual é: <span current-grade="">${resultReply}</span></p>
+                </div>`
+
+    const result = await QuillEditor.open({
+        title: extraData.customTitle || 'Responder recurso',
+        placeholder: extraData.customPlaceholder || 'Escreva sua resposta para o recurso',
+        entityId: entityId,
+        selectId: selectId,
+        triggerButton: buttonElement,
+        html: htmlSelect,
+        showFile: false,
+        onOpen: () => {
+            // Inicializa o listener do select após o modal abrir
+            initRecourseStatusListener();
         }
     });
+    
+    if (result.isConfirmed) {
+        const content = result?.value?.conteudo;
+        const dataForm = createBodyRequest(extraData.action, content, entityId, null, 'replyRecourse'); // forma do corpo da requisição
+        const requestForm = createFormData(dataForm, []); // cria a requisicao com arquivos
+        // Complementando requestForm
+        const request = setobject(result.value.customFields, requestForm);
+        const response = await fetch(MapasCulturais.createUrl(extraData.url), {
+            method: 'POST',
+            body: request,
+        })
+
+        const data = await response.json();
+        if (!response.ok) {
+            McMessages.error(
+                'Ops! Ocorreu um erro inesperado', data && data.message? data.message : "Tente novamente mais tarde.",
+            )
+            return;
+        }
+        McMessages.success(
+            "Sucesso!",
+            data && data.message? data.message : "Acompanhe o andamento do recurso no seu Painel. <br /> "
+        )
+        setTimeout(()=>{
+            window.location.reload()
+        },2000)
+    }
+}
+
+function setobject(objectVal, request)
+{
+    // Adiciona dados simples, lidando com arrays para append múltiplo
+    for (const [key, value] of Object.entries(objectVal)) {
+        if (Array.isArray(value)) {
+            // Se for array, append cada item individualmente (ex: campos multi-valor)
+            value.forEach(item => request.append(key, item));
+        } else {
+            request.append(key, value);
+        }
+    }
+    return request;
 }

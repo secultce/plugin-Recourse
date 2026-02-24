@@ -4,6 +4,8 @@ namespace Recourse\Utils;
 
 use MapasCulturais\App;
 use MapasCulturais\Entities\Notification;
+use MapasCulturais\Services\SentryService;
+use PhpAmqpLib\Exchange\AMQPExchangeType;
 use PhpAmqpLib\Connection\AMQPStreamConnection;
 use PhpAmqpLib\Message\AMQPMessage;
 use Recourse\Entities\Recourse;
@@ -24,7 +26,7 @@ class Util
         $initialPeriodFormatted = \DateTime::createFromFormat('Y-m-d H:i', $initialPeriod); // Converte para formato Datetime
         $now = new \DateTime();
 
-        if ($opportunity->getMetadata('claimDisabled') == '0' && $finalPeriodFormatted >= $now && $now >= $initialPeriodFormatted) return true;
+        if ($opportunity->getMetadata('appealEnabled') === 'Sim' && $finalPeriodFormatted >= $now && $now >= $initialPeriodFormatted) return true;
         return false;
     }
 
@@ -39,7 +41,6 @@ class Util
         $finalPeriod = $opportunity->getMetadata('recourse_date_end') . ' ' . $opportunity->getMetadata('recourse_time_end');
         $finalPeriodFormatted = \DateTime::createFromFormat('Y-m-d H:i', $finalPeriod); // Converte para formato Datetime
         $now = new \DateTime();
-
         if ($finalPeriodFormatted <= $now) return true;
         return false;
     }
@@ -63,33 +64,66 @@ class Util
         return false;
     }
 
-    public static function addRecoursesToRabbitmqQueue($recourses, $queueName): void
+    public static function addRecoursesToRabbitmqQueue($recourses): void
     {
         $app = App::i();
         $count = count($recourses);
 
-        // Conectar ao RabbitMQ
-        $connection = new AMQPStreamConnection(env('RABBITMQ_HOST'), env('RABBITMQ_PORT'), env('RABBITMQ_USER'), env('RABBITMQ_PASSWORD'));
-        $channel = $connection->channel();
+        $connection = null;
+        $channel = null;
 
-        // Criar a fila de e-mails
-        $channel->queue_declare($queueName, false, true, false, false);
+        try {
+            // Tentar conectar ao RabbitMQ
+            $connection = new AMQPStreamConnection(
+                $app->config['rabbitmq']['host'],
+                $app->config['rabbitmq']['port'],
+                $app->config['rabbitmq']['user'],
+                $app->config['rabbitmq']['password']
+            );
+            $exchange = $app->config['rabbitmq']['exchange_default']; // Exchange padrão
+            $queueName = $app->config['rabbitmq']['queues']['queue_published_recourses']; // Nome da fila de recursos publicados
 
-        foreach ($recourses as $i => $recourse) {
-            $data = [
-                'email' => $recourse->agent->user->email,
-                'opportunityName' => $recourse->opportunity->name,
-                'agentId' => $recourse->agent->id,
-            ];
-            $msg = new AMQPMessage(json_encode($data), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
+            $channel = $connection->channel();
 
-            $channel->basic_publish($msg, '', $queueName);
-            self::notificationPublishedRecourse($recourse);
-            $app->log->debug("Notificação " . ($i + 1) . "/$count enviada para o usuário {$recourse->agent->user->id} ({$recourse->agent->name})");
+            // Declarando a exchange que irá usar
+            $channel->exchange_declare($exchange, AMQPExchangeType::DIRECT, false, true, false);
+
+            // Ligando a fila à exchange
+            $channel->queue_bind($queueName, $exchange, $app->config['rabbitmq']['routing']['plugin_published_recourses']);
+
+            foreach ($recourses as $i => $recourse) {
+                try {
+                    $data = [
+                        'email' => $recourse->agent->user->email,
+                        'opportunityName' => $recourse->opportunity->name,
+                        'agentId' => $recourse->agent->id,
+                    ];
+                    $msg = new AMQPMessage(json_encode($data), ['delivery_mode' => AMQPMessage::DELIVERY_MODE_PERSISTENT]);
+
+                    $channel->basic_publish($msg, $exchange, $app->config['rabbitmq']['routing']['plugin_published_recourses']);
+
+                    $app->log->debug("Notificação " . ($i + 1) . "/$count enviada para o usuário {$recourse->agent->user->id} ({$recourse->agent->name})");
+                } catch (\Exception $e) {
+                    // Logar erro individual por mensagem, mas continuar o loop
+                    $app->log->error("Falha ao publicar mensagem para o recurso {$recourse->id} no RabbitMQ: " . $e->getMessage());
+                }
+
+                // Chamar notificação independentemente do sucesso do RabbitMQ
+                self::notificationPublishedRecourse($recourse);
+            }
+        } catch (\Exception $e) {
+            // Logar erro geral (ex.: falha de conexão) e continuar fluxo
+            SentryService::captureExceptions($e);
+            $app->log->error("Falha ao conectar ou operar com RabbitMQ: " . $e->getMessage());
+        } finally {
+            // Fechar recursos se existirem
+            if ($channel) {
+                $channel->close();
+            }
+            if ($connection) {
+                $connection->close();
+            }
         }
-
-        $channel->close();
-        $connection->close();
     }
 
     public static function notificationPublishedRecourse($recourse): void

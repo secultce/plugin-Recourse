@@ -125,6 +125,11 @@
     border-radius: 10px;
 }
 
+.badge-info {
+    color: #fff;
+    background-color: #17a2b8;
+}
+
 .badge:empty {
     display: none;
 }
@@ -193,10 +198,6 @@ textarea.form-control {
     padding-left: 15px;
     padding-right: 15px;
     padding-top: 10px;
-}
-
-.label-reply-form {
-    display: block;
 }
 
 .btn-reply-recourse {
@@ -282,27 +283,7 @@ textarea.form-control {
     padding: 5px;
 }
 
-.swal2-icon.swal2-warning {
-    border-color: #23A350 !important;
-    color: #085E55 !important;
-}
 
-.swal2-icon .swal2-icon-content {
-    display: flex !important;
-    align-items: center !important;
-    font-size: 3.75em !important;
-}
-
-div:where(.swal2-icon) .swal2-icon-content {
-    display: flex !important;
-    align-items: center;
-    font-size: 0 !important;
-}
-
-.swal2-icon {
-    width: 4em !important;
-    height: 4em !important;
-}
 
 .btn-success-rec {
     color: #fff !important;
@@ -326,14 +307,6 @@ div:where(.swal2-icon) .swal2-icon-content {
     color: #fff;
     background-color: #d1a347;
     border: 1px solid #a37a29;
-}
-
-.swal2-styled.swal2-confirm {
-    padding: .175rem .75rem !important;
-}
-
-.swal2-styled.swal2-cancel {
-    padding: .175rem .75rem !important;
 }
 
 .select-recourse-enabled {
@@ -373,4 +346,21 @@ div:where(.swal2-icon) .swal2-icon-content {
     font-size: 10px;
     margin-left: 5px;
     cursor: pointer;
+}
+
+.modal-read-recourse {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.d-none {
+    display: none;
+}
+
+.current-grade {
+    font-size: 18px;
+}
+/* QUILL.JS  */
+.ql-container {
+    height: auto !important;
 }

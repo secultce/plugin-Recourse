@@ -1,5 +1,6 @@
 <?php
 
+use MapasCulturais\Utils;
 use Recourse\Entities\Recourse;
 
 $header = [
@@ -24,10 +25,10 @@ foreach ($recources as $recourse) {
     $row = [
         $recourse->registration->number,
         $recourse->agent->name,
-        $recourse->recourseText,
+        Utils::htmlToReadableText($recourse->recourseText),
         date_format($recourse->recourseSend, "d/m/Y H:i"),
         $situation,
-        $recourse->recourseReply,
+        Utils::htmlToReadableText($recourse->recourseReply),
         $recourse->recourseDateReply ? date_format($recourse->recourseDateReply, "d/m/Y H:i") : '',
         $recourse->replyAgent ? $recourse->replyAgent->name : '',
         $recourse->replyResult,
